@@ -285,7 +285,7 @@ soil_b.ASV[1:4,1:4]
 
 write.table(soil_b.ASV, "data/CZN_SaltonSea_SoilSamples_16S.V3V4_Clean_W23.tsv",
            sep="\t", quote=F, col.names=NA)
-saveRDS(soil_b.ASV, file = "data/CZN_SaltonSea_SoilSamples_16S.V3V4_Clean_W23.tsv.rds", ascii = FALSE, version = NULL,
+saveRDS(soil_b.ASV, file = "data/CZN_SaltonSea_SoilSamples_16S.V3V4_Clean_W23.rds", ascii = FALSE, version = NULL,
        compress = TRUE, refhook = NULL)
 
 # pull out lung sample ASV table
@@ -295,7 +295,7 @@ lung_b.ASV[1:4,1:4]
 
 write.table(lung_b.ASV, "data/SaltonSea_LungSamples_16S.V3V4_Clean_W23.tsv",
            sep="\t", quote=F, col.names=NA)
-saveRDS(lung_b.ASV, file = "data/SaltonSea_LungSamples_16S.V3V4_Clean_W23.tsv.rds", ascii = FALSE, version = NULL,
+saveRDS(lung_b.ASV, file = "data/SaltonSea_LungSamples_16S.V3V4_Clean_W23.rds", ascii = FALSE, version = NULL,
        compress = TRUE, refhook = NULL)
 
 #### Upload/Update Dust Metadata ####
