@@ -34,6 +34,7 @@ suppressPackageStartupMessages({ # load packages quietly
 
 #load("data/EnvMiSeq_W23_Data.Rdata") # load Rdata to global env
 #save.image("data/Env_Seqs_All/env.seq_analysis.Rdata") # save global env to Rdata file
+load("data/MiSeq_16S.V3V4_W23_Data_Ready.Rdata")
 
 #### Import and Prepare Data for Analyses ####
 
@@ -304,15 +305,15 @@ unique(dust_meta$SampleMonth)
 dust_meta$SampleMonth<-factor(dust_meta$SampleMonth, levels=c("July","August","September","October","November","December"))
 colorset2 = melt(c(July="#2b9348",August="#ffd60a",September="#CA6702",October="#d00000",November="#6930c3",December="#03045e"))
 
-colorset2$SampleType<-rownames(colorset2)
-colnames(colorset2)[which(names(colorset2) == "value")] <- "SampleType_Color"
+colorset2$SampleMonth<-rownames(colorset2)
+colnames(colorset2)[which(names(colorset2) == "value")] <- "SampMonth_Color"
 colorset2
 
-metadata_clean<-merge(metadata_clean, colorset2, by="SampleType")
-head(metadata_clean)
-metadata_clean$SampleType_Color <- as.character(metadata_clean$SampleType_Color)
-rownames(metadata_clean)<-metadata_clean$SampleID
-head(metadata_clean)
+dust_meta<-merge(dust_meta, colorset2, by="SampleMonth")
+head(dust_meta)
+dust_meta$SampMonth_Color <- as.character(dust_meta$SampMonth_Color)
+rownames(dust_meta)<-dust_meta$SampleID
+head(dust_meta)
 
 #### Scale Environmental Metadata ####
 head(metadata)
