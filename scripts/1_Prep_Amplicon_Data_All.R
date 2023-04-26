@@ -32,8 +32,6 @@ suppressPackageStartupMessages({ # load packages quietly
   library(decontam)
 })
 
-#load("data/EnvMiSeq_W23_Data.Rdata") # load Rdata to global env
-#save.image("data/Env_Seqs_All/env.seq_analysis.Rdata") # save global env to Rdata file
 load("data/MiSeq_16S.V3V4_W23_Data_Ready.Rdata")
 
 #### Import and Prepare Data for Analyses ####
