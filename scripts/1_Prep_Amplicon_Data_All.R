@@ -302,8 +302,7 @@ dust_meta<-as.data.frame(read_excel("data/Metadata_EnvMiSeqPlate_Winter23.xlsx",
 head(dust_meta)
 unique(dust_meta$SampleMonth)
 dust_meta$SampleMonth<-factor(dust_meta$SampleMonth, levels=c("July","August","September","October","November","December"))
-
-colorset2 = melt(c(Soil="#c44536",Dust="#432818",Lung="#47126b",Control="red"))
+colorset2 = melt(c(July="#2b9348",August="#ffd60a",September="#CA6702",October="#d00000",November="#6930c3",December="#03045e"))
 
 colorset2$SampleType<-rownames(colorset2)
 colnames(colorset2)[which(names(colorset2) == "value")] <- "SampleType_Color"
