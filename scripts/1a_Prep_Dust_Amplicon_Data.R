@@ -29,29 +29,24 @@ suppressPackageStartupMessages({ # load packages quietly
   library(rstatix)
   library(devtools)
   library(decontam)
+  library(fst)
 })
 
-#load("data/EnvMiSeq_W23_Data.Rdata") # load Rdata to global env
-#save.image("data/Env_Seqs_All/env.seq_analysis.Rdata") # save global env to Rdata file
-#load("data/MiSeq_16S.V3V4_W23_Data_Ready.Rdata")
+## Info about these data
+# dust samples were sequenced with some soil & lungs via UCR Core, MiSeq (targeting 16S V3V4)
+# contaminants removed with decontam, also control ASVs removed as well as singletons, zero ASVs, and eukaryotic hits
+# taxonomy file also had those contaminating ASVs removed
 
 #### Import and Prepare Data for Analyses ####
 
 ## Import ALL env plate bacterial ASV count data
-bac.ASV_table<-as.data.frame(readRDS("data/SaltonSea_16S.V3V4_Dust_ASVs_Clean.rds", refhook = NULL))
+bac.ASV_table<-as.data.frame(readRDS("data/SaltonSeaDust_16S.V3V4_ASVTable_Robject.rds", refhook = NULL))
 dim(bac.ASV_table)
 bac.ASV_table[1:5,1:5]
-colnames(bac.ASV_table)
 #bac.ASV_table<-bac.ASV_table[, !duplicated(colnames(bac.ASV_table))] # remove col duplicates
 
 ## Import ASV taxonomic data
-bac.ASV_tax<-data.frame(readRDS("data/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Robject.rds", refhook = NULL))
-head(bac.ASV_tax)
-
-bac.ASV_tax[is.na(bac.ASV_tax)]<- "Unknown" # turn all NAs into "Unkowns"
-bac.ASV_tax$Species<-gsub("Unknown", "unknown", bac.ASV_tax$Species) # change uppercase Unkonwn to lowercase unknown for unknown species classification
-head(bac.ASV_tax)
-bac.ASV_tax$ASV_ID<-rownames(bac.ASV_tax) # create ASV ID column to use for merging data frames
+bac.ASV_tax<-data.frame(readRDS("data/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Clean_Robject.rds", refhook = NULL))
 head(bac.ASV_tax)
 
 ### Import & Update Metadata ####
@@ -71,11 +66,24 @@ dust_meta$SampMonth_Color <- as.character(dust_meta$SampMonth_Color)
 rownames(dust_meta)<-dust_meta$SampleID
 head(dust_meta)
 
+dust_meta$SampDate<-interaction(dust_meta$SampleMonth,dust_meta$CollectionYear,sep=".")
+head(dust_meta)
+unique(dust_meta$SampDate)
+dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020","October.2020","November.2020",
+                                                        "July.2021","August.2021","September.2021","December.2021"))
+#### Import Wind Trajectory Data ####
+# data from Will Porter's group
+
+traj.df<-read.fst("data/SaltonSeaDust_PorterLab_TrajectoryData.fst")
+colnames(traj.df)[which(names(traj.df) == "site")] <- "Site"
+head(traj.df)
+
+
 #### Scale Environmental Metadata ####
-head(metadata)
-meta_scaled<-metadata
-meta_scaled[,8:15]<-scale(meta_scaled[,8:15],center=TRUE,scale=TRUE) # only scale chem env data
-head(meta_scaled)
+#head(metadata)
+#meta_scaled<-metadata
+#meta_scaled[,8:15]<-scale(meta_scaled[,8:15],center=TRUE,scale=TRUE) # only scale chem env data
+#head(meta_scaled)
 
 #### Create Super DF with Count, Taxa, & Metadata ####
 # merge CLEAN aka contaminants/controls removed count & taxa tables
@@ -98,7 +106,7 @@ colnames(bac.dat.dust)[which(names(bac.dat.dust) == "variable")] <- "SampleID"
 colnames(bac.dat.dust)[which(names(bac.dat.dust) == "value")] <- "Count"
 
 b.dust.all<-merge(bac.dat.dust,dust_meta,by="SampleID")
-
+head(b.dust.all)
 #### Save Global Env for Import into Other Scripts ####
 
 save.image("data/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
