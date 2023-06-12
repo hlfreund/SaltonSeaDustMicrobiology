@@ -251,8 +251,11 @@ bac.ASV_meta<-merge(bac.ASV_table,metadata, by.x="SampleID", by.y="SampleID") # 
 dim(bac.ASV_meta)
 dim(metadata) # the difference between dimensions is that the original metadata contains info for the controls
 dim(bac.ASV_table)
-
 rownames(bac.ASV_meta)<-bac.ASV_meta$SampleID
+
+# recreate ASV taxonomy table so that ASVs that were removed are not included in new taxa table
+bac.tax.clean<-as.data.frame(unique(subset(bac.dat, select=-c(SampleID,Count))))
+head(bac.tax.clean)
 
 # recreate ASV table (excluding samples we don't have metadata or counts for)
 colnames(bac.ASV_meta); rownames(bac.ASV_meta)
@@ -364,6 +367,10 @@ saveRDS(dust_b.ASV, file = "data/SaltonSeaDust_16S.V3V4_ASVTable_Robject.rds", a
 #saveRDS(soil_b.ASV, file = "data/SaltonSeaDust_16S.V3V4_ASVTable_Robject.rds", ascii = FALSE, version = NULL,
 #        compress = TRUE, refhook = NULL)
 saveRDS(lung_b.ASV, file = "data/SaltonSea_Lungs_16S.V3V4_ASVTable_Robject.rds", ascii = FALSE, version = NULL,
+        compress = TRUE, refhook = NULL)
+
+# save updated taxa file
+saveRDS(bac.tax.clean, file = "data/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Clean_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
 #### Save Global Env for Import into Other Scripts ####
