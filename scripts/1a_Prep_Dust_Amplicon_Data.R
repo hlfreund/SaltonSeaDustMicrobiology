@@ -1,6 +1,6 @@
 #### Set WD & Load Libraries ####
 getwd() # use setwd("path/to/files") if you are not in the right directory
-setwd("/Volumes/HLF_SSD/Aronson_Lab_Data/Salton_Sea/SaltonSeaDust")
+#setwd("/Volumes/HLF_SSD/Aronson_Lab_Data/Salton_Sea/SaltonSeaDust")
 suppressPackageStartupMessages({ # load packages quietly
   library(phyloseq)
   library(ggplot2)
@@ -50,8 +50,11 @@ bac.ASV_tax<-data.frame(readRDS("data/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_
 head(bac.ASV_tax)
 
 ### Import & Update Metadata ####
-dust_meta<-as.data.frame(read_excel("data/Metadata_EnvMiSeqPlate_Winter23.xlsx", sheet="SSea_Dust_Metadata"), header=TRUE)
+dust_meta<-as.data.frame(read_excel("data/Metadata_EnvMiSeqPlate_Winter23.xlsx", sheet="SSea_Dust_Metadata_Updated"), header=TRUE)
 head(dust_meta)
+
+# confirm that categorical variables of interest are factors
+dust_meta$CollectionYear<-factor(dust_meta$CollectionYear,levels=c("2020","2021"))
 unique(dust_meta$SampleMonth)
 dust_meta$SampleMonth<-factor(dust_meta$SampleMonth, levels=c("July","August","September","October","November","December"))
 colorset2 = melt(c(July="#2b9348",August="#ffd60a",September="#CA6702",October="#d00000",November="#6930c3",December="#03045e"))
@@ -66,11 +69,35 @@ dust_meta$SampMonth_Color <- as.character(dust_meta$SampMonth_Color)
 rownames(dust_meta)<-dust_meta$SampleID
 head(dust_meta)
 
+# create Summer vs Fall palette
+unique(dust_meta$Season_General)
+colorset3 = melt(c(Summer="#4361ee",Fall="#9a031e"))
+
+colorset3$Season_General<-rownames(colorset3)
+colnames(colorset3)[which(names(colorset3) == "value")] <- "SeasonGen_Color"
+colorset3
+
+# create more specific seasons palette
+unique(dust_meta$Season_Specific)
+colorset4 = melt(c(Early.Summer="#4cc9f0",Late.Summer="#5e60ce",Early.Fall="#c1121f",Late.Fall="#780000",Fall="#e36414"))
+
+colorset4$Season_Specific<-rownames(colorset4)
+colnames(colorset4)[which(names(colorset4) == "value")] <- "SeasonSpec_Color"
+colorset4
+
+dust_meta<-merge(dust_meta, colorset4, by="Season_Specific")
+head(dust_meta)
+dust_meta$SeasonSpec_Color <- as.character(dust_meta$SeasonSpec_Color)
+rownames(dust_meta)<-dust_meta$SampleID
+head(dust_meta)
+
+# create SampDate variable
 dust_meta$SampDate<-interaction(dust_meta$SampleMonth,dust_meta$CollectionYear,sep=".")
 head(dust_meta)
 unique(dust_meta$SampDate)
 dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020","October.2020","November.2020",
                                                         "July.2021","August.2021","September.2021","December.2021"))
+
 #### Import Wind Trajectory Data ####
 # data from Will Porter's group
 
@@ -107,6 +134,33 @@ colnames(bac.dat.dust)[which(names(bac.dat.dust) == "value")] <- "Count"
 
 b.dust.all<-merge(bac.dat.dust,dust_meta,by="SampleID")
 head(b.dust.all)
+
+### Drop Duplicates from ASV Table ####
+# sanity check that this indexing gets what we want
+dim(bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),])
+
+# update ASV table
+bac.ASV_table<-bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),]
+
+#### Drop Rep Letter from Sample Names ####
+
+# v gsub() - (.*\\..*) means that we are keeping all .*.*., no matter how many there are in string
+## (.*\\..*) & (.*\\..*\\..*) & (.*\\..*\\..*\\..*) ALL do the same thing
+## whatever is outside of the parentheses will be removed; here it's last occurence of .*
+dust_meta$SampleID<-gsub("(.*\\..*)\\..*","\\1", dust_meta$SampleID)
+dust_meta$SampleID # sanity check
+rownames(dust_meta)<-dust_meta$SampleID
+
+bac.ASV_table$SampleID<-gsub("(.*\\..*)\\..*","\\1", bac.ASV_table$SampleID)
+bac.ASV_table$SampleID # sanity check
+rownames(bac.ASV_table)<-bac.ASV_table$SampleID
+
+# check if sampleIDs match between metadata & ASV table
+rownames(dust_meta) %in% rownames(bac.ASV_table)
+
+# reorder metadata based off of ASV table
+dust_meta=dust_meta[rownames(bac.ASV_table),] ## will drop rows that are not shared by both dataframes!
+
 #### Save Global Env for Import into Other Scripts ####
 
 save.image("data/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
