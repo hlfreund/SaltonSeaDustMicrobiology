@@ -77,6 +77,12 @@ colorset3$Season_General<-rownames(colorset3)
 colnames(colorset3)[which(names(colorset3) == "value")] <- "SeasonGen_Color"
 colorset3
 
+dust_meta<-merge(dust_meta, colorset3, by="Season_General")
+head(dust_meta)
+dust_meta$SeasonGen_Color <- as.character(dust_meta$SeasonGen_Color)
+rownames(dust_meta)<-dust_meta$SampleID
+head(dust_meta)
+
 # create more specific seasons palette
 unique(dust_meta$Season_Specific)
 colorset4 = melt(c(Early.Summer="#4cc9f0",Late.Summer="#5e60ce",Early.Fall="#c1121f",Late.Fall="#780000",Fall="#e36414"))
