@@ -57,6 +57,8 @@ head(dust_meta)
 dust_meta$CollectionYear<-factor(dust_meta$CollectionYear,levels=c("2020","2021"))
 unique(dust_meta$SampleMonth)
 dust_meta$SampleMonth<-factor(dust_meta$SampleMonth, levels=c("July","August","September","October","November","December"))
+
+# create sample month palette
 colorset2 = melt(c(July="#2b9348",August="#ffd60a",September="#CA6702",October="#d00000",November="#6930c3",December="#03045e"))
 
 colorset2$SampleMonth<-rownames(colorset2)
@@ -81,11 +83,12 @@ dust_meta<-merge(dust_meta, colorset3, by="Season_General")
 head(dust_meta)
 dust_meta$SeasonGen_Color <- as.character(dust_meta$SeasonGen_Color)
 rownames(dust_meta)<-dust_meta$SampleID
+dust_meta$Season_General<-factor(dust_meta$Season_General, levels=c("Summer","Fall"))
 head(dust_meta)
 
 # create more specific seasons palette
 unique(dust_meta$Season_Specific)
-colorset4 = melt(c(Early.Summer="#4cc9f0",Late.Summer="#5e60ce",Early.Fall="#c1121f",Late.Fall="#780000",Fall="#e36414"))
+colorset4 = melt(c(Early.Summer="#4cc9f0",Late.Summer="#5e60ce",Early.Fall="#e85d04",Late.Fall="#9a031e",Fall.Winter="#63003a"))
 
 colorset4$Season_Specific<-rownames(colorset4)
 colnames(colorset4)[which(names(colorset4) == "value")] <- "SeasonSpec_Color"
@@ -95,6 +98,24 @@ dust_meta<-merge(dust_meta, colorset4, by="Season_Specific")
 head(dust_meta)
 dust_meta$SeasonSpec_Color <- as.character(dust_meta$SeasonSpec_Color)
 rownames(dust_meta)<-dust_meta$SampleID
+dust_meta$Season_Specific<-factor(dust_meta$Season_Specific, levels=c("Early.Summer","Late.Summer","Early.Fall","Late.Fall","Fall.Winter"))
+
+head(dust_meta)
+
+# create year palette
+unique(dust_meta$CollectionYear)
+colorset5 = melt(c("2020"="#751966","2021"="#135767"))
+
+colorset5$CollectionYear<-rownames(colorset5)
+colnames(colorset5)[which(names(colorset5) == "value")] <- "Year_Color"
+colorset5
+
+dust_meta<-merge(dust_meta, colorset5, by="CollectionYear")
+head(dust_meta)
+dust_meta$Year_Color <- as.character(dust_meta$Year_Color)
+rownames(dust_meta)<-dust_meta$SampleID
+dust_meta$CollectionYear<-factor(dust_meta$CollectionYear, levels=c("2020","2021"))
+
 head(dust_meta)
 
 # create SampDate variable
@@ -110,7 +131,6 @@ dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020
 traj.df<-read.fst("data/SaltonSeaDust_PorterLab_TrajectoryData.fst")
 colnames(traj.df)[which(names(traj.df) == "site")] <- "Site"
 head(traj.df)
-
 
 #### Scale Environmental Metadata ####
 #head(metadata)
