@@ -118,6 +118,22 @@ dust_meta$CollectionYear<-factor(dust_meta$CollectionYear, levels=c("2020","2021
 
 head(dust_meta)
 
+# create site palette
+unique(dust_meta$Site)
+colorset6 = melt(c("BDC"="#390099","DP"="#ffbd00","PD"="#eb5e28","RHB"="#a11d33","SB"="#0077b6","WI"="#008000"))
+
+colorset6$Site<-rownames(colorset6)
+colnames(colorset6)[which(names(colorset6) == "value")] <- "Site_Color"
+colorset6
+
+dust_meta<-merge(dust_meta, colorset6, by="Site")
+head(dust_meta)
+dust_meta$Site_Color <- as.character(dust_meta$Site_Color)
+rownames(dust_meta)<-dust_meta$SampleID
+#dust_meta$Site<-factor(dust_meta$Site, levels=c("WI","RHB","SB","DP","PD","BDC"))
+
+head(dust_meta)
+
 # create SampDate variable
 dust_meta$SampDate<-interaction(dust_meta$SampleMonth,dust_meta$CollectionYear,sep=".")
 head(dust_meta)
