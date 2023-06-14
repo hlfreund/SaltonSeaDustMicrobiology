@@ -141,12 +141,12 @@ unique(dust_meta$SampDate)
 dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020","October.2020","November.2020",
                                                         "July.2021","August.2021","September.2021","December.2021"))
 
-#### Import Wind Trajectory Data ####
+#### Import Wind Back Trajectory Data ####
 # data from Will Porter's group
 
-back.traj<-read.fst("data/SaltonSeaDust_PorterLab_TrajectoryData.fst")
-colnames(back.traj)[which(names(back.traj) == "site")] <- "Site"
-head(back.traj)
+# back.traj<-read.fst("data/SaltonSeaDust_PorterLab_TrajectoryData.fst")
+# colnames(back.traj)[which(names(back.traj) == "site")] <- "Site"
+# head(back.traj)
 # ^^ individual data points for each time steps that it was running backwards
 # _i --> starting point of wind trajectory (aka origin aka the site)
 # _add --> additional back trajectory points, moving backwards in time (5 min increments)
