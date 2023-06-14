@@ -158,7 +158,8 @@ perc.cov.bck.trj<-as.data.frame(read.csv("data/Porter_CollectorBackTrajectoriesD
 head(perc.cov.bck.trj)
 # ^ predicted source material by site, by time --> % from shrubs, urban, etc
 # describes what land was covered by wind trajectory, indicating how much dust can be attributed from that area based on wind trajectory
-
+#look at all points passed over by each trajectory on its way to the dust collector, and weight them
+## weighted by wind speed (higher wind = more contribution), estimated erodibility of the surface (based on published sediment availability maps), & proximity (closer surfaces are more likely to contribute than distant ones due to gravitational settling)
 
 #### Scale Environmental Metadata ####
 #head(metadata)
