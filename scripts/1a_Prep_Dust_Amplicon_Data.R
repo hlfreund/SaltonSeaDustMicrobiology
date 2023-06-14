@@ -156,6 +156,9 @@ dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020
 
 perc.cov.bck.trj<-as.data.frame(read.csv("data/Porter_CollectorBackTrajectoriesData.csv",header=TRUE))
 head(perc.cov.bck.trj)
+perc.cov.bck.trj[is.na(perc.cov.bck.trj)] <- 0
+head(perc.cov.bck.trj)
+
 # ^ predicted source material by site, by time --> % from shrubs, urban, etc
 # describes what land was covered by wind trajectory, indicating how much dust can be attributed from that area based on wind trajectory
 #look at all points passed over by each trajectory on its way to the dust collector, and weight them
