@@ -1,6 +1,6 @@
 #### Set WD & Load Libraries ####
 getwd() # use setwd("path/to/files") if you are not in the right directory
-setwd("/Volumes/HLF_SSD/Aronson_Lab_Data/Salton_Sea/SaltonSeaWater")
+setwd("/Volumes/HLF_SSD/Aronson_Lab_Data/Salton_Sea/SaltonSeaDust")
 suppressPackageStartupMessages({ # load packages quietly
   library(devtools)
   library(phyloseq)
@@ -34,21 +34,20 @@ suppressPackageStartupMessages({ # load packages quietly
   library(microbiome)
   library(pairwiseAdonis)
   library(corrplot)
+  library(fst)
+  library(plotly)
 })
 
 #### Load Global Env to Import Count/ASV Tables ####
-load("data/SSeawater_Data_Ready.Rdata") # save global env to Rdata file
-load("data/SSeawater_BetaDiv_Data.Rdata")
-#load("data/SSW_16S_CLR_EucDist_PCoA_Ready.Rdata")
+load("data/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
+#load("data/SSD_16S_CLR_EucDist_Ready.Rdata")
 
-
-#save.image("data/Env_Seqs_All/env.seq_analysis.Rdata") # save global env to Rdata file
-bac.dat.all[1:6,1:6]
+head(b.dust.all)
 bac.ASV_table[1:4,1:4]
 bac.ASV_table[(nrow(bac.ASV_table)-4):(nrow(bac.ASV_table)),(ncol(bac.ASV_table)-4):(ncol(bac.ASV_table))] # last 4 rows & cols
-head(meta_scaled)
+head(dust_meta)
 
-#### Beta Diversity ####
+#### Beta Diversity - All Data ####
 rownames(bac.ASV_table)
 bac.ASV_table[1:4,1:4]
 
@@ -58,8 +57,8 @@ b.clr<-decostand(bac.ASV_table[,-1],method = "clr", pseudocount = 1) #CLR transf
 b.clr[1:4,1:4]
 
 # check rownames of CLR transformed ASV data & metadata
-rownames(b.clr) %in% rownames(meta_scaled)
-meta_scaled=meta_scaled[rownames(b.clr),] ## reorder metadata to match order of CLR data
+rownames(b.clr) %in% rownames(dust_meta)
+dust_meta=dust_meta[rownames(b.clr),] ## reorder metadata to match order of CLR data
 
 # calculate our Euclidean distance matrix using CLR data
 b.euc_dist <- dist(b.clr, method = "euclidean")
@@ -69,7 +68,7 @@ b.euc_clust <- hclust(b.euc_dist, method="ward.D2")
 
 # let's make it a little nicer...
 b.euc_dend <- as.dendrogram(b.euc_clust, hang=0.2)
-b.dend_cols <- as.character(meta_scaled$SampDate_Color[order.dendrogram(b.euc_dend)])
+b.dend_cols <- as.character(dust_meta$SampMonth_Color[order.dendrogram(b.euc_dend)])
 labels_colors(b.euc_dend) <- b.dend_cols
 
 ## DO NOT RUN THIS LINE, THIS IS YOUR COLOR REFERENCE!!!!
@@ -82,7 +81,7 @@ dev.off()
 
 # PCOA w/ Euclidean distance matrix (of CLR data)
 b.pcoa <- pcoa(b.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
-#save.image("data/SSW_16S_CLR_EucDist_PCoA_Ready.Rdata")
+#save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 # The proportion of variances explained is in its element values$Relative_eig
 b.pcoa$values
@@ -92,34 +91,310 @@ b.pcoa.vectors<-data.frame(b.pcoa$vectors)
 b.pcoa.vectors$SampleID<-rownames(b.pcoa$vectors)
 
 # merge pcoa coordinates w/ metadata
-b.pcoa.meta<-merge(b.pcoa.vectors, meta_scaled, by.x="SampleID", by.y="SampleID")
+b.pcoa.meta<-merge(b.pcoa.vectors, dust_meta, by.x="SampleID", by.y="SampleID")
 b.pcoa.meta$SampleMonth
 b.pcoa.meta$SampDate
 
 head(b.pcoa.meta)
 
 head(b.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axes labels
-save.image("data/SSW_16S_CLR_EucDist_PCoA_Ready.Rdata")
+# PC1 = 23.63%, PC2 = 9.73%
 
-#### Visualize PCoAs ####
+save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+
+#### Visualize PCoAs - All Data ####
+plot_ly(b.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~Season_Specific, colors = c(unique(b.pcoa.meta$SeasonSpec_Color[order(b.pcoa.meta$Season_Specific)])),
+        symbol=~CollectionYear,symbols = c("square", "circle")) %>%
+  layout(scene = list(xaxis = list(title = 'PC1 23.63%'),
+                      yaxis = list(title = 'PC2 9.73%'),
+                      zaxis = list(title = 'PC3 6.97%')))
+
 # create PCoA ggplot fig
-pcoa1<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(SampDate)), size=5)+theme_bw()+
-  labs(title="PCoA: Bacteria/Archaea in Salton Seawater",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+pcoa1<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(SampleMonth),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="Sample Type",values=unique(b.pcoa.meta$SampDate_Color[order(b.pcoa.meta$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("PC1 [31.99%]") + ylab("PC2 [27.38%]")
+  scale_color_manual(name ="Collection Date",values=unique(b.pcoa.meta$SampMonth_Color[order(b.pcoa.meta$SampleMonth)]),labels=c(unique(b.pcoa.meta$SampleMonth[order(b.pcoa.meta$SampleMonth)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
 
-ggsave(pcoa1,filename = "figures/BetaDiversity/SSW_16S_pcoa_CLR_sampdate.png", width=12, height=10, dpi=600)
+ggsave(pcoa1,filename = "figures/BetaDiversity/SSD_16S_CLR_SampMonth_Year_PCOA.png", width=12, height=10, dpi=600)
 
-# sample month shape, depth color
-pcoa2<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +
-  geom_point(aes(color=as.numeric(as.character(Depth_m)),shape=SampleMonth), size=5)+theme_bw()+
-  labs(title="PCoA: Bacteria/Archaea in Salton Seawater",subtitle="Using Centered-Log Ratio Data",color="Depth (m)")+
-  theme_classic()+ theme(axis.title.x = element_text(size=15),axis.title.y = element_text(size=15),legend.title.align=0.5, legend.title = element_text(size=15),axis.text = element_text(size=12),axis.text.x = element_text(vjust=1),legend.text = element_text(size=12),plot.title = element_text(size=17))+
-  scale_color_continuous(low="blue3",high="red",trans = 'reverse') + scale_shape_discrete(labels=c("August 2021","December 2021","April 2022"),name="Sample Date") +
-  xlab("PC1 [31.99%]") + ylab("PC2 [27.38%]")
+pcoa1a<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Site),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Date",values=unique(b.pcoa.meta$Site_Color[order(b.pcoa.meta$Site)]),labels=c(unique(b.pcoa.meta$Site[order(b.pcoa.meta$Site)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
 
-ggsave(pcoa2,filename = "figures/BetaDiversity/SSW_16S_pcoa_CLR_depth_sampdate.png", width=12, height=10, dpi=600)
+ggsave(pcoa1a,filename = "figures/BetaDiversity/SSD_16S_CLR_Site_Year_PCOA.png", width=12, height=10, dpi=600)
+
+# general season
+pcoa2<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_General),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonGen_Color[order(b.pcoa.meta$Season_General)]),labels=c(unique(b.pcoa.meta$Season_General[order(b.pcoa.meta$Season_General)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa2,filename = "figures/BetaDiversity/SSD_16S_CLR_season_general_PCOA.png", width=12, height=10, dpi=600)
+
+# specific season
+pcoa3<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonSpec_Color[order(b.pcoa.meta$Season_Specific)]),
+                     labels=c("Early.Summer"="Early Summer","Late.Summer"="Late Summer","Early.Fall"="Early Fall","Late.Fall"="Late Fall","Fall.Winter"="Fall-Winter")) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa3,filename = "figures/BetaDiversity/SSD_16S_CLR_season_specific_PCOA.png", width=12, height=10, dpi=600)
+
+# by collection year
+pcoa4<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(CollectionYear)), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Collection Year")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Year",values=unique(b.pcoa.meta$Year_Color[order(b.pcoa.meta$CollectionYear)])) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa4,filename = "figures/BetaDiversity/SSD_16S_CLR_CollectionYear_PCOA.png", width=12, height=10, dpi=600)
+
+# by collection year & site
+pcoa4a<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(CollectionYear),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Collection Year")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Year",values=unique(b.pcoa.meta$Year_Color[order(b.pcoa.meta$CollectionYear)])) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa4a,filename = "figures/BetaDiversity/SSD_16S_CLR_CollectionYear_Site_PCOA.png", width=12, height=10, dpi=600)
+
+### PCOAs by Collection Year
+
+# 2020
+pcoa.2020.1<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(SampleMonth),shape=Site), size=5)+theme_bw()+
+                labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Date",values=unique(b.pcoa.meta$SampMonth_Color[order(b.pcoa.meta$SampleMonth)]),labels=c(unique(b.pcoa.meta$SampleMonth[order(b.pcoa.meta$SampleMonth)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.2020.1,filename = "figures/BetaDiversity/SSD_16S_2020_CLR_sampdate_PCOA.png", width=12, height=10, dpi=600)
+
+# general season
+pcoa.2020.2<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_General),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonGen_Color[order(b.pcoa.meta$Season_General)]),labels=c(unique(b.pcoa.meta$Season_General[order(b.pcoa.meta$Season_General)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.2020.2,filename = "figures/BetaDiversity/SSD_16S_2020_CLR_season_general_PCOA.png", width=12, height=10, dpi=600)
+
+# specific season
+pcoa.2020.3<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonSpec_Color[order(b.pcoa.meta$Season_Specific)]),
+                     labels=c("Early.Summer"="Early Summer","Late.Summer"="Late Summer","Early.Fall"="Early Fall","Late.Fall"="Late Fall","Fall.Winter"="Fall-Winter")) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.2020.3,filename = "figures/BetaDiversity/SSD_16S_2020_CLR_season_specific_PCOA.png", width=12, height=10, dpi=600)
+
+# 2021
+pcoa.2021.1<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(SampleMonth),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Date",values=unique(b.pcoa.meta$SampMonth_Color[order(b.pcoa.meta$SampleMonth)]),labels=c(unique(b.pcoa.meta$SampleMonth[order(b.pcoa.meta$SampleMonth)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.2021.1,filename = "figures/BetaDiversity/SSD_16S_2021_CLR_sampdate_PCOA.png", width=12, height=10, dpi=600)
+
+# general season
+pcoa.2021.2<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_General),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonGen_Color[order(b.pcoa.meta$Season_General)]),labels=c(unique(b.pcoa.meta$Season_General[order(b.pcoa.meta$Season_General)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.2021.2,filename = "figures/BetaDiversity/SSD_16S_2021_CLR_season_general_PCOA.png", width=12, height=10, dpi=600)
+
+# specific season
+pcoa.2021.3<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonSpec_Color[order(b.pcoa.meta$Season_Specific)]),
+                     labels=c("Early.Summer"="Early Summer","Late.Summer"="Late Summer","Early.Fall"="Early Fall","Late.Fall"="Late Fall","Fall.Winter"="Fall-Winter")) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.2021.3,filename = "figures/BetaDiversity/SSD_16S_2021_CLR_season_specific_PCOA.png", width=12, height=10, dpi=600)
+
+#### Beta Diversity - Exclude Control Sites ####
+rownames(bac.ASV_table)
+bac.ASV_table[1:4,1:4]
+
+# remove control sites from ASV table
+bac.ASV_table1<-bac.ASV_table[!grepl(c("BDC"), bac.ASV_table$SampleID),] #remove BDC
+bac.ASV_tab.noctrl<-bac.ASV_table1[!grepl(c("PD"), bac.ASV_table1$SampleID),] #remove PD
+unique(bac.ASV_tab.noctrl$SampleID) # sanity check
+
+# CLR transformation of ASV table
+# df must have rownames are SampleIDs, columns are ASV IDs for vegan functions below
+b.near.clr<-decostand(bac.ASV_tab.noctrl[,-1],method = "clr", pseudocount = 1) #CLR transformation
+b.near.clr[1:4,1:4]
+dim(b.near.clr)
+
+# check rownames of CLR transformed ASV data & metadata
+rownames(b.near.clr) %in% rownames(dust_meta)
+dust_meta_near=dust_meta[rownames(b.near.clr),] ## reorder metadata to match order of CLR data
+dim(dust_meta_near)
+
+# calculate our Euclidean distance matrix using CLR data
+b.near.euc_dist <- dist(b.near.clr, method = "euclidean")
+
+# creating our hierarcical clustering dendrogram
+b.near.euc_clust <- hclust(b.near.euc_dist, method="ward.D2")
+
+# let's make it a little nicer...
+b.near.euc_dend <- as.dendrogram(b.near.euc_clust, hang=0.2)
+b.near.dend_cols <- as.character(dust_meta_near$SeasonSpec_Color[order.dendrogram(b.near.euc_dend)])
+labels_colors(b.near.euc_dend) <- b.near.dend_cols
+
+plot(b.near.euc_dend, ylab="CLR Euclidean Distance",cex = 0.5) + title(main = "Bacteria/Archaea Clustering Dendrogram", cex.main = 1, font.main= 1, cex.sub = 0.8, font.sub = 2)
+dev.off()
+
+# PCOA w/ Euclidean distance matrix (of CLR data)
+b.near.pcoa <- pcoa(b.near.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
+
+# The proportion of variances explained is in its element values$Relative_eig
+b.near.pcoa$values
+
+# extract principal coordinates
+b.near.pcoa.vectors<-data.frame(b.near.pcoa$vectors)
+b.near.pcoa.vectors$SampleID<-rownames(b.near.pcoa$vectors)
+
+# merge pcoa coordinates w/ metadata
+b.near.pcoa.meta<-merge(b.near.pcoa.vectors, dust_meta_near, by.x="SampleID", by.y="SampleID")
+b.near.pcoa.meta$SampleMonth
+b.near.pcoa.meta$SampDate
+
+head(b.near.pcoa.meta)
+
+head(b.near.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axes labels
+# PC1 = 24.03%, PC2 = 14.26%
+
+save.image("data/SSD_NearSitesOnly_16S_CLR_EucDist_Ready.Rdata")
+
+#### Visualize PCoAs - Exclude Control Sites Data ####
+plot_ly(b.near.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~Season_Specific, colors = c(unique(b.near.pcoa.meta$SeasonSpec_Color[order(b.near.pcoa.meta$Season_Specific)])),
+        symbol=~CollectionYear,symbols = c("square", "circle")) %>%
+  layout(scene = list(xaxis = list(title = 'PC1 24.03%'),
+                      yaxis = list(title = 'PC2 14.26%'),
+                      zaxis = list(title = 'PC3 11.16%')))
+
+# create PCoA ggplot fig
+pcoa.n.1<-ggplot(b.near.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(SampleMonth),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Date",values=unique(b.near.pcoa.meta$SampMonth_Color[order(b.near.pcoa.meta$SampleMonth)]),labels=c(unique(b.near.pcoa.meta$SampleMonth[order(b.near.pcoa.meta$SampleMonth)]))) +
+  xlab("PC1 [24.03%]") + ylab("PC2 [14.26%]")
+
+ggsave(pcoa.n.1,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_CLR_SampMonth_year_PCOA.png", width=12, height=10, dpi=600)
+
+pcoa.n.1a<-ggplot(b.near.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Site),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Date",values=unique(b.near.pcoa.meta$Site_Color[order(b.near.pcoa.meta$Site)]),labels=c(unique(b.near.pcoa.meta$Site[order(b.near.pcoa.meta$Site)]))) +
+  xlab("PC1 [24.03%]") + ylab("PC2 [14.26%]")
+
+ggsave(pcoa.n.1a,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_CLR_Site_Year_PCOA.png", width=12, height=10, dpi=600)
+
+# general season
+pcoa.n.2<-ggplot(b.near.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_General),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.near.pcoa.meta$SeasonGen_Color[order(b.near.pcoa.meta$Season_General)]),labels=c(unique(b.near.pcoa.meta$Season_General[order(b.near.pcoa.meta$Season_General)]))) +
+  xlab("PC1 [24.03%]") + ylab("PC2 [14.26%]")
+
+ggsave(pcoa.n.2,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_CLR_season_general_PCOA.png", width=12, height=10, dpi=600)
+
+# specific season
+pcoa.n.3<-ggplot(b.near.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.near.pcoa.meta$SeasonSpec_Color[order(b.near.pcoa.meta$Season_Specific)]),
+                     labels=c("Early.Summer"="Early Summer","Late.Summer"="Late Summer","Early.Fall"="Early Fall","Late.Fall"="Late Fall","Fall.Winter"="Fall-Winter")) +
+  xlab("PC1 [24.03%]") + ylab("PC2 [14.26%]")
+
+ggsave(pcoa.n.3,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_CLR_season_specific_PCOA.png", width=12, height=10, dpi=600)
+
+# by collection year
+pcoa.n.4<-ggplot(b.near.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(CollectionYear)), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Collection Year")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Year",values=unique(b.near.pcoa.meta$Year_Color[order(b.near.pcoa.meta$CollectionYear)])) +
+  xlab("PC1 [24.03%]") + ylab("PC2 [14.26%]")
+
+ggsave(pcoa.n.4,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_CLR_CollectionYear_PCOA.png", width=12, height=10, dpi=600)
+
+# by collection year & site
+pcoa.n.4a<-ggplot(b.near.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(CollectionYear),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Collection Year")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Year",values=unique(b.near.pcoa.meta$Year_Color[order(b.near.pcoa.meta$CollectionYear)])) +
+  xlab("PC1 [24.03%]") + ylab("PC2 [14.26%]")
+
+ggsave(pcoa.n.4a,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_CLR_CollectionYear_Site_PCOA.png", width=12, height=10, dpi=600)
+
+### PCOAs by Collection Year
+
+# 2020
+pcoa.n.2020.1<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(SampleMonth),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Date",values=unique(b.pcoa.meta$SampMonth_Color[order(b.pcoa.meta$SampleMonth)]),labels=c(unique(b.pcoa.meta$SampleMonth[order(b.pcoa.meta$SampleMonth)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.n.2020.1,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_2020_CLR_sampdate_PCOA.png", width=12, height=10, dpi=600)
+
+# general season
+pcoa.n.2020.2<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_General),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonGen_Color[order(b.pcoa.meta$Season_General)]),labels=c(unique(b.pcoa.meta$Season_General[order(b.pcoa.meta$Season_General)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.n.2020.2,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_2020_CLR_season_general_PCOA.png", width=12, height=10, dpi=600)
+
+# specific season
+pcoa.n.2020.3<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonSpec_Color[order(b.pcoa.meta$Season_Specific)]),
+                     labels=c("Early.Summer"="Early Summer","Late.Summer"="Late Summer","Early.Fall"="Early Fall","Late.Fall"="Late Fall","Fall.Winter"="Fall-Winter")) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.n.2020.3,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_2020_CLR_season_specific_PCOA.png", width=12, height=10, dpi=600)
+
+# 2021
+pcoa.n.2021.1<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(SampleMonth),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Date",values=unique(b.pcoa.meta$SampMonth_Color[order(b.pcoa.meta$SampleMonth)]),labels=c(unique(b.pcoa.meta$SampleMonth[order(b.pcoa.meta$SampleMonth)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.n.2021.1,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_2021_CLR_sampdate_PCOA.png", width=12, height=10, dpi=600)
+
+# general season
+pcoa.n.2021.2<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_General),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonGen_Color[order(b.pcoa.meta$Season_General)]),labels=c(unique(b.pcoa.meta$Season_General[order(b.pcoa.meta$Season_General)]))) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.n.2021.2,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_2021_CLR_season_general_PCOA.png", width=12, height=10, dpi=600)
+
+# specific season
+pcoa.n.2021.3<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=CollectionYear), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonSpec_Color[order(b.pcoa.meta$Season_Specific)]),
+                     labels=c("Early.Summer"="Early Summer","Late.Summer"="Late Summer","Early.Fall"="Early Fall","Late.Fall"="Late Fall","Fall.Winter"="Fall-Winter")) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(pcoa.n.2021.3,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_2021_CLR_season_specific_PCOA.png", width=12, height=10, dpi=600)
 
 #### Homogeneity of Variance & PERMANOVA tests - Composition by Groups ####
 ## betadisper to look at homogeneity of group dispersions (aka variance) when considering multiple variables
@@ -131,10 +406,10 @@ ggsave(pcoa2,filename = "figures/BetaDiversity/SSW_16S_pcoa_CLR_depth_sampdate.p
 #(analogous to Levene's test for equal variances). The vegan function for this test is “betadisper”:
 ## * need a distance matrix!
 
-rownames(meta_scaled) %in% rownames(b.clr) #b.clr was used to make the distance matrix b.euc_dist
+rownames(dust_meta) %in% rownames(b.clr) #b.clr was used to make the distance matrix b.euc_dist
 
 # first by compare dispersions by sampling date
-b.disper1<-betadisper((vegdist(b.clr,method="euclidean")), meta_scaled$SampDate)
+b.disper1<-betadisper((vegdist(b.clr,method="euclidean")), dust_meta$SampDate)
 b.disper1
 
 ## Significant differences in homogeneities can be tested using either parametric or permutational tests,
@@ -160,7 +435,7 @@ TukeyHSD(b.disper1) # tells us which Sample Dates/category's dispersion MEANS ar
 # If both tests are significant, then there is a dispersion effect for sure and there might also be (not always) a location effect.
 # Dispersion effect means the actual spread of the data points is influencing the significant differences, not the actual data itself
 
-pnova1<-adonis2(b.clr ~ SampDate,data=meta_scaled,method = "euclidean",by="terms",permutations=1000)
+pnova1<-adonis2(b.clr ~ SampDate,data=dust_meta,method = "euclidean",by="terms",permutations=1000)
 pnova1 # p-value = 0.000999
 
 ##one issue with adonis is that it doesn't do multiple comparisons *******
@@ -171,7 +446,7 @@ pnova1 # p-value = 0.000999
 #install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 
 b.clr.dist = (vegdist(b.clr, "euclidean", na.rm = TRUE)) #distance matrix using Bray's dissimilarity index for trait distribution (traits of interest only)
-pair.mod1<-pairwise.adonis(b.clr.dist,meta_scaled$SampDate, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
+pair.mod1<-pairwise.adonis(b.clr.dist,dust_meta$SampDate, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
 pair.mod1
 #                           pairs Df SumsOfSqs  F.Model        R2 p.value p.adjusted sig
 # 1  December.2021 vs April.2022  1  7006.287 17.13323 0.5503196   0.001      0.003   *
@@ -180,15 +455,15 @@ pair.mod1
 
 # Visualize dispersions
 png('figures/BetaDiversity/pcoa_betadispersion_sampledate.png',width = 700, height = 600, res=100)
-plot(b.disper1,main = "Centroids and Dispersion based on Aitchison Distance", col=colorset1$SampDate_Color)
+plot(b.disper1,main = "Centroids and Dispersion based on Aitchison Distance", col=colorset1$SampMonth_Color)
 dev.off()
 
 png('boxplot_centroid_distance_sampledate.png',width = 700, height = 600, res=100)
-boxplot(b.disper1,xlab="Sample Collection Date", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset1$SampDate_Color)
+boxplot(b.disper1,xlab="Sample Collection Date", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset1$SampMonth_Color)
 dev.off()
 
 # Next compare dispersions by depth
-b.disper2<-betadisper((vegdist(b.clr,method="euclidean")), meta_scaled$Depth_m)
+b.disper2<-betadisper((vegdist(b.clr,method="euclidean")), dust_meta$Depth_m)
 b.disper2
 
 permutest(b.disper2, pairwise=TRUE) # compare dispersions to each other via permutation test to see significant differences in dispersion by pairwise comparisons
@@ -202,11 +477,11 @@ TukeyHSD(b.disper2) # tells us which Sample Dates/category's dispersion MEANS ar
 # If both tests are significant, then there is a dispersion effect for sure and there might also be (not always) a location effect.
 # Dispersion effect means the actual spread of the data points is influencing the significant differences, not the actual data itself
 
-pnova2<-adonis2(b.clr ~ Depth_m,data=meta_scaled,method = "euclidean",by="terms",permutations=1000)
+pnova2<-adonis2(b.clr ~ Depth_m,data=dust_meta,method = "euclidean",by="terms",permutations=1000)
 pnova2 # p-value = 1
 
 #b.clr.dist = (vegdist(b.clr, "euclidean", na.rm = TRUE)) #distance matrix using Bray's dissimilarity index for trait distribution (traits of interest only)
-pair.mod2<-pairwise.adonis(b.clr.dist,meta_scaled$Depth_m, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
+pair.mod2<-pairwise.adonis(b.clr.dist,dust_meta$Depth_m, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
 pair.mod2
 # none are significantly different
 
@@ -239,39 +514,39 @@ help(adonis)
 ## w/ distance matrices - The adonis2 tests are identical to anova.cca of dbrda. With Euclidean distances, the tests are also identical to anova.cca of rda.
 
 # create column for Depth that is a numeric version of this variable, rather than a factor
-meta_scaled$Depth.num<-as.numeric(as.character(meta_scaled$Depth_m))
+dust_meta$Depth.num<-as.numeric(as.character(dust_meta$Depth_m))
 
 # now make sure your data frames you're comparing are in the same exact order!!
-rownames(b.clr) %in% rownames(meta_scaled)
-meta_scaled=meta_scaled[rownames(b.clr),] ## reorder metadata to match order of CLR data
-perm <- with(meta_scaled, how(nperm = 1000)) # using SampDate as block because there is a significant difference between sample dates, trying to remove this effect when looking at permanovas
+rownames(b.clr) %in% rownames(dust_meta)
+dust_meta=dust_meta[rownames(b.clr),] ## reorder metadata to match order of CLR data
+perm <- with(dust_meta, how(nperm = 1000)) # using SampDate as block because there is a significant difference between sample dates, trying to remove this effect when looking at permanovas
 
-pnova1<-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Depth.num*Sulfate_milliM*Sulfide_microM,data=meta_scaled,method = "euclidean",by="terms",permutations=perm)
+pnova1<-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Depth.num*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
 pnova1
 # nothing
 
-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Depth.num*Sulfate_milliM*Sulfide_microM,data=meta_scaled,method = "euclidean",by=NULL,permutations=perm)
+adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Depth.num*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
 #         Df SumOfSqs     R2    F Pr(>F)
 #Model    23    25343  1
 #Residual  0        0  0
 #Total    23    25343  1
 
-pnova2<-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=meta_scaled,method = "euclidean",by="terms",permutations=perm)
+pnova2<-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
 pnova2
 # nothing significant
 
-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=meta_scaled,method = "euclidean",by=NULL,permutations=perm)
+adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
 #         Df SumOfSqs      R2      F   Pr(>F)
 #Model    23    34412 0.73114 1.8918 0.4615
 #Residual 16    12654 0.26886
 #Total    39    47066 1.00000
 
-pnova3<-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=meta_scaled,method = "euclidean",by="terms",permutations=perm)
+pnova3<-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
 pnova3
 
-adonis2(b.clr ~ ORP_mV*DO_Percent_Local*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=meta_scaled,method = "euclidean",by=NULL,permutations=perm)
+adonis2(b.clr ~ ORP_mV*DO_Percent_Local*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
 
-pnova4<-adonis2(b.clr ~ ORP_mV*DO_Percent_Local*Dissolved_OrganicMatter_RFU*Sulfate_milliM,data=meta_scaled,method = "euclidean",by="terms",permutations=perm)
+pnova4<-adonis2(b.clr ~ ORP_mV*DO_Percent_Local*Dissolved_OrganicMatter_RFU*Sulfate_milliM,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
 pnova4
 #                                         Df SumOfSqs      R2       F   Pr(>F)
 # ORP_mV                                                              1   3435.1 0.13555  8.0320 0.000999 ***
@@ -282,13 +557,13 @@ pnova4
 # DO_Percent_Local:Dissolved_OrganicMatter_RFU                        1   1413.3 0.05577  3.3045 0.005994 **
 # DO_Percent_Local:Sulfate_milliM                                     1    794.0 0.03133  1.8566 0.072927 .
 
-adonis2(b.clr ~ ORP_mV*DO_Percent_Local*Dissolved_OrganicMatter_RFU*Sulfate_milliM,data=meta_scaled,method = "euclidean",by=NULL,permutations=perm)
+adonis2(b.clr ~ ORP_mV*DO_Percent_Local*Dissolved_OrganicMatter_RFU*Sulfate_milliM,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
 #         Df SumOfSqs      R2      F   Pr(>F)
 #Model    15  21921.1 0.86499 3.417 0.000999 ***
 #Residual  8   3421.5 0.13501
 #Total    23  25342.6 1.00000
 
-pnova4b<-adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU*ORP_mV,data=meta_scaled,method = "euclidean",by="terms",permutations=perm)
+pnova4b<-adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU*ORP_mV,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
 pnova4b
 #                                   Df SumOfSqs      R2       F   Pr(>F)
 # DO_Percent_Local                                     1   5830.3 0.23006 12.2377 0.000999 ***
@@ -301,7 +576,7 @@ pnova4b
 # Residual                                            16   7622.8 0.30079
 # Total                                               23  25342.6 1.00000
 
-pnova5<-adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU,data=meta_scaled,method = "euclidean",by="terms",permutations=perm)
+pnova5<-adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
 pnova5
 #                                               Df SumOfSqs      R2       F   Pr(>F)
 # DO_Percent_Local                              1   5830.3 0.23006  9.5297 0.000999 ***
@@ -310,7 +585,7 @@ pnova5
 # Residual                                     20  12236.1 0.48283
 # Total                                        23  25342.6 1.00000
 
-adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU,data=meta_scaled,method = "euclidean",by=NULL,permutations=perm)
+adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
 #         Df SumOfSqs      R2      F   Pr(>F)
 #Model     3    13106 0.51717 7.1409 0.000999 ***
 #Residual 20    12236 0.48283
@@ -325,4 +600,4 @@ adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU,data=meta_scaled,me
 ### Larger F-ratios indicate more pronounced group separation, however, the significance of this ratio is usually of more interest than its magnitude.
 
 #### Save Everything ####
-save.image("data/SSeawater_BetaDiv_Data.Rdata")
+save.image("data/SSea Dust_BetaDiv_Data.Rdata")
