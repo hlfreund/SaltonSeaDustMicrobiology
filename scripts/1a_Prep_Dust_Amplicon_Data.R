@@ -144,9 +144,21 @@ dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020
 #### Import Wind Trajectory Data ####
 # data from Will Porter's group
 
-traj.df<-read.fst("data/SaltonSeaDust_PorterLab_TrajectoryData.fst")
-colnames(traj.df)[which(names(traj.df) == "site")] <- "Site"
-head(traj.df)
+back.traj<-read.fst("data/SaltonSeaDust_PorterLab_TrajectoryData.fst")
+colnames(back.traj)[which(names(back.traj) == "site")] <- "Site"
+head(back.traj)
+# ^^ individual data points for each time steps that it was running backwards
+# _i --> starting point of wind trajectory (aka origin aka the site)
+# _add --> additional back trajectory points, moving backwards in time (5 min increments)
+# so back trajectory info was used to determine which surface the wind traveled over
+# this raw model output data
+
+
+perc.cov.bck.trj<-as.data.frame(read.csv("data/Porter_CollectorBackTrajectoriesData.csv",header=TRUE))
+head(perc.cov.bck.trj)
+# ^ predicted source material by site, by time --> % from shrubs, urban, etc
+# describes what land was covered by wind trajectory, indicating how much dust can be attributed from that area based on wind trajectory
+
 
 #### Scale Environmental Metadata ####
 #head(metadata)
