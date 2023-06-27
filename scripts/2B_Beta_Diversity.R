@@ -424,6 +424,9 @@ permutest(b.disper1, pairwise=TRUE) # compare dispersions to each other via perm
 # April.2022      0.0012603     0.1201286
 
 anova(b.disper1) # p = 0.0003451 --> reject the Null H, spatial medians (a measure of dispersion) are significantly difference across sample dates
+# ANOVA adjusted p-value
+aov.beta.p1<-summary(anova(b.disper1))[[1]][["Pr(>F)"]] # get p values from ANOVA
+p.adjust(aov.beta.p1,method="bonferroni",n=length(aov.beta.p1))
 
 TukeyHSD(b.disper1) # tells us which Sample Dates/category's dispersion MEANS are significantly different than each other
 #                               diff       lwr       upr     p adj
@@ -437,6 +440,7 @@ TukeyHSD(b.disper1) # tells us which Sample Dates/category's dispersion MEANS ar
 
 pnova1<-adonis2(b.clr ~ SampDate,data=dust_meta,method = "euclidean",by="terms",permutations=1000)
 pnova1 # p-value = 0.000999
+p.adjust(pnova1$`Pr(>F)`,method="bonferroni",n=length(pnova1$`Pr(>F)`)) # adjusted pval
 
 ##one issue with adonis is that it doesn't do multiple comparisons *******
 # tells us that something is different, but what is different? Which sample/plot/location?
@@ -470,6 +474,10 @@ permutest(b.disper2, pairwise=TRUE) # compare dispersions to each other via perm
 
 anova(b.disper2) # p = 0.6277 --> accept the Null H, spatial medians are NOT significantly difference across sample dates
 
+# ANOVA adjusted p-value
+aov.beta.p2<-summary(anova(b.disper2))[[1]][["Pr(>F)"]] # get p values from ANOVA
+p.adjust(aov.beta.p2,method="bonferroni",n=length(aov.beta.p1))
+
 TukeyHSD(b.disper2) # tells us which Sample Dates/category's dispersion MEANS are significantly different than each other
 # no sig results
 
@@ -479,6 +487,7 @@ TukeyHSD(b.disper2) # tells us which Sample Dates/category's dispersion MEANS ar
 
 pnova2<-adonis2(b.clr ~ Depth_m,data=dust_meta,method = "euclidean",by="terms",permutations=1000)
 pnova2 # p-value = 1
+p.adjust(pnova2$`Pr(>F)`,method="bonferroni",n=length(pnova2$`Pr(>F)`)) # adjusted pval
 
 #b.clr.dist = (vegdist(b.clr, "euclidean", na.rm = TRUE)) #distance matrix using Bray's dissimilarity index for trait distribution (traits of interest only)
 pair.mod2<-pairwise.adonis(b.clr.dist,dust_meta$Depth_m, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
@@ -556,6 +565,7 @@ pnova4
 # ORP_mV:DO_Percent_Local                                             1   1322.9 0.05220  3.0932 0.002997 **
 # DO_Percent_Local:Dissolved_OrganicMatter_RFU                        1   1413.3 0.05577  3.3045 0.005994 **
 # DO_Percent_Local:Sulfate_milliM                                     1    794.0 0.03133  1.8566 0.072927 .
+p.adjust(pnova4$`Pr(>F)`,method="bonferroni",n=length(pnova4$`Pr(>F)`)) # adjusted pval
 
 adonis2(b.clr ~ ORP_mV*DO_Percent_Local*Dissolved_OrganicMatter_RFU*Sulfate_milliM,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
 #         Df SumOfSqs      R2      F   Pr(>F)
@@ -576,6 +586,8 @@ pnova4b
 # Residual                                            16   7622.8 0.30079
 # Total                                               23  25342.6 1.00000
 
+p.adjust(pnova4b$`Pr(>F)`,method="bonferroni",n=length(pnova4b$`Pr(>F)`)) # adjusted pval
+
 pnova5<-adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
 pnova5
 #                                               Df SumOfSqs      R2       F   Pr(>F)
@@ -584,6 +596,8 @@ pnova5
 #   DO_Percent_Local:Dissolved_OrganicMatter_RFU  1    931.5 0.03676  1.5226 0.134865
 # Residual                                     20  12236.1 0.48283
 # Total                                        23  25342.6 1.00000
+
+p.adjust(pnova5$`Pr(>F)`,method="bonferroni",n=length(pnova5$`Pr(>F)`)) # adjusted pval
 
 adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
 #         Df SumOfSqs      R2      F   Pr(>F)
