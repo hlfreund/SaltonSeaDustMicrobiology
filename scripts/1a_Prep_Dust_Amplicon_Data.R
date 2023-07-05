@@ -134,6 +134,22 @@ rownames(dust_meta)<-dust_meta$SampleID
 
 head(dust_meta)
 
+# create collection palette
+unique(dust_meta$Seas_Coll_Year)
+colorset7 = melt(c("S.1.2020"="#07f49e","S.2.2020"="#2962ff","S.3.2020"="#9500ff","F.1.2020"="#ff0059","S.1.2021"="#ff8c00","S.2.2021"="#b4e600","F.1.2021"="#ffd500"))
+
+colorset7$Seas_Coll_Year<-rownames(colorset7)
+colnames(colorset7)[which(names(colorset7) == "value")] <- "SCY_Color"
+colorset7
+
+dust_meta<-merge(dust_meta, colorset7, by="Seas_Coll_Year")
+head(dust_meta)
+dust_meta$SCY_Color <- as.character(dust_meta$SCY_Color)
+rownames(dust_meta)<-dust_meta$SampleID
+dust_meta$Seas_Coll_Year<-factor(dust_meta$Seas_Coll_Year, levels=c("S.1.2020","S.2.2020","S.3.2020","F.1.2020","S.1.2021","S.2.2021","F.1.2021"))
+
+head(dust_meta)
+
 # create SampDate variable
 dust_meta$SampDate<-interaction(dust_meta$SampleMonth,dust_meta$CollectionYear,sep=".")
 head(dust_meta)
