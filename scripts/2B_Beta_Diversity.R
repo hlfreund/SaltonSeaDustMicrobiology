@@ -1,6 +1,6 @@
 #### Set WD & Load Libraries ####
 getwd() # use setwd("path/to/files") if you are not in the right directory
-setwd("/Volumes/HLF_SSD/Aronson_Lab_Data/Salton_Sea/SaltonSeaDust")
+#setwd("/Volumes/HLF_SSD/Aronson_Lab_Data/Salton_Sea/SaltonSeaDust")
 suppressPackageStartupMessages({ # load packages quietly
   library(devtools)
   library(phyloseq)
@@ -36,6 +36,7 @@ suppressPackageStartupMessages({ # load packages quietly
   library(corrplot)
   library(fst)
   library(plotly)
+  library(htmlwidgets)
 })
 
 #### Load Global Env to Import Count/ASV Tables ####
@@ -47,7 +48,7 @@ bac.ASV_table[1:4,1:4]
 bac.ASV_table[(nrow(bac.ASV_table)-4):(nrow(bac.ASV_table)),(ncol(bac.ASV_table)-4):(ncol(bac.ASV_table))] # last 4 rows & cols
 head(dust_meta)
 
-#### Beta Diversity - All Data ####
+#### CLR Transform All Comp Data ####
 rownames(bac.ASV_table)
 bac.ASV_table[1:4,1:4]
 
@@ -55,6 +56,8 @@ bac.ASV_table[1:4,1:4]
 # df must have rownames are SampleIDs, columns are ASV IDs for vegan functions below
 b.clr<-decostand(bac.ASV_table[,-1],method = "clr", pseudocount = 1) #CLR transformation
 b.clr[1:4,1:4]
+
+#### Beta Diversity - All Data ####
 
 # check rownames of CLR transformed ASV data & metadata
 rownames(b.clr) %in% rownames(dust_meta)
@@ -103,11 +106,6 @@ head(b.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axe
 save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 #### Visualize PCoAs - All Data ####
-plot_ly(b.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~Season_Specific, colors = c(unique(b.pcoa.meta$SeasonSpec_Color[order(b.pcoa.meta$Season_Specific)])),
-        symbol=~CollectionYear,symbols = c("square", "circle")) %>%
-  layout(scene = list(xaxis = list(title = 'PC1 23.63%'),
-                      yaxis = list(title = 'PC2 9.73%'),
-                      zaxis = list(title = 'PC3 6.97%')))
 
 # create PCoA ggplot fig
 pcoa1<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(SampleMonth),shape=CollectionYear), size=5)+theme_bw()+
@@ -163,63 +161,501 @@ pcoa4a<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=facto
 
 ggsave(pcoa4a,filename = "figures/BetaDiversity/SSD_16S_CLR_CollectionYear_Site_PCOA.png", width=12, height=10, dpi=600)
 
-### PCOAs by Collection Year
-
-# 2020
-pcoa.2020.1<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(SampleMonth),shape=Site), size=5)+theme_bw()+
-                labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+# by collection period & site
+pcoa5<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Seas_Coll_Year),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="Collection Date",values=unique(b.pcoa.meta$SampMonth_Color[order(b.pcoa.meta$SampleMonth)]),labels=c(unique(b.pcoa.meta$SampleMonth[order(b.pcoa.meta$SampleMonth)]))) +
+  scale_color_manual(name ="Collection Period",values=unique(b.pcoa.meta$SCY_Color[order(b.pcoa.meta$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
 
-ggsave(pcoa.2020.1,filename = "figures/BetaDiversity/SSD_16S_2020_CLR_sampdate_PCOA.png", width=12, height=10, dpi=600)
+ggsave(pcoa5,filename = "figures/BetaDiversity/SSD_16S_CLR_SeasCollYr_Site_PCOA.png", width=12, height=10, dpi=600)
 
-# general season
-pcoa.2020.2<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_General),shape=CollectionYear), size=5)+theme_bw()+
-  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+# 3D PCoA
+
+plot_ly(b.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~Season_Specific, colors = c(unique(b.pcoa.meta$SeasonSpec_Color[order(b.pcoa.meta$Season_Specific)])),
+        symbol=~CollectionYear,symbols = c("square", "circle")) %>%
+  layout(scene = list(xaxis = list(title = 'PC1 23.63%'),
+                      yaxis = list(title = 'PC2 9.73%'),
+                      zaxis = list(title = 'PC3 6.97%')))
+
+pltly.all.a<-plot_ly(b.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~factor(Seas_Coll_Year), colors = c(unique(b.pcoa.meta$SCY_Color[order(b.pcoa.meta$Seas_Coll_Year)])),
+                    symbol=~Site,symbols = c("square", "circle","diamond-open","x","circle-open")) %>%
+  layout(scene = list(xaxis = list(title = 'PC1 23.63%'),
+                      yaxis = list(title = 'PC2 9.73%'),
+                      zaxis = list(title = 'PC3 6.97%')))
+saveWidget(widget = pltly.all.a, #the plotly object,
+           file = "figures/BetaDiversity/SSD_16S_CLR_SeasCollYr_Site_3D_PCOA.html", #the path & file name
+           selfcontained = TRUE #creates a single html file
+)
+
+#### CLR Transform 2020 Comp Data ####
+d.meta_20<-dust_meta[which(dust_meta$CollectionYear=="2020"),]
+
+asv.table.20<-bac.ASV_table[which(bac.ASV_table$SampleID %in% d.meta_20$SampleID),]
+asv.table.20[1:4,1:4]
+rownames(asv.table.20)
+
+# CLR transformation of ASV table
+# df must have rownames are SampleIDs, columns are ASV IDs for vegan functions below
+b.clr.20<-decostand(asv.table.20[,-1],method = "clr", pseudocount = 1) #CLR transformation
+b.clr.20[1:4,1:4]
+
+#### Beta Diversity - 2020 Data ####
+
+# check rownames of CLR transformed ASV data & metadata
+rownames(b.clr.20) %in% rownames(d.meta_20)
+d.meta_20=d.meta_20[rownames(b.clr.20),] ## reorder metadata to match order of CLR data
+
+# calculate our Euclidean distance matrix using CLR data
+b.20.euc_dist <- dist(b.clr.20, method = "euclidean")
+
+# creating our hierarcical clustering dendrogram
+b.20.euc_clust <- hclust(b.20.euc_dist, method="ward.D2")
+
+# let's make it a little nicer...
+b.20.euc_dend <- as.dendrogram(b.20.euc_clust, hang=0.2)
+b.20.dend_cols <- as.character(d.meta_20$SampMonth_Color[order.dendrogram(b.20.euc_dend)])
+labels_colors(b.20.euc_dend) <- b.20.dend_cols
+
+## DO NOT RUN THIS LINE, THIS IS YOUR COLOR REFERENCE!!!!
+#(August.2021="#ef781c",December.2021="#03045e",April.2022="#059c3f")
+
+plot(b.20.euc_dend, ylab="CLR Euclidean Distance",cex = 0.5) + title(main = "Bacteria/Archaea Clustering Dendrogram", cex.main = 1, font.main= 1, cex.sub = 0.8, font.sub = 2)
+#legend("topright",legend = c("August 2021","December 2021","April 2022"),cex=.8,col = c("#ef781c","#03045e","#059c3f"),pch = 15, bty = "n")
+# Control is dark blue ("#218380"), #Alternaria is light blue ("#73d2de")
+dev.off()
+
+# PCOA w/ Euclidean distance matrix (of CLR data)
+b.20.pcoa <- pcoa(b.20.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
+#save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+
+# The proportion of variances explained is in its element values$Relative_eig
+b.20.pcoa$values
+
+# extract principal coordinates
+b.20.pcoa.vectors<-data.frame(b.20.pcoa$vectors)
+b.20.pcoa.vectors$SampleID<-rownames(b.20.pcoa$vectors)
+
+# merge pcoa coordinates w/ metadata
+b.20.pcoa.meta<-merge(b.20.pcoa.vectors, d.meta_20, by.x="SampleID", by.y="SampleID")
+b.20.pcoa.meta$SampleMonth
+b.20.pcoa.meta$SampDate
+
+head(b.20.pcoa.meta)
+
+head(b.20.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axes labels
+# PC1 = 23.63%, PC2 = 9.73%
+
+save.image("data/SSD_16S_2020_CLR_EucDist_Ready.Rdata")
+
+#### Visualize PCoAs - 2020 Data ####
+
+# create PCoA ggplot fig
+pcoa1<-ggplot(b.20.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust, 2020",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonGen_Color[order(b.pcoa.meta$Season_General)]),labels=c(unique(b.pcoa.meta$Season_General[order(b.pcoa.meta$Season_General)]))) +
-  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+  scale_color_manual(name ="Collection Date",values=unique(b.20.pcoa.meta$SeasonSpec_Color[order(b.20.pcoa.meta$Season_Specific)]),labels=c(unique(b.20.pcoa.meta$Season_Specific[order(b.20.pcoa.meta$Season_Specific)]))) +
+  xlab("PC1 [31.85%]") + ylab("PC2 [15.26%]")
 
-ggsave(pcoa.2020.2,filename = "figures/BetaDiversity/SSD_16S_2020_CLR_season_general_PCOA.png", width=12, height=10, dpi=600)
+ggsave(pcoa1,filename = "figures/BetaDiversity/2020/SSD_16S_2020_CLR_SampMonth_Site_PCOA.png", width=12, height=10, dpi=600)
+
+# collection period
+pcoa1a<-ggplot(b.20.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=Seas_Coll_Year,shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust, 2020",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Period",values=unique(b.20.pcoa.meta$SCY_Color[order(b.20.pcoa.meta$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1","S.2.2020"="Summer #2","S.3.2020"="Summer #3","F.1.2020"="Fall #1")) +
+  xlab("PC1 [31.85%]") + ylab("PC2 [15.26%]")
+
+ggsave(pcoa1a,filename = "figures/BetaDiversity/2020/SSD_16S_2020_CLR_Site_SeasCollYr_PCOA.png", width=12, height=10, dpi=600)
 
 # specific season
-pcoa.2020.3<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=CollectionYear), size=5)+theme_bw()+
-  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+pcoa3<-ggplot(b.20.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust, 2020",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonSpec_Color[order(b.pcoa.meta$Season_Specific)]),
+  scale_color_manual(name ="Season",values=unique(b.20.pcoa.meta$SeasonSpec_Color[order(b.20.pcoa.meta$Season_Specific)]),
                      labels=c("Early.Summer"="Early Summer","Late.Summer"="Late Summer","Early.Fall"="Early Fall","Late.Fall"="Late Fall","Fall.Winter"="Fall-Winter")) +
-  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+  xlab("PC1 [31.85%]") + ylab("PC2 [15.26%]")
 
-ggsave(pcoa.2020.3,filename = "figures/BetaDiversity/SSD_16S_2020_CLR_season_specific_PCOA.png", width=12, height=10, dpi=600)
+ggsave(pcoa3,filename = "figures/BetaDiversity/2020/SSD_16S_2020_CLR_season_specific_PCOA.png", width=12, height=10, dpi=600)
 
-# 2021
-pcoa.2021.1<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(SampleMonth),shape=Site), size=5)+theme_bw()+
+# 3D PCoA
+pltly.20.a<-plot_ly(b.20.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~Season_Specific, colors = c(unique(b.20.pcoa.meta$SeasonSpec_Color[order(b.20.pcoa.meta$Season_Specific)])),
+                    symbol=~Site,symbols = c("square", "circle","diamond-open","x","circle-open")) %>%
+  layout(scene = list(xaxis = list(title = 'PC1 31.85%'),
+                      yaxis = list(title = 'PC2 15.26%'),
+                      zaxis = list(title = 'PC3 9.33%')))
+saveWidget(widget = pltly.20.a, #the plotly object,
+           file = "figures/BetaDiversity/2020/SSD_16S_2020_CLR_SeasonSpec_Site_3D_PCOA.html", #the path & file name
+           selfcontained = TRUE #creates a single html file
+)
+pltly.20.b<-plot_ly(b.20.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~factor(Seas_Coll_Year), colors = c(unique(b.20.pcoa.meta$SCY_Color[order(b.20.pcoa.meta$Seas_Coll_Year)])),
+                    symbol=~Site,symbols = c("square", "circle","diamond-open","x","circle-open")) %>%
+  layout(scene = list(xaxis = list(title = 'PC1 31.85%'),
+                      yaxis = list(title = 'PC2 15.26%'),
+                      zaxis = list(title = 'PC3 9.33%')))
+saveWidget(widget = pltly.20.b, #the plotly object,
+           file = "figures/BetaDiversity/2020/SSD_16S_2020_CLR_SeasCollYr_Site_3D_PCOA.html", #the path & file name
+           selfcontained = TRUE #creates a single html file
+)
+#### CLR Transform 2021 Comp Data ####
+d.meta_21<-dust_meta[which(dust_meta$CollectionYear=="2021"),]
+
+asv.table.21<-bac.ASV_table[which(bac.ASV_table$SampleID %in% d.meta_21$SampleID),]
+asv.table.21[1:4,1:4]
+rownames(asv.table.21)
+
+# CLR transformation of ASV table
+# df must have rownames are SampleIDs, columns are ASV IDs for vegan functions below
+b.clr.21<-decostand(asv.table.21[,-1],method = "clr", pseudocount = 1) #CLR transformation
+b.clr.21[1:4,1:4]
+
+#### Beta Diversity - 2021 Data ####
+
+# check rownames of CLR transformed ASV data & metadata
+rownames(b.clr.21) %in% rownames(d.meta_21)
+d.meta_21=d.meta_21[rownames(b.clr.21),] ## reorder metadata to match order of CLR data
+
+# calculate our Euclidean distance matrix using CLR data
+b.21.euc_dist <- dist(b.clr.21, method = "euclidean")
+
+# creating our hierarcical clustering dendrogram
+b.21.euc_clust <- hclust(b.21.euc_dist, method="ward.D2")
+
+# let's make it a little nicer...
+b.21.euc_dend <- as.dendrogram(b.21.euc_clust, hang=0.2)
+b.21.dend_cols <- as.character(d.meta_21$SampMonth_Color[order.dendrogram(b.21.euc_dend)])
+labels_colors(b.21.euc_dend) <- b.21.dend_cols
+
+## DO NOT RUN THIS LINE, THIS IS YOUR COLOR REFERENCE!!!!
+#(August.2121="#ef781c",December.2121="#03045e",April.2122="#059c3f")
+
+plot(b.21.euc_dend, ylab="CLR Euclidean Distance",cex = 0.5) + title(main = "Bacteria/Archaea Clustering Dendrogram", cex.main = 1, font.main= 1, cex.sub = 0.8, font.sub = 2)
+#legend("topright",legend = c("August 2021","December 2021","April 2022"),cex=.8,col = c("#ef781c","#03045e","#059c3f"),pch = 15, bty = "n")
+# Control is dark blue ("#218380"), #Alternaria is light blue ("#73d2de")
+dev.off()
+
+# PCOA w/ Euclidean distance matrix (of CLR data)
+b.21.pcoa <- pcoa(b.21.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
+#save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+
+# The proportion of variances explained is in its element values$Relative_eig
+b.21.pcoa$values
+
+# extract principal coordinates
+b.21.pcoa.vectors<-data.frame(b.21.pcoa$vectors)
+b.21.pcoa.vectors$SampleID<-rownames(b.21.pcoa$vectors)
+
+# merge pcoa coordinates w/ metadata
+b.21.pcoa.meta<-merge(b.21.pcoa.vectors, d.meta_21, by.x="SampleID", by.y="SampleID")
+b.21.pcoa.meta$SampleMonth
+b.21.pcoa.meta$SampDate
+
+head(b.21.pcoa.meta)
+
+head(b.21.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axes labels
+# PC1 = 24.72%, PC2 = 15.13%
+
+save.image("data/SSD_16S_2021_CLR_EucDist_Ready.Rdata")
+
+#### Visualize PCoAs - 2021 Data ####
+
+# create PCoA ggplot fig
+pcoa1<-ggplot(b.21.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust, 2021",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Date",values=unique(b.21.pcoa.meta$SeasonSpec_Color[order(b.21.pcoa.meta$Season_Specific)]),labels=c(unique(b.21.pcoa.meta$Season_Specific[order(b.21.pcoa.meta$Season_Specific)]))) +
+  xlab("PC1 [24.72%]") + ylab("PC2 [15.13%]")
+
+ggsave(pcoa1,filename = "figures/BetaDiversity/2021/SSD_16S_2021_CLR_SampMonth_Site_PCOA.png", width=12, height=10, dpi=600)
+
+pcoa1a<-ggplot(b.21.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=Seas_Coll_Year,shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust, 2021",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Period",values=unique(b.21.pcoa.meta$SCY_Color[order(b.21.pcoa.meta$Seas_Coll_Year)]),labels=c("S.1.2021"="Summer #1","S.2.2021"="Summer #2","S.3.2021"="Summer #3","F.1.2021"="Fall #1")) +
+  xlab("PC1 [24.72%]") + ylab("PC2 [15.13%]")
+
+ggsave(pcoa1a,filename = "figures/BetaDiversity/2021/SSD_16S_2021_CLR_Site_SeasCollYr_PCOA.png", width=12, height=10, dpi=600)
+
+# specific season
+pcoa3<-ggplot(b.21.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust, 2021",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Season",values=unique(b.21.pcoa.meta$SeasonSpec_Color[order(b.21.pcoa.meta$Season_Specific)]),
+                     labels=c("Early.Summer"="Early Summer","Late.Summer"="Late Summer","Early.Fall"="Early Fall","Late.Fall"="Late Fall","Fall.Winter"="Fall-Winter")) +
+  xlab("PC1 [24.72%]") + ylab("PC2 [15.13%]")
+
+ggsave(pcoa3,filename = "figures/BetaDiversity/2021/SSD_16S_2021_CLR_season_specific_PCOA.png", width=12, height=10, dpi=600)
+
+# 3D PCoAs
+pltly.21.a<-plot_ly(b.21.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~factor(Season_Specific), colors = c(unique(b.21.pcoa.meta$SeasonSpec_Color[order(b.21.pcoa.meta$Season_Specific)])),
+                    symbol=~Site,symbols = c("square", "circle","diamond-open","x","circle-open")) %>%
+  layout(scene = list(xaxis = list(title = 'PC1 24.72%'),
+                      yaxis = list(title = 'PC2 15.13%'),
+                      zaxis = list(title = 'PC3 12.79%')))
+saveWidget(widget = pltly.21.a, #the plotly object,
+           file = "figures/BetaDiversity/2021/SSD_16S_2021_CLR_SeasonSpec_Site_3D_PCOA.html", #the path & file name
+           selfcontained = TRUE #creates a single html file
+)
+pltly.21.b<-plot_ly(b.21.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~factor(Seas_Coll_Year), colors = c(unique(b.21.pcoa.meta$SCY_Color[order(b.21.pcoa.meta$Seas_Coll_Year)])),
+                    symbol=~Site,symbols = c("square", "circle","diamond-open","x","circle-open")) %>%
+  layout(scene = list(xaxis = list(title = 'PC1 24.72%'),
+                      yaxis = list(title = 'PC2 15.13%'),
+                      zaxis = list(title = 'PC3 12.79%')))
+saveWidget(widget = pltly.21.b, #the plotly object,
+           file = "figures/BetaDiversity/2021/SSD_16S_2021_CLR_SeasCollYr_Site_3D_PCOA.html", #the path & file name
+           selfcontained = TRUE #creates a single html file
+)
+
+
+#### Separate All Data by Timepoints ####
+
+head(dust_meta)
+
+date_list<-unique(dust_meta$SampDate) #define an array of string values
+# go through metadata & create a list of data frames
+## when metadata$Variable == element in date_list (aka x in this case), subset metadata by said element into elements of a list
+date_list
+# here the function(x) is using date_list aka x to subset metadata, when $Variable column == date_list
+# Run the function so it's stored in Global Env
+date_subsets<-lapply(date_list, function(x) {subset(dust_meta, SampDate==x)})
+# date_subsets is a list; each element is the sample date
+
+date_subsets # sanity check1 (should see all elements in list)
+date_subsets[[1]] # sanity check2 (see 1st element in list)
+date_subsets[[2]]
+date_subsets[[3]]
+#rename the list elements
+
+# name each element in list
+names(date_subsets)<-date_list # * only do this if the order of names in date_list match order of the elements in date_subsets!
+date_subsets$July.2021 # sanity check3 - should be able to pull dataframes by names rather than index now
+
+# example of subsetting
+date_subsets[[2]][1:6]
+date_subsets$November.2020 # should produce same ouptut as line above
+
+date_subsets[[2]][1:2,1:2] # another example of indexing w/ list
+
+# ^ subsetting list to [[second dataframe]], [[row #, column #]]
+date_subsets[[2]][[1,2]] # [[second dataframe]], [[row 1, column 2]]
+
+# set up the function and run this to store fxn in our Global environment
+df_specific.subset<-function(var_vec,var_subsets){
+  # var_vec = vector of variable elements from specific categorical variable;
+  ## e.g. vector of names from date categorical variable (metadata dates)
+  # var_subsets = list of dataframes subsetted by column$element from original dataframe;
+  ## e.g. list of dataframes (each df = element of list) subsetted from metadata using vector of metadata$date names
+  for(i in seq_along(var_vec)){
+    # print(var_vec[i]) -- var_vec[i] = each element in var_vec
+    # print(var_subsets[[i]]) -- var_subsets[[i]] = each sub
+    df<-paste(var_vec[i])
+    #print(df)
+    assign(df, var_subsets[[i]], envir = .GlobalEnv)
+    print(paste("Dataframe", var_vec[i] ,"done"))
+
+  }
+
+}
+
+# run the function
+df_specific.subset(date_list, date_subsets) # used scaled metadata quantitative values
+
+head(August.2021) # sanity check
+August.2021[1:5,] # double check that our new Variable (here SampDate) data frames still have scaled chemical data
+rownames(August.2021)
+
+# matching data with user defined function -- here is the function, must run to store function in Global env
+match_dat<-function(compdata, subset_metadata){
+  subset_comp_data = pullrow<-(is.element(row.names(compdata), row.names(subset_metadata)))
+  ### * comp data and metadata need to have (same) row names - rownames should be Sample IDs
+  subset_comp_data=compdata[pullrow,]
+  return(subset_comp_data)
+}
+
+# double check that our data frames are ready for this function, aka that they both have the same rownames
+## row #s do not have to be the same, but their row names should be in the same format and be able to match up
+rownames(b.clr)
+rownames(August.2021)
+
+# run the match_dat function in loop
+# using elements in date_list to look for object w/ same name in global env, then run match_dat function on that object to create new object
+for (x in date_list) {
+  #print(x)
+  if(x %in% names(which(unlist(eapply(.GlobalEnv,is.data.frame))))){
+    print(x)
+    df<-paste0("b.clr_",x)
+    df2<-match_dat(b.clr,get(x))
+    assign(df, df2, envir = .GlobalEnv)
+  }
+}
+
+# did the function work the way we wanted it to?
+b.clr_July.2020[,1:4]
+b.clr_July.2021[,1:4]
+
+# function version of the match dat + loop in nested function
+loop_match_dat<-function(obj_list, compdata){
+  # must run match_dat function first so it's in Global Env
+  match_dat<-function(compdata, subset_metadata){
+    subset_comp_data = pullrow<-(is.element(row.names(compdata), row.names(subset_metadata)))
+    ### * comp data and metadata need to have (same) row names - rownames should be Sample IDs
+    subset_comp_data=compdata[pullrow,]
+    return(subset_comp_data)
+  }
+  for (x in obj_list) {
+    #print(x)
+    if(x %in% names(which(unlist(eapply(.GlobalEnv,is.data.frame))))){
+      print(x)
+      df<-paste0("b.clr_",x) # create name of df
+      df2<-match_dat(compdata,get(x)) # create df2 w/ custom match_dat function
+      assign(df, df2, envir = .GlobalEnv) # assign new df the values of df2 from match_dat function
+    }
+  }
+  return(df)
+}
+
+#### Separate All Data by Collections ####
+
+head(dust_meta)
+
+coll_list<-unique(dust_meta$Seas_Coll_Year) #define an array of string values
+# go through metadata & create a list of data frames
+## when metadata$Variable == element in coll_list (aka x in this case), subset metadata by said element into elements of a list
+coll_list
+# here the function(x) is using coll_list aka x to subset metadata, when $Variable column == coll_list
+# Run the function so it's stored in Global Env
+coll_subsets<-lapply(coll_list, function(x) {subset(dust_meta, Seas_Coll_Year==x)})
+# coll_subsets is a list; each element is the sample date
+
+coll_subsets # sanity check1 (should see all elements in list)
+coll_subsets[[1]] # sanity check2 (see 1st element in list)
+coll_subsets[[2]]
+coll_subsets[[3]]
+#rename the list elements
+
+# name each element in list
+names(coll_subsets)<-coll_list # * only do this if the order of names in coll_list match order of the elements in coll_subsets!
+coll_subsets$July.2021 # sanity check3 - should be able to pull dataframes by names rather than index now
+
+# example of subsetting
+coll_subsets[[2]][1:6]
+coll_subsets$November.2020 # should produce same ouptut as line above
+
+coll_subsets[[2]][1:2,1:2] # another example of indexing w/ list
+
+# ^ subsetting list to [[second dataframe]], [[row #, column #]]
+coll_subsets[[2]][[1,2]] # [[second dataframe]], [[row 1, column 2]]
+
+# set up the function and run this to store fxn in our Global environment
+# df_specific.subset<-function(var_vec,var_subsets){
+#   # var_vec = vector of variable elements from specific categorical variable;
+#   ## e.g. vector of names from coll categorical variable (metadata colls)
+#   # var_subsets = list of dataframes subsetted by column$element from original dataframe;
+#   ## e.g. list of dataframes (each df = element of list) subsetted from metadata using vector of metadata$coll names
+#   for(i in seq_along(var_vec)){
+#     # print(var_vec[i]) -- var_vec[i] = each element in var_vec
+#     # print(var_subsets[[i]]) -- var_subsets[[i]] = each sub
+#     df<-paste(var_vec[i])
+#     #print(df)
+#     assign(df, var_subsets[[i]], envir = .GlobalEnv)
+#     print(paste("Dataframe", var_vec[i] ,"done"))
+#
+#   }
+#
+# }
+
+# run the function
+df_specific.subset(coll_list, coll_subsets) # used scaled metadata quantitative values
+
+head(S.1.2020) # sanity check
+S.1.2020[1:5,] # double check that our new Variable (here SampDate) data frames still have scaled chemical data
+rownames(S.1.2020)
+
+# matching data with user defined function -- here is the function, must run to store function in Global env
+# match_dat<-function(compdata, subset_metadata){
+#   subset_comp_data = pullrow<-(is.element(row.names(compdata), row.names(subset_metadata)))
+#   ### * comp data and metadata need to have (same) row names - rownames should be Sample IDs
+#   subset_comp_data=compdata[pullrow,]
+#   return(subset_comp_data)
+# }
+
+# double check that our data frames are ready for this function, aka that they both have the same rownames
+## row #s do not have to be the same, but their row names should be in the same format and be able to match up
+rownames(b.clr)
+rownames(S.1.2020)
+
+# run the match_dat function in loop
+# using elements in coll_list to look for object w/ same name in global env, then run match_dat function on that object to create new object
+for (x in coll_list) {
+  #print(x)
+  if(x %in% names(which(unlist(eapply(.GlobalEnv,is.data.frame))))){
+    print(x)
+    df<-paste0("b.clr_",x)
+    df2<-match_dat(b.clr,get(x))
+    assign(df, df2, envir = .GlobalEnv)
+  }
+}
+
+# did the function work the way we wanted it to?
+b.clr_S.1.2020[,1:4]
+b.clr_S.1.2021[,1:4]
+
+#### Beta Diversity - Summer Early 2020 ####
+
+# check rownames of CLR transformed ASV data & metadata
+rownames(b.clr_S.1.2020) %in% rownames(dust_meta)
+meta_s120=dust_meta[rownames(b.clr_S.1.2020),] ## reorder metadata to match order of CLR data
+
+# calculate our Euclidean distance matrix using CLR data
+b.s120.euc_dist <- dist(b.clr_S.1.2020, method = "euclidean")
+
+# creating our hierarcical clustering dendrogram
+b.s120.euc_clust <- hclust(b.s120.euc_dist, method="ward.D2")
+
+# let's make it a little nicer...
+b.s120.euc_dend <- as.dendrogram(b.s120.euc_clust, hang=0.2)
+b.s120.dend_cols <- as.character(meta_s120$Site_Color[order.dendrogram(b.s120.euc_dend)])
+labels_colors(b.s120.euc_dend) <- b.s120.dend_cols
+
+## DO NOT RUN THIS LINE, THIS IS YOUR COLOR REFERENCE!!!!
+#(August.2021="#ef781c",December.2021="#03045e",April.2022="#059c3f")
+
+plot(b.s120.euc_dend, ylab="CLR Euclidean Distance",cex = 0.5) + title(main = "Bacteria/Archaea Clustering Dendrogram", cex.main = 1, font.main= 1, cex.sub = 0.8, font.sub = 2)
+#legend("topright",legend = c("August 2021","December 2021","April 2022"),cex=.8,col = c("#ef781c","#03045e","#059c3f"),pch = 15, bty = "n")
+# Control is dark blue ("#218380"), #Alternaria is light blue ("#73d2de")
+dev.off()
+
+# PCOA w/ Euclidean distance matrix (of CLR data)
+b.s120.pcoa <- pcoa(b.s120.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
+#save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+
+# The proportion of variances explained is in its element values$Relative_eig
+b.s120.pcoa$values
+
+# extract principal coordinates
+b.s120.pcoa.vectors<-data.frame(b.s120.pcoa$vectors)
+b.s120.pcoa.vectors$SampleID<-rownames(b.s120.pcoa$vectors)
+
+# merge pcoa coordinates w/ metadata
+b.s120.pcoa.meta<-merge(b.s120.pcoa.vectors, dust_meta, by.x="SampleID", by.y="SampleID")
+b.s120.pcoa.meta$Site
+
+head(b.s120.pcoa.meta)
+
+head(b.s120.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axes labels
+# PC1 = 62.22%, PC2 = 25.75%
+
+#### Visualize PCoAs - S.1.2020 Data ####
+# create PCoA ggplot fig
+
+pcoa1a<-ggplot(b.s120.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Site)), size=5)+theme_bw()+
   labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="Collection Date",values=unique(b.pcoa.meta$SampMonth_Color[order(b.pcoa.meta$SampleMonth)]),labels=c(unique(b.pcoa.meta$SampleMonth[order(b.pcoa.meta$SampleMonth)]))) +
+  scale_color_manual(name ="Collection Date",values=unique(b.s120.pcoa.meta$Site_Color[order(b.s120.pcoa.meta$Site)]),labels=c(unique(b.s120.pcoa.meta$Site[order(b.s120.pcoa.meta$Site)]))) +
   xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
 
-ggsave(pcoa.2021.1,filename = "figures/BetaDiversity/SSD_16S_2021_CLR_sampdate_PCOA.png", width=12, height=10, dpi=600)
+ggsave(pcoa1a,filename = "figures/BetaDiversity/SSD_16S_CLR_Site_Year_PCOA.png", width=12, height=10, dpi=600)
 
-# general season
-pcoa.2021.2<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_General),shape=CollectionYear), size=5)+theme_bw()+
-  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
-  guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonGen_Color[order(b.pcoa.meta$Season_General)]),labels=c(unique(b.pcoa.meta$Season_General[order(b.pcoa.meta$Season_General)]))) +
-  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
-
-ggsave(pcoa.2021.2,filename = "figures/BetaDiversity/SSD_16S_2021_CLR_season_general_PCOA.png", width=12, height=10, dpi=600)
-
-# specific season
-pcoa.2021.3<-ggplot(b.pcoa.meta[b.pcoa.meta$CollectionYear=="2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=CollectionYear), size=5)+theme_bw()+
-  labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Season")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
-  guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="Season",values=unique(b.pcoa.meta$SeasonSpec_Color[order(b.pcoa.meta$Season_Specific)]),
-                     labels=c("Early.Summer"="Early Summer","Late.Summer"="Late Summer","Early.Fall"="Early Fall","Late.Fall"="Late Fall","Fall.Winter"="Fall-Winter")) +
-  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
-
-ggsave(pcoa.2021.3,filename = "figures/BetaDiversity/SSD_16S_2021_CLR_season_specific_PCOA.png", width=12, height=10, dpi=600)
 
 #### Beta Diversity - Exclude Control Sites ####
 rownames(bac.ASV_table)
