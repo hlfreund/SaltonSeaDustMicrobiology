@@ -130,7 +130,7 @@ dust_meta<-merge(dust_meta, colorset6, by="Site")
 head(dust_meta)
 dust_meta$Site_Color <- as.character(dust_meta$Site_Color)
 rownames(dust_meta)<-dust_meta$SampleID
-#dust_meta$Site<-factor(dust_meta$Site, levels=c("WI","RHB","SB","DP","PD","BDC"))
+dust_meta$Site<-factor(dust_meta$Site, levels=c("PD","BDC","DP","WI","SB","RHB"))
 
 head(dust_meta)
 
@@ -228,6 +228,14 @@ rownames(dust_meta)<-dust_meta$SampleID
 bac.ASV_table$SampleID<-gsub("(.*\\..*)\\..*","\\1", bac.ASV_table$SampleID)
 bac.ASV_table$SampleID # sanity check
 rownames(bac.ASV_table)<-bac.ASV_table$SampleID
+
+bac.ASV_table$SampleID<-gsub("(.*\\..*)\\..*","\\1", bac.ASV_table$SampleID)
+bac.ASV_table$SampleID # sanity check
+rownames(bac.ASV_table)<-bac.ASV_table$SampleID
+
+b.dust.all$SampleID<-gsub("(.*\\..*)\\..*","\\1", b.dust.all$SampleID)
+b.dust.all$SampleID # sanity check
+head(b.dust.all)
 
 # check if sampleIDs match between metadata & ASV table
 rownames(dust_meta) %in% rownames(bac.ASV_table)
