@@ -675,7 +675,7 @@ b.dust.all[1:4,1:4]
 
 tg1<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.01,], aes(Genus_species, Count)) +
   geom_jitter(aes(color=factor(Seas_Coll_Year),shape=Site), size=3, width=0.15, height=0) +
-  scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020","S.2.2020","S.3.2020","F.1.2020","S.1.2021","S.2.2021","F.1.2021")) +
+  scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   geom_boxplot(fill=NA, outlier.color=NA) + theme_classic() +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=0.5,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genera", y="Relative Abundance", title="Microbial Genera & Sample Date",subtitle="Includes taxa with Relative Abundance > 1%")
@@ -684,16 +684,16 @@ ggsave(tg1,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_taxasum_1perc
 
 tg1a<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Genus_species == "Massilia unknown",], aes(Genus_species, Count)) +
   geom_jitter(aes(color=factor(Seas_Coll_Year),shape=Site), size=4, width=0.15, height=0) +
-  scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020","S.2.2020","S.3.2020","F.1.2020","S.1.2021","S.2.2021","F.1.2021")) +
+  scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   geom_boxplot(fill=NA, outlier.color=NA) + theme_classic() +
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="", y="Relative Abundance", title="Bacterial Genus Massilia Across Samples")
 
 ggsave(tg1a,filename = "figures/RelativeAbundance/SSD_16S_Massilia.RA_only_taxasum.png", width=15, height=10, dpi=600)
 
 tg1a2<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.05,], aes(Genus_species, Count)) +
   geom_jitter(aes(color=factor(Seas_Coll_Year),shape=Site), size=3, width=0.15, height=0) +
-  scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020","S.2.2020","S.3.2020","F.1.2020","S.1.2021","S.2.2021","F.1.2021")) +
+  scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   geom_boxplot(fill=NA, outlier.color=NA) + theme_classic() +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust = 1, hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genera", y="Relative Abundance", title="Microbial Genera & Sample Date",subtitle="Includes taxa with Relative Abundance > 5%")
@@ -702,7 +702,7 @@ ggsave(tg1a2,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_taxasum_5pe
 
 tg1b<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.1,], aes(Genus_species, Count)) +
   geom_jitter(aes(color=factor(Seas_Coll_Year),shape=Site), size=3, width=0.15, height=0) +
-  scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020","S.2.2020","S.3.2020","F.1.2020","S.1.2021","S.2.2021","F.1.2021")) +
+  scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   geom_boxplot(fill=NA, outlier.color=NA) + theme_classic() +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust = 1, hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genera", y="Relative Abundance", title="Microbial Genera & Sample Date",subtitle="Includes taxa with Relative Abundance > 10%")
@@ -711,7 +711,7 @@ ggsave(tg1b,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_taxasum_10pe
 
 tg1c<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.15,], aes(Genus_species, Count)) +
   geom_jitter(aes(color=factor(Seas_Coll_Year),shape=Site), size=3, width=0.15, height=0) +
-  scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020","S.2.2020","S.3.2020","F.1.2020","S.1.2021","S.2.2021","F.1.2021")) +
+  scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   geom_boxplot(fill=NA, outlier.color=NA) + theme_classic() +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust = 1, hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genera", y="Relative Abundance", title="Microbial Genera & Sample Date",subtitle="Includes taxa with Relative Abundance > 15%")
