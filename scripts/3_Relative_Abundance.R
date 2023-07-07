@@ -93,7 +93,7 @@ p.b1<-ggplot(b.phyla_RA_meta, aes(x=SampleID, y=Count, fill=Phylum))+geom_bar(st
   labs(title = "Microbial Phylum Relative Abundance", x="SampleID", y="Relative Abundance", fill="Phylum")+
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+guides(fill=guide_legend(ncol=2))+scale_y_continuous(expand = c(0,0),limits = c(0,1))
 
-ggsave(p.b1,filename = "figures/RelativeAbundance/16S_Phyla.RA_barplot.png", width=12, height=10, dpi=600)
+ggsave(p.b1,filename = "figures/RelativeAbundance/SSD_16S_Phyla.RA_barplot.png", width=12, height=10, dpi=600)
 
 head(b.phyla_RA_meta)
 
@@ -102,7 +102,7 @@ p.h1<-ggplot(b.phyla_RA_meta, aes(SampleID, Phylum, fill= Count)) +geom_tile()+s
   theme_classic()+theme(axis.title.x = element_text(size=13,vjust=-0.5),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Sample ID", y="Microbial Phyla", title="Microbial Phyla & Sample Type",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0))
 
-ggsave(p.h1,filename = "figures/RelativeAbundance/16S_Phyla.RA_heatmap.png", width=12, height=10, dpi=600)
+ggsave(p.h1,filename = "figures/RelativeAbundance/SSD_16S_Phyla.RA_heatmap.png", width=12, height=10, dpi=600)
 
 b.dust.all[1:4,1:4]
 
@@ -176,7 +176,7 @@ b.dust.all[1:4,1:4]
 #   guides(fill=guide_legend(ncol=2))+
 #   scale_y_continuous(expand = c(0,0),limits = c(0,1))+ scale_x_discrete(labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022"))
 #
-# ggsave(psd0,filename = "figures/RelativeAbundance/16S_Phyla.RA_barplot_sampdate.png", width=12, height=10, dpi=600)
+# ggsave(psd0,filename = "figures/RelativeAbundance/SSD_16S_Phyla.RA_barplot_sampdate.png", width=12, height=10, dpi=600)
 #
 # # Taxonomic Summary by Sample Date
 #
@@ -242,7 +242,7 @@ c.b1<-ggplot(b.class_RA_meta, aes(x=SampleID, y=Count, fill=Class))+geom_bar(sta
         legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+scale_y_continuous(expand = c(0,0),limits = c(0,1)) +
   guides(fill=guide_legend(ncol=4))
 
-ggsave(c.b1,filename = "figures/RelativeAbundance/16S_Class.RA_barplot.png", width=15, height=10, dpi=600)
+ggsave(c.b1,filename = "figures/RelativeAbundance/SSD_16S_Class.RA_barplot.png", width=15, height=10, dpi=600)
 
 head(b.class_RA_meta)
 
@@ -251,7 +251,7 @@ c.h1<-ggplot(b.class_RA_meta, aes(SampleID, Class, fill= Count)) +geom_tile()+sc
   theme_classic()+theme(axis.title.x = element_text(size=13,vjust=-0.5),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Sample ID", y="Microbial Class", title="Microbial Class & Sample Type",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0))
 
-ggsave(c.h1,filename = "figures/RelativeAbundance/16S_class.RA_heatmap.png", width=12, height=12, dpi=600)
+ggsave(c.h1,filename = "figures/RelativeAbundance/SSD_16S_class.RA_heatmap.png", width=12, height=12, dpi=600)
 
 b.dust.all[1:4,1:4]
 
@@ -424,14 +424,14 @@ f.b1<-ggplot(b.fam_RA_meta, aes(x=SampleID, y=Count, fill=Family))+geom_bar(stat
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
   guides(fill=guide_legend(ncol=4))+scale_y_continuous(expand = c(0,0),limits = c(0,1))
 
-ggsave(f.b1,filename = "figures/RelativeAbundance/16S_fam.RA_barplot.png", width=17, height=10, dpi=600)
+ggsave(f.b1,filename = "figures/RelativeAbundance/SSD_16S_fam.RA_barplot.png", width=17, height=10, dpi=600)
 
 f.b1a<-ggplot(b.fam_RA_meta[b.fam_RA_meta$Count>0.01,], aes(x=SampleID, y=Count, fill=Family))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
   labs(title = "Relative Abundance of Microbial Families", subtitle="Only Taxa with Relative Abundance > 1%",x="SampleID", y="Relative Abundance", fill="Family")+
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
   guides(fill=guide_legend(ncol=4))+scale_y_continuous(expand = c(0,0),limits = c(0,1))
 
-ggsave(f.b1a,filename = "figures/RelativeAbundance/16S_fam.RA_barplot.png", width=17, height=10, dpi=600)
+ggsave(f.b1a,filename = "figures/RelativeAbundance/SSD_16S_fam.RA_barplot.png", width=17, height=10, dpi=600)
 
 head(b.fam_RA_meta)
 
@@ -441,7 +441,7 @@ f.h1<-ggplot(b.fam_RA_meta, aes(SampleID, Family, fill= Count)) +geom_tile()+sca
   theme_classic()+theme(axis.title.x = element_text(size=13,vjust=-0.5),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Sample ID", y="Microbial Family", title="Microbial Families & Sample Type",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0))
 
-ggsave(f.h1,filename = "figures/RelativeAbundance/16S_fam.RA_heatmap.png", width=12, height=10, dpi=600)
+ggsave(f.h1,filename = "figures/RelativeAbundance/SSD_16S_fam.RA_heatmap.png", width=12, height=10, dpi=600)
 
 b.dust.all[1:4,1:4]
 
@@ -653,22 +653,21 @@ ggsave(b.gen_RA4,filename = "figures/RelativeAbundance/SSD_16S_Genera.Spec.RA_ba
 # prep for heatmap
 max(b.genus_RA_meta$Count)
 mean(b.genus_RA_meta$Count)
-median(b.genus_RA_meta$Count)
 max(b.genus_RA_meta$Count)/2 # what is the mid point of the RA here?
 
 # Heatmap by SampleID
 
-g.h1<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.01,], aes(SampleID, Genus_species, fill= Count)) +geom_tile()+scale_fill_gradient2(low="orange",mid="white",high="purple",midpoint=0.3)+
+g.h1<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.01,], aes(SampleID, Genus_species, fill= Count)) +geom_tile()+scale_fill_gradient2(low="orange",mid="white",high="purple",midpoint=0.35)+
   theme_classic()+theme(axis.title.x = element_text(size=13,vjust=-0.5),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Sample ID", y="Microbial Genera", title="Microbial Genera & Sample Type",subtitle="Includes taxa with Relative Abundance > 1%",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0))
 
-ggsave(g.h1,filename = "figures/RelativeAbundance/16S_Genera.RA_heatmap_A_1perc.png", width=20, height=15, dpi=600)
+ggsave(g.h1,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_heatmap_A_1perc.png", width=20, height=15, dpi=600)
 
 g.h2<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.05,], aes(SampleID, Genus_species, fill= Count)) +geom_tile()+scale_fill_gradient2(low="orange",mid="white",high="purple",midpoint=0.3)+
   theme_classic()+theme(axis.title.x = element_text(size=13,vjust=-0.5),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Sample ID", y="Microbial Genera", title="Microbial Genera & Sample Type",subtitle="Includes taxa with Relative Abundance > 5%",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0))
 
-ggsave(g.h2,filename = "figures/RelativeAbundance/16S_Genera.RA_heatmap_B_5perc.png", width=16, height=10, dpi=600)
+ggsave(g.h2,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_heatmap_B_5perc.png", width=16, height=10, dpi=600)
 
 b.dust.all[1:4,1:4]
 
@@ -933,14 +932,14 @@ g.sd.d.h1<-ggplot(b.gen.date.dep_m2[b.gen.date.dep_m2$Count>0.01,], aes(SampDate
   labs(x="Sampling Date - Depth (m)", y="Microbial Genera", title="Microbial Genera by Sample Date & Depth",subtitle="Includes taxa with Relative Abundance > 1%",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0))
 #+ scale_x_discrete(labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022"))
 
-ggsave(g.sd.d.h1,filename = "figures/RelativeAbundance/16S_Genera.RA_heatmap_date_depth_1perc.png", width=20, height=15, dpi=600)
+ggsave(g.sd.d.h1,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_heatmap_date_depth_1perc.png", width=20, height=15, dpi=600)
 
 g.sd.d.h2<-ggplot(b.gen.date.dep_m2[b.gen.date.dep_m2$Count>0.05,], aes(SampDate_Depth, Genus, fill= Count)) +geom_tile()+scale_fill_gradient2(low="orange",mid="white",high="purple",midpoint=0.3)+
   theme_classic()+theme(axis.title.x = element_text(size=13,vjust=-0.5),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Sampling Date - Depth (m)", y="Microbial Genera", title="Microbial Genera by Sample Date & Depth",subtitle="Includes taxa with Relative Abundance > 1%",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0))
 #+ scale_x_discrete(labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022"))
 
-ggsave(g.sd.d.h2,filename = "figures/RelativeAbundance/16S_Genera.RA_heatmap_date_depth_5perc.png", width=20, height=15, dpi=600)
+ggsave(g.sd.d.h2,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_heatmap_date_depth_5perc.png", width=20, height=15, dpi=600)
 
 g.sd.d.hm.1<-ggplot(b.gen.date.dep_m2[b.gen.date.dep_m2$Count>0.05,], aes(Genus, Count)) +
   geom_jitter(aes(color=as.numeric(as.character(Depth_m)),shape=SampDate), size=3, width=0.15, height=0) +
@@ -1253,7 +1252,7 @@ sh.t1<-ggplot(g_shared_typ, aes(Genus, Count)) +
   theme(axis.title.x = element_text(size=13, vjust=-1),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genus", y="Relative Abundance", title="Shared Microbial Genera Across Sample Types")
 
-ggsave(sh.t1,filename = "figures/RelativeAbundance/16S_shared_Genera_taxasum_type.png", width=23, height=10, dpi=600)
+ggsave(sh.t1,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_taxasum_type.png", width=23, height=10, dpi=600)
 
 sh.t1a<-ggplot(g_shared_typ[g_shared_typ$Count>=0.01,], aes(Genus, Count)) +
   geom_jitter(aes(color=factor(Sample_Type)), size=2, width=0.15, height=0) +
@@ -1261,7 +1260,7 @@ sh.t1a<-ggplot(g_shared_typ[g_shared_typ$Count>=0.01,], aes(Genus, Count)) +
   theme(axis.title.x = element_text(size=13, vjust=-1),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genus", y="Relative Abundance", title="Microbial Genera & Sample Type",subtitle="Only Includes Genera Shared Across All Sample Types")
 
-ggsave(sh.t1a,filename = "figures/RelativeAbundance/16S_shared_Genera_taxasum_type_1perc.png", width=23, height=10, dpi=600)
+ggsave(sh.t1a,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_taxasum_type_1perc.png", width=23, height=10, dpi=600)
 
 ggplot(g_shared_typ[g_shared_typ$Count>=0.01,], aes(Genus, Count)) +
   geom_jitter(aes(color=factor(Sample_Type)), size=3, width=0.15, height=0) +
@@ -1284,7 +1283,7 @@ sh.t2<-ggplot(g_shared_typ[g_shared_typ$Count>=0.005,], aes(Genus, Count)) +
   theme(axis.title.x = element_text(size=13, vjust=-1),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genus", y="Relative Abundance", title="Microbial Genera & Sample Type",subtitle="Relative Abundance > 0.25%")
 
-ggsave(sh.t2,filename = "figures/RelativeAbundance/16S_shared_Genera_taxasum_type_0.5perc.png", width=23, height=10, dpi=600)
+ggsave(sh.t2,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_taxasum_type_0.5perc.png", width=23, height=10, dpi=600)
 
 sh.t3<-ggplot(g_shared_typ[g_shared_typ$Count>=0.0025,], aes(Genus, Count)) +
   geom_jitter(aes(color=factor(Sample_Type)), size=3, width=0.15, height=0) +
@@ -1293,7 +1292,7 @@ sh.t3<-ggplot(g_shared_typ[g_shared_typ$Count>=0.0025,], aes(Genus, Count)) +
   theme(axis.title.x = element_text(size=13, vjust=-1),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genus", y="Relative Abundance", title="Microbial Genera & Sample Type",subtitle="Relative Abundance > 0.25%")
 
-ggsave(sh.t3,filename = "figures/RelativeAbundance/16S_shared_Genera_taxasum_type_0.25perc.png", width=23, height=10, dpi=600)
+ggsave(sh.t3,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_taxasum_type_0.25perc.png", width=23, height=10, dpi=600)
 
 ## Comparing Genera in Dust vs Seawater
 # X Axis Breaks and Labels
@@ -1313,7 +1312,7 @@ share1<-ggplot(g_shared_typ1, aes(x = Genus, y = -Count2, fill = Sample_Type)) +
   coord_flip()+scale_y_continuous(labels = lbls,breaks=brks)+theme_classic()+scale_fill_manual(name ="Sample Type", values=unique(g_shared_typ1$Sample_Color[rev(order(g_shared_typ1$Sample_Type))]))+ylab("Relative Abundance")+
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+labs(title="Microbial Genera by Sample Type", subtitle="Includes Taxa with a Relative Abundance of at least 0.05%")
 
-ggsave(share1,filename = "figures/RelativeAbundance/16S_shared_Genera_dust.v.sw_population.pyramid.png", width=12, height=10, dpi=600)
+ggsave(share1,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_dust.v.sw_population.pyramid.png", width=12, height=10, dpi=600)
 
 pp2<-ggplot(g_shared_typ1[g_shared_typ1$Count>=0.0005,], aes(x = reorder(Genus,Count), fill = Sample_Type,y = ifelse(test = Sample_Type == "Dust",yes = Count, no = -Count))) +
   geom_bar(stat = "identity") +
@@ -1322,7 +1321,7 @@ pp2<-ggplot(g_shared_typ1[g_shared_typ1$Count>=0.0005,], aes(x = reorder(Genus,C
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type",subtitle="Includes Only Shared Taxa with a Relative Abundance of at least 0.05%")+xlab("Genus")
 
-ggsave(pp2,filename = "figures/RelativeAbundance/16S_shared_Genera_dust.v.sw_population.pyramid.pretty.05percent.png", width=13, height=10, dpi=600)
+ggsave(pp2,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_dust.v.sw_population.pyramid.pretty.05percent.png", width=13, height=10, dpi=600)
 
 pp3<-ggplot(g_shared_typ1[g_shared_typ1$Count>=0.0010,], aes(x = reorder(Genus,Count), fill = Sample_Type,y = ifelse(test = Sample_Type == "Dust",yes = Count, no = -Count))) +
   geom_bar(stat = "identity") +
@@ -1331,7 +1330,7 @@ pp3<-ggplot(g_shared_typ1[g_shared_typ1$Count>=0.0010,], aes(x = reorder(Genus,C
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type",subtitle="Includes Only Shared Taxa with a Relative Abundance of at least 0.1%")+xlab("Genus")
 
-ggsave(pp3,filename = "figures/RelativeAbundance/16S_shared_Genera_dust.v.sw_population.pyramid.pretty.1percent.png", width=13, height=10, dpi=600)
+ggsave(pp3,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_dust.v.sw_population.pyramid.pretty.1percent.png", width=13, height=10, dpi=600)
 
 pp4<-ggplot(g_shared_typ1[g_shared_typ1$Count>=0.010,], aes(x = reorder(Genus,Count), fill = Sample_Type,y = ifelse(test = Sample_Type == "Dust",yes = Count, no = -Count))) +
   geom_bar(stat = "identity") +
@@ -1339,7 +1338,7 @@ pp4<-ggplot(g_shared_typ1[g_shared_typ1$Count>=0.010,], aes(x = reorder(Genus,Co
   coord_flip()+scale_fill_manual(name ="Sample Type", values=unique(g_shared_typ1$Sample_Color[order(g_shared_typ1$Sample_Type)]))+ylab("Relative Abundance")+theme_classic()+
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type",subtitle="Includes Only Shared Taxa with a Relative Abundance of at least 1%")+xlab("Genus")
-ggsave(pp4,filename = "figures/RelativeAbundance/16S_shared_Genera_dust.v.sw_population.pyramid.pretty.1percent_10.14.22.png", width=13, height=10, dpi=600)
+ggsave(pp4,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_dust.v.sw_population.pyramid.pretty.1percent_10.14.22.png", width=13, height=10, dpi=600)
 
 ## Lollipop chart
 
@@ -1353,7 +1352,7 @@ lg1<-ggplot(g_shared_typ1[g_shared_typ1$Count>=0.0005,], aes(x = reorder(Genus,C
   coord_flip()+scale_color_manual(name ="Sample Type", values=unique(g_shared_typ1$Sample_Color[order(g_shared_typ1$Sample_Type)]))+ylab("Relative Abundance")+theme_classic()+theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type")+xlab("Genus")
 
-ggsave(lg1,filename = "figures/RelativeAbundance/16S_shared_Genera_dust.v.sw_lollipop_chart.png", width=13, height=10, dpi=600)
+ggsave(lg1,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_dust.v.sw_lollipop_chart.png", width=13, height=10, dpi=600)
 
 ggplot(g_shared_typ1[g_shared_typ1$Count>=0.0005,], aes(x = reorder(Genus,Count),
                                                          y = ifelse(test = Sample_Type == "Dust",yes = Count, no = -Count),color=g_shared_typ1$Sample_Type[g_shared_typ1$Count>=0.0005])) +
@@ -1379,7 +1378,7 @@ share2<-ggplot(g_shared_typ2, aes(x = Genus, y = -Count2, fill = Sample_Type)) +
   coord_flip()+scale_y_continuous(labels = lbls,breaks=brks)+theme_classic()+scale_fill_manual(name ="Sample Type", values=unique(g_shared_typ2$Sample_Color[order(g_shared_typ2$Sample_Type)]))+ylab("Relative Abundance")+
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+labs(title="Microbial Genera by Sample Type", subtitle="Includes Taxa with a Relative Abundance of at least 0.05%")
 
-ggsave(share2,filename = "figures/RelativeAbundance/16S_shared_Genera_dust.v.soil_population.pyramid.png", width=12, height=10, dpi=600)
+ggsave(share2,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_dust.v.soil_population.pyramid.png", width=12, height=10, dpi=600)
 
 
 ggplot(g_shared_typ2, aes(x = Genus, y = Count2, fill = Sample_Type)) +
@@ -1396,7 +1395,7 @@ pp2a<-ggplot(g_shared_typ2[g_shared_typ2$Count>=0.0005,], aes(x = reorder(Genus,
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type",subtitle="Includes Only Shared Taxa with a Relative Abundance of at least 0.05%")+xlab("Genus")
 
-ggsave(pp2a,filename = "figures/RelativeAbundance/16S_shared_Genera_dust.v.soil_population.pyramid.pretty.05percent.png", width=13, height=10, dpi=600)
+ggsave(pp2a,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_dust.v.soil_population.pyramid.pretty.05percent.png", width=13, height=10, dpi=600)
 
 pp3a<-ggplot(g_shared_typ2[g_shared_typ2$Count>=0.010,], aes(x = reorder(Genus,Count), fill = Sample_Type,y = ifelse(test = Sample_Type == "Dust",yes = Count, no = -Count))) +
   geom_bar(stat = "identity") +
@@ -1405,7 +1404,7 @@ pp3a<-ggplot(g_shared_typ2[g_shared_typ2$Count>=0.010,], aes(x = reorder(Genus,C
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type",subtitle="Includes Only Shared Taxa with a Relative Abundance of at least 0.1%")+xlab("Genus")
 
-ggsave(pp3a,filename = "figures/RelativeAbundance/16S_shared_Genera_dust.v.soil_population.pyramid.pretty.1percent.png", width=13, height=10, dpi=600)
+ggsave(pp3a,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_dust.v.soil_population.pyramid.pretty.1percent.png", width=13, height=10, dpi=600)
 
 pp4a<-ggplot(g_shared_typ2[g_shared_typ2$Count>=0.010,], aes(x = reorder(Genus,Count), fill = Sample_Type,y = ifelse(test = Sample_Type == "Dust",yes = Count, no = -Count))) +
   geom_bar(stat = "identity") +
@@ -1414,7 +1413,7 @@ pp4a<-ggplot(g_shared_typ2[g_shared_typ2$Count>=0.010,], aes(x = reorder(Genus,C
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type",subtitle="Includes Only Shared Taxa with a Relative Abundance of at least 1%")+xlab("Genus")
 
-ggsave(pp4a,filename = "figures/RelativeAbundance/16S_shared_Genera_dust.v.soil_population.pyramid.pretty_1percent_10.14.22.png", width=13, height=10, dpi=600)
+ggsave(pp4a,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_dust.v.soil_population.pyramid.pretty_1percent_10.14.22.png", width=13, height=10, dpi=600)
 
 ## Lollipop chart
 
@@ -1427,7 +1426,7 @@ lg1a<-ggplot(g_shared_typ2[g_shared_typ2$Count>=0.0005,], aes(x = reorder(Genus,
                    xend = Genus),color = "black") +
   coord_flip()+scale_color_manual(name ="Sample Type", values=unique(g_shared_typ2$Sample_Color[order(g_shared_typ2$Sample_Type)]))+ylab("Relative Abundance")+theme_classic()+theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+labs(title="Microbial Genera by Sample Type")+xlab("Genus")
 
-ggsave(lg1a,filename = "figures/RelativeAbundance/16S_shared_Genera_dust.v.soil_lollipop_chart.png", width=13, height=10, dpi=600)
+ggsave(lg1a,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_dust.v.soil_lollipop_chart.png", width=13, height=10, dpi=600)
 
 ## Seawater vs Soil
 # X Axis Breaks and Labels
@@ -1447,7 +1446,7 @@ share3<-ggplot(g_shared_typ3, aes(x = Genus, y = -Count2, fill = Sample_Type)) +
   coord_flip()+scale_y_continuous(labels = lbls,breaks=brks)+theme_classic()+scale_fill_manual(name ="Sample Type", values=unique(g_shared_typ3$Sample_Color[order(g_shared_typ3$Sample_Type)]))+ylab("Relative Abundance")+
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+labs(title="Microbial Genera by Sample Type", subtitle="Includes Taxa with a Relative Abundance of at least 0.05%")
 
-ggsave(share3,filename = "figures/RelativeAbundance/16S_shared_Genera_sw.v.soil_population.pyramid.png", width=12, height=10, dpi=600)
+ggsave(share3,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_sw.v.soil_population.pyramid.png", width=12, height=10, dpi=600)
 
 
 ggplot(g_shared_typ3, aes(x = Genus, y = Count2, fill = Sample_Type)) +
@@ -1464,7 +1463,7 @@ pp2b<-ggplot(g_shared_typ3[g_shared_typ3$Count>=0.0005,], aes(x = reorder(Genus,
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type",subtitle="Includes Only Shared Taxa with a Relative Abundance of at least 0.05%")+xlab("Genus")
 
-ggsave(pp2b,filename = "figures/RelativeAbundance/16S_shared_Genera_sw.v.soil_population.pyramid.pretty.05percent.png", width=13, height=10, dpi=600)
+ggsave(pp2b,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_sw.v.soil_population.pyramid.pretty.05percent.png", width=13, height=10, dpi=600)
 
 pp3b<-ggplot(g_shared_typ3[g_shared_typ3$Count>=0.0010,], aes(x = reorder(Genus,Count), fill = Sample_Type,y = ifelse(test = Sample_Type == "Seawater",yes = Count, no = -Count))) +
   geom_bar(stat = "identity") +
@@ -1473,7 +1472,7 @@ pp3b<-ggplot(g_shared_typ3[g_shared_typ3$Count>=0.0010,], aes(x = reorder(Genus,
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type",subtitle="Includes Only Shared Taxa with a Relative Abundance of at least 0.1%")+xlab("Genus")
 
-ggsave(pp3b,filename = "figures/RelativeAbundance/16S_shared_Genera_sw.v.soil_population.pyramid.pretty.1percent.png", width=13, height=10, dpi=600)
+ggsave(pp3b,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_sw.v.soil_population.pyramid.pretty.1percent.png", width=13, height=10, dpi=600)
 
 pp4b<-ggplot(g_shared_typ3[g_shared_typ3$Count>=0.005,], aes(x = reorder(Genus,Count), fill = Sample_Type,y = ifelse(test = Sample_Type == "Seawater",yes = Count, no = -Count))) +
   geom_bar(stat = "identity") +
@@ -1482,7 +1481,7 @@ pp4b<-ggplot(g_shared_typ3[g_shared_typ3$Count>=0.005,], aes(x = reorder(Genus,C
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type",subtitle="Includes Only Shared Taxa with a Relative Abundance of at least 0.5%")+xlab("Genus")
 
-ggsave(pp4b,filename = "figures/RelativeAbundance/16S_shared_Genera_sw.v.soil_population.pyramid.pretty.1percent.png", width=13, height=10, dpi=600)
+ggsave(pp4b,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_sw.v.soil_population.pyramid.pretty.1percent.png", width=13, height=10, dpi=600)
 
 pp5b<-ggplot(g_shared_typ3[g_shared_typ3$Count>=0.010,], aes(x = reorder(Genus,Count), fill = Sample_Type,y = ifelse(test = Sample_Type == "Seawater",yes = Count, no = -Count))) +
   geom_bar(stat = "identity") +
@@ -1491,7 +1490,7 @@ pp5b<-ggplot(g_shared_typ3[g_shared_typ3$Count>=0.010,], aes(x = reorder(Genus,C
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+
   labs(title="Microbial Genera by Sample Type",subtitle="Includes Only Shared Taxa with a Relative Abundance of at least 1%")+xlab("Genus")
 
-ggsave(pp5b,filename = "figures/RelativeAbundance/16S_shared_Genera_sw.v.soil_population.pyramid.pretty_1percent.png", width=13, height=10, dpi=600)
+ggsave(pp5b,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_sw.v.soil_population.pyramid.pretty_1percent.png", width=13, height=10, dpi=600)
 
 ## Lollipop chart
 
@@ -1504,7 +1503,7 @@ lg1b<-ggplot(g_shared_typ3[g_shared_typ3$Count>=0.0005,], aes(x = reorder(Genus,
                    xend = Genus),color = "black") +
   coord_flip()+scale_color_manual(name ="Sample Type", values=unique(g_shared_typ3$Sample_Color[order(g_shared_typ3$Sample_Type)]))+ylab("Relative Abundance")+theme_classic()+theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+labs(title="Microbial Genera by Sample Type")+xlab("Genus")
 
-ggsave(lg1a,filename = "figures/RelativeAbundance/16S_shared_Genera_sw.v.soil_lollipop_chart.png", width=13, height=10, dpi=600)
+ggsave(lg1a,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_sw.v.soil_lollipop_chart.png", width=13, height=10, dpi=600)
 
 typ_meta<-unique(data.frame("Sample_Type"=dust_meta$Sample_Type, "Sample_Color"=dust_meta$Sample_Color))
 g_typ_meta<-merge(typ_meta,b.g.typ_m, by="Sample_Type")
@@ -1518,7 +1517,7 @@ ts1<-ggplot(g_typ_meta[g_typ_meta$Count>=0.0005,], aes(Genus,-Count)) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=0.5,angle=90),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genera", y="Relative Abundance", title="Bacteria/Archaea & Sample Type")
 
-ggsave(ts1,filename = "figures/RelativeAbundance/16S_Gen.RA.png", width=20, height=10, dpi=600)
+ggsave(ts1,filename = "figures/RelativeAbundance/SSD_16S_Gen.RA.png", width=20, height=10, dpi=600)
 
 #ts1a<-ggplot(g_typ_meta, aes(Genus, Count, label=Genus)) +
 #  geom_jitter(aes(color=ifelse(Count>0.01,factor(Sample_Type),"grey")), size=2, width=0.15, height=0) +
@@ -1527,7 +1526,7 @@ ggsave(ts1,filename = "figures/RelativeAbundance/16S_Gen.RA.png", width=20, heig
 #  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
 #  labs(x="Microbial Genera", y="Relative Abundance", title="Microbial Genera & Sample Type")
 
-#ggsave(ts1a,filename = "figures/RelativeAbundance/16S_Phyla.RA2.png", width=15, height=10, dpi=600)
+#ggsave(ts1a,filename = "figures/RelativeAbundance/SSD_16S_Phyla.RA2.png", width=15, height=10, dpi=600)
 
 g.typ.05p<-na.omit(subset(g_typ_meta, Count>=0.005))
 
@@ -1536,14 +1535,14 @@ g.t.05<-ggplot(g.typ.05p, aes(Genus, Count)) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genera", y="Relative Abundance", title="Bacteria/Archaea & Sample Type")
 
-ggsave(g.t.05,filename = "figures/RelativeAbundance/16S_Gen.0.5percRA.png", width=15, height=10, dpi=600)
+ggsave(g.t.05,filename = "figures/RelativeAbundance/SSD_16S_Gen.0.5percRA.png", width=15, height=10, dpi=600)
 
 g.t.05a<-ggplot(g.typ.05p, aes(Genus, Count)) +
   geom_jitter(aes(color=ifelse(Count>0.01,factor(Sample_Type),"grey")), size=2, width=0.15, height=0) + geom_boxplot(fill=NA, outlier.color=NA) +scale_color_manual(name ="Sample Type", values=c(unique(g.typ.05p$Sample_Color[order(g.typ.05p$Sample_Type)]),"grey"),c("Seawater","Soil", "Dust","<1% RA")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genera", y="Relative Abundance", title="Bacteria/Archaea & Sample Type")
 
-ggsave(g.t.05a,filename = "figures/RelativeAbundance/16S_Gen.0.5percRA.v2.png", width=15, height=10, dpi=600)
+ggsave(g.t.05a,filename = "figures/RelativeAbundance/SSD_16S_Gen.0.5percRA.v2.png", width=15, height=10, dpi=600)
 
 g.typ.1p<-subset(g_typ_meta, Count>=0.01)
 g.typ.1p<-subset(g.typ.1p, Genus!="Unknown")
@@ -1555,7 +1554,7 @@ g2<-ggplot(g.typ.1p, aes(Genus, Count)) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=0.5),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Microbial Genera", y="Relative Abundance", title="Microbial Genera by Sample Type", subtitle="Includes Taxa with a Relative Abundance of at least 1%")+coord_flip()
 
-ggsave(g2,filename = "figures/RelativeAbundance/16S_Genera.RA_1percent_v1.png", width=12, height=10, dpi=600)
+ggsave(g2,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_1percent_v1.png", width=12, height=10, dpi=600)
 
 b.gen_RA.st<-ggplot(g.typ.1p, aes(x=Sample_Type, y=Count, fill=Genus))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
   labs(title = "Microbial Genera by Sample Type", x="Sample Type", y="Relative Abundance", fill="Genus", subtitle="Includes Taxa with a Relative Abundance of at least 1%")+
@@ -1571,7 +1570,7 @@ tg.h1<-ggplot(g_typ_meta.no0, aes(Sample_Type, Genus, fill= Count)) +geom_tile()
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.y=element_text(margin = margin(0,0)),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Sample Type", y="Microbial Genera", title="Microbial Genera & Sample Type",fill="Relative Abundance")+theme_classic()+scale_x_discrete(expand = c(0,0))
 
-ggsave(tp.h1,filename = "figures/RelativeAbundance/16S_Phyla.RA_heatmap.png", width=12, height=10, dpi=600)
+ggsave(tp.h1,filename = "figures/RelativeAbundance/SSD_16S_Phyla.RA_heatmap.png", width=12, height=10, dpi=600)
 
 
 head(g_typ_meta)
@@ -1623,13 +1622,13 @@ test1<-ggplot(tgen.comp, aes(SW.RA, D.RA, color=Gen2))+geom_point(size=2.5) + th
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+scale_colour_manual(values=unique(tgen.comp$Gen_Col[order(tgen.comp$Gen2)]))+
   labs(x="Seawater Relative Abundance", y="Dust Relative Abundance", title="Microbial Genera & Sample Type",subtitle="Points labeled 'Other' include Genera with a Relative Abundance of < 1%")+guides(shape = guide_legend(override.aes = list(size = 3)),col=guide_legend(title="Genus"))
 
-ggsave(test1,filename = "figures/RelativeAbundance/16S_Gen.RA_sample.type_scatterplot.png", width=12, height=10, dpi=600)
+ggsave(test1,filename = "figures/RelativeAbundance/SSD_16S_Gen.RA_sample.type_scatterplot.png", width=12, height=10, dpi=600)
 
 test2<-ggplot(tgen.comp, aes(SW.RA, D.RA, color=Genus))  +geom_point(aes(color=ifelse(SW.RA>0.01 | D.RA>0.01,Genus,"black")),size=2) + theme_classic() +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Seawater Relative Abundance", y="Dust Relative Abundance", title="Microbial Genera & Sample Type")
 
-ggsave(test2,filename = "figures/RelativeAbundance/16S_Gen.RA_type_linear1_colortest.png", width=12, height=10, dpi=600)
+ggsave(test2,filename = "figures/RelativeAbundance/SSD_16S_Gen.RA_type_linear1_colortest.png", width=12, height=10, dpi=600)
 
 ggplot(tgen.comp, aes(SW.RA, D.RA, color=ifelse(SW.RA>0.01 | D.RA>0.01,Genus,"black")))  +geom_point() + theme_classic() +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
@@ -1639,7 +1638,7 @@ tgc1<-ggplot(tgen.comp, aes(SW.RA, D.RA, color=Genus)) +geom_point(aes(color=D.R
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   labs(x="Seawater Relative Abundance", y="Dust Relative Abundance", title="Microbial Genera & Sample Type", subtitle="Only shows shared taxa w/ RA > 0.0001")
 
-ggsave(tgc1,filename = "figures/RelativeAbundance/16S_Gen.RA_type_linear1.png", width=12, height=10, dpi=600)
+ggsave(tgc1,filename = "figures/RelativeAbundance/SSD_16S_Gen.RA_type_linear1.png", width=12, height=10, dpi=600)
 ## Date of note: 11/1/21 vvv
 # 16S_Gen.RA_type_linear1 - cutoff is 0.0001
 # 16S_Gen.RA_type_linear2 - cutoff is 0.00001
