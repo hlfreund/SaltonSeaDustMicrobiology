@@ -687,7 +687,7 @@ tg1a<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Genus_species == "Massilia unknown"
   scale_color_manual(name ="Collection Period", values=c("#07f49e","#2962ff","#9500ff","#ff0059","#ff8c00","#b4e600","#ffd500"), labels=c("S.1.2020","S.2.2020","S.3.2020","F.1.2020","S.1.2021","S.2.2021","F.1.2021")) +
   geom_boxplot(fill=NA, outlier.color=NA) + theme_classic() +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
-  labs(x="", y="Relative Abundance", title="Bacterial Genus Massilia Across Samples",subtitle="Includes taxa with Relative Abundance > 5%")
+  labs(x="", y="Relative Abundance", title="Bacterial Genus Massilia Across Samples")
 
 ggsave(tg1a,filename = "figures/RelativeAbundance/SSD_16S_Massilia.RA_only_taxasum.png", width=15, height=10, dpi=600)
 
