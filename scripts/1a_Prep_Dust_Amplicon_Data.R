@@ -229,10 +229,6 @@ bac.ASV_table$SampleID<-gsub("(.*\\..*)\\..*","\\1", bac.ASV_table$SampleID)
 bac.ASV_table$SampleID # sanity check
 rownames(bac.ASV_table)<-bac.ASV_table$SampleID
 
-bac.ASV_table$SampleID<-gsub("(.*\\..*)\\..*","\\1", bac.ASV_table$SampleID)
-bac.ASV_table$SampleID # sanity check
-rownames(bac.ASV_table)<-bac.ASV_table$SampleID
-
 b.dust.all$SampleID<-gsub("(.*\\..*)\\..*","\\1", b.dust.all$SampleID)
 b.dust.all$SampleID # sanity check
 head(b.dust.all)
@@ -242,6 +238,9 @@ rownames(dust_meta) %in% rownames(bac.ASV_table)
 
 # reorder metadata based off of ASV table
 dust_meta=dust_meta[rownames(bac.ASV_table),] ## will drop rows that are not shared by both dataframes!
+
+#### Check Read Distribution Across Samples ####
+rowSums(bac.ASV_table[,-1])
 
 #### Save Global Env for Import into Other Scripts ####
 
