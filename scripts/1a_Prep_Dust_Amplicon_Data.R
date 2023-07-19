@@ -169,8 +169,7 @@ dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020
 # so back trajectory info was used to determine which surface the wind traveled over
 # this raw model output data
 
-
-perc.cov.bck.trj<-as.data.frame(read.csv("data/Porter_CollectorBackTrajectoriesData.csv",header=TRUE))
+perc.cov.bck.trj<-as.data.frame(read_xls("data/PorterLab_SSD_SurfaceTypeFrequencies.xls",sheet="SSD_SitesOnly_byColl",col_names=TRUE))
 head(perc.cov.bck.trj)
 perc.cov.bck.trj[is.na(perc.cov.bck.trj)] <- 0
 head(perc.cov.bck.trj)
