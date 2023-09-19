@@ -1021,7 +1021,7 @@ permutest(b.disper1, pairwise=TRUE) # compare dispersions to each other via perm
 
 anova(b.disper1) # p = 0.0003451 --> reject the Null H, spatial medians (a measure of dispersion) are significantly difference across sample dates
 # ANOVA adjusted p-value
-aov.beta.p1<-summary(anova(b.disper1))[[1]][["Pr(>F)"]] # get p values from ANOVA
+aov.beta.p1<-anova(b.disper1)[["Pr(>F)"]] # get p values from ANOVA
 p.adjust(aov.beta.p1,method="bonferroni",n=length(aov.beta.p1))
 
 TukeyHSD(b.disper1) # tells us which Sample Dates/category's dispersion MEANS are significantly different than each other
@@ -1055,11 +1055,11 @@ pair.mod1
 
 # Visualize dispersions
 png('figures/BetaDiversity/pcoa_betadispersion_sampledate.png',width = 700, height = 600, res=100)
-plot(b.disper1,main = "Centroids and Dispersion based on Aitchison Distance", col=colorset1$SampMonth_Color)
+plot(b.disper1,main = "Centroids and Dispersion based on Aitchison Distance", col=colorset2$SampMonth_Color)
 dev.off()
 
 png('boxplot_centroid_distance_sampledate.png',width = 700, height = 600, res=100)
-boxplot(b.disper1,xlab="Sample Collection Date", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset1$SampMonth_Color)
+boxplot(b.disper1,xlab="Sample Collection Date", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset2$SampMonth_Color)
 dev.off()
 
 # Next compare dispersions by depth
