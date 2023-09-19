@@ -136,8 +136,7 @@ head(dust_meta)
 
 # create collection palette
 unique(dust_meta$Seas_Coll_Year)
-colorset7 = melt(c("S.1.2020"="#07f49e","S.2.2020"="#2962ff","S.3.2020"="#9500ff","F.1.2020"="#ff0059","S.1.2021"="#ff8c00","S.2.2021"="#b4e600","F.1.2021"="#ffd500"))
-
+colorset7 = melt(c("S.1.2020"="#14c9cb","S.2.2020"="#2962ff","S.3.2020"="#9500ff","F.1.2020"="#ff0059","S.1.2021"="#ff8c00","S.2.2021"="#0B6623","F.1.2021"="#ffd500"))
 colorset7$Seas_Coll_Year<-rownames(colorset7)
 colnames(colorset7)[which(names(colorset7) == "value")] <- "SCY_Color"
 colorset7
