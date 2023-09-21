@@ -348,6 +348,28 @@ d2021.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="December.2021",], aes(x=Axis
 
 ggsave(d2021.p1,filename = "figures/BetaDiversity/SSD_16S_CLR_AllSites_Dec2021_PCOA1.png", width=12, height=10, dpi=600)
 
+## visualizing by year
+b.pcoa1.20<-b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",]
+b.pcoa1.21<-b.pcoa.meta[b.pcoa.meta$CollectionYear=="2021",]
+
+# 2020
+twntytwnty.pc1<-ggplot(b.pcoa1.20, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Seas_Coll_Year),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Microbial Composition in 2020",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Period",values=unique(b.pcoa1.20$SCY_Color[order(b.pcoa1.20$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(twntytwnty.pc1,filename = "figures/BetaDiversity/SSD_16S_CLR_SeasCollYr_2020_PCOA1.png", width=12, height=10, dpi=600)
+
+# 2021
+twntytwnty1.pc1<-ggplot(b.pcoa1.21, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Seas_Coll_Year),shape=Site), size=5)+theme_bw()+
+  labs(title="PCoA: Microbial Composition in 2021",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  guides(shape = guide_legend(override.aes = list(size = 5)))+
+  scale_color_manual(name ="Collection Period",values=unique(b.pcoa1.21$SCY_Color[order(b.pcoa1.21$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
+  xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
+
+ggsave(twntytwnty1.pc1,filename = "figures/BetaDiversity/SSD_16S_CLR_SeasCollYr_2021_PCOA1.png", width=12, height=10, dpi=600)
+
 #### CLR Transform 2020 Comp Data ####
 d.meta_20<-dust_meta[which(dust_meta$CollectionYear=="2020"),]
 
