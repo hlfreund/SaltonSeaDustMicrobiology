@@ -713,7 +713,7 @@ tg1b<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.1,], aes(Genus_species, Cou
 ggsave(tg1b,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_taxasum_10perc.png", width=18, height=10, dpi=600)
 
 tg1c<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.15,], aes(Genus_species, Count)) +
-  geom_jitter(aes(color=factor(Seas_Coll_Year),shape=Site), size=3, width=0.15, height=0) +
+  geom_jitter(aes(color=factor(Seas_Coll_Year),shape=Site), size=5, width=0.15, height=0) +
   scale_color_manual(name ="Collection Period", values=c("#14c9cb","#2962ff","#9500ff","#ff0059","#ff8c00","#0B6623","#ffd500"), labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   geom_boxplot(fill=NA, outlier.color=NA) + theme_classic() +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust = 1, hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15),plot.margin = unit(c(1, 1, 1, 3),"cm")) +
