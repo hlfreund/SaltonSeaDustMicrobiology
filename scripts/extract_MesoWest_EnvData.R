@@ -45,8 +45,9 @@ suppressPackageStartupMessages({ # load packages quietly
 # wind_gust (m/s)
 # wind_direction (degrees)
 # wind_cardinal_direction (char)
+# mesowest package GitHub: https://github.com/fickse/mesowest
 
-requestToken(apikey = "KukcOHEep8cg01gR4hlGbnJdnMuEoeP7vMfVN7uetz")
+requestToken(apikey = "KuRvN1RwhvIS6gHsnK5HunnVSIlvMFV7nW3I4AlmMp")
 
 #### Retrieve Data for Sites of Interest ####
 
