@@ -37,6 +37,7 @@ suppressPackageStartupMessages({ # load packages quietly
   library(fst)
   library(plotly)
   library(htmlwidgets)
+  library(MoMAColors)
 })
 
 #### Load Global Env to Import Count/ASV Tables ####
@@ -94,6 +95,13 @@ p.b1<-ggplot(b.phyla_RA_meta, aes(x=SampleID, y=Count, fill=Phylum))+geom_bar(st
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+guides(fill=guide_legend(ncol=2))+scale_y_continuous(expand = c(0,0),limits = c(0,1))
 
 ggsave(p.b1,filename = "figures/RelativeAbundance/SSD_16S_Phyla.RA_barplot.png", width=12, height=10, dpi=600)
+
+p.b1a<-ggplot(b.phyla_RA_meta[b.phyla_RA_meta$Count>0.05,], aes(x=SampleID, y=Count, fill=Phylum))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
+  labs(title = "Microbial Phylum Relative Abundance", x="SampleID", y="Relative Abundance", fill="Phylum",subtitle="Only Taxa with Relative Abundance > 5%")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+  guides(fill=guide_legend(ncol=1))+scale_y_continuous(expand = c(0,0),limits = c(0,1))
+
+ggsave(p.b1a,filename = "figures/RelativeAbundance/SSD_16S_Phyla.RA_5perc_barplot.png", width=12, height=10, dpi=600)
 
 head(b.phyla_RA_meta)
 
@@ -432,6 +440,13 @@ f.b1a<-ggplot(b.fam_RA_meta[b.fam_RA_meta$Count>0.01,], aes(x=SampleID, y=Count,
   guides(fill=guide_legend(ncol=4))+scale_y_continuous(expand = c(0,0),limits = c(0,1))
 
 ggsave(f.b1a,filename = "figures/RelativeAbundance/SSD_16S_fam.RA_barplot.png", width=17, height=10, dpi=600)
+
+f.b1b<-ggplot(b.fam_RA_meta[b.fam_RA_meta$Count>0.1,], aes(x=SampleID, y=Count, fill=Family))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
+  labs(title = "Relative Abundance of Microbial Families", subtitle="Only Taxa with Relative Abundance > 10%",x="SampleID", y="Relative Abundance", fill="Family")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+  guides(fill=guide_legend(ncol=2))+scale_y_continuous(expand = c(0,0),limits = c(0,1))
+
+ggsave(f.b1b,filename = "figures/RelativeAbundance/SSD_16S_fam.RA_1perc_barplot.png", width=17, height=10, dpi=600)
 
 head(b.fam_RA_meta)
 
