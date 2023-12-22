@@ -700,11 +700,11 @@ max(b.genus_RA_meta$Count)/2 # what is the mid point of the RA here?
 #
 # ggsave(g.h1,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_1perc_heatmap_A.png", width=20, height=15, dpi=600)
 #
-# g.h2<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.05,], aes(SampleID, Genus_species, fill= Count)) +geom_tile()+scale_fill_gradient2(low="orange",mid="white",high="purple",midpoint=0.3)+
-#   theme_classic()+theme(axis.title.x = element_text(size=13,vjust=-0.5),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
-#   labs(x="Sample ID", y="Microbial Genera", title="Microbial Genera & Sample Date",subtitle="Includes taxa with Relative Abundance > 5%",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0))
-#
-# ggsave(g.h2,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_5perc_heatmap_B.png", width=16, height=10, dpi=600)
+g.h2<-ggplot(b.genus_RA_meta[b.genus_RA_meta$Count>0.05,], aes(SampleID, Genus_species, fill= Count)) +geom_tile()+scale_fill_gradient2(low="blue",mid="pink",high="red",midpoint=0.3)+
+  theme_classic()+theme(axis.title.x = element_text(size=13,vjust=-0.5),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
+  labs(x="Sample ID", y="Microbial Genera", title="Microbial Genera & Sample Date",subtitle="Includes taxa with Relative Abundance > 5%",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0))
+
+ggsave(g.h2,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_5perc_heatmap_B.png", width=16, height=10, dpi=600)
 
 b.dust.all[1:4,1:4]
 
@@ -2138,19 +2138,19 @@ ggsave(fig.ds001.so4.fit1,filename = "figures/RelativeAbundance/DS001_Genus_RelA
 
 #### Shared Genus Relative Abundance ####
 # first let's get RelAb of taxa by site
-b.g.site <- as.data.frame(dcast(b.dust.all.g, Site~Genus+Species, value.var="Count", fun.aggregate=sum)) ###
-head(b.g.site) # counts by genus per sample
+b.g.site <- as.data.frame(dcast(b.dust.all.g, Site+SampDate~Genus+Species, value.var="Count", fun.aggregate=sum)) ###
+b.g.site[1:7,1:7] # counts by genus per sample
 dim(b.g.site)
-rownames(b.g.site)<-b.g.site$Site
-b.g.site[1:4,1:4]
-b.g.site<-b.g.site[,colSums(b.g.site[,-1])>0] # drop classes that are not represented
+rownames(b.g.site)<-interaction(b.g.site$Site, b.g.site$SampDate,sep="-")
+b.g.site[1:7,1:7]
+b.g.site<-b.g.site[,colSums(b.g.site[,-c(1:2)])>0] # drop genera that are not present
 dim(b.g.site) # sanity check that we dropped taxa with no hits
 
-b.g.site_RA<-data.frame(decostand(b.g.site[,-1], method="total", MARGIN=1, na.rm=TRUE))
+b.g.site_RA<-data.frame(decostand(b.g.site[,-c(1:2)], method="total", MARGIN=1, na.rm=TRUE))
 # relative abundance of taxa data where everything is divided by col total (b/c Margin=1 meaning rows == SAMPLES in this case)
 rowSums(b.g.site_RA) # sanity check to make sure the transformation worked!
 
-b.g.site_RA$Site<-rownames(b.g.site_RA)
+b.g.site_RA$Site.SampDate<-rownames(b.g.site_RA)
 b.g.site_RA[1:4,1:4]
 #write.csv(b.genus_RelAb,"16S_Genera_Relative_Abundance.csv",row.names=TRUE) # good to save just in case
 
@@ -2166,6 +2166,18 @@ b.g.site_RA.m$Genus_species<-gsub("\\.\\."," ",b.g.site_RA.m$Genus_species) # ge
 b.g.site_RA.m$Genus_species<-gsub("\\."," ",b.g.site_RA.m$Genus_species) # get rid of . in species name --> . is regex
 b.g.site_RA.m$Genus_species<-gsub("_"," ",b.g.site_RA.m$Genus_species) #
 head(b.g.site_RA.m) ## relative abundance based on sum of counts by genus!
+b.g.site_RA.m <- separate(data=b.g.site_RA.m, col="Site.SampDate", sep="-", into=c("Site","Samp.Date"),remove=FALSE) # use separate to create new columns (Site, SampDate) from 1 column
+b.g.site_RA.m$Samp.Date<-factor(b.g.site_RA.m$Samp.Date, levels=c("July.2020","August.2020","October.2020","November.2020",
+                                                                      "July.2021","August.2021","September.2021","December.2021"))
+b.g.site_RA.m$Site<-factor(b.g.site_RA.m$Site, levels=c("PD","BDC","DP","WI","RHB","SB"))
+b.g.site_RA.m$Site.SampDate<-factor(b.g.site_RA.m$Site.SampDate, levels=unique(b.g.site_RA.m$Site.SampDate[order(b.g.site_RA.m$Samp.Date,b.g.site_RA.m$Site)]))
+b.g.site_RA.m<-b.g.site_RA.m[b.g.site_RA.m$Count>0,]
+
+ggplot(b.g.site_RA.m[b.g.site_RA.m$Count>0.025,], aes(Site.SampDate, Genus_species, fill= Count)) +geom_tile()+scale_fill_gradient2(low="blue",mid="pink",high="red",midpoint=0.3)+
+  theme_classic()+theme(axis.title.x = element_text(size=13,vjust=-0.5),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
+  labs(x="Sample ID", y="Microbial Genera", title="Microbial Genera & Sample Date",subtitle="Includes taxa with Relative Abundance > 5%",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0))
+
+ggsave(g.h2,filename = "figures/RelativeAbundance/SSD_16S_Genera.RA_5perc_heatmap_B.png", width=16, height=10, dpi=600)
 
 # merge dust_meta and RA data
 site_meta<-unique(data.frame("Site"=dust_meta$Site, "Site_Color"=dust_meta$Site_Color))
