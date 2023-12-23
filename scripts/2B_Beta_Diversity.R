@@ -143,16 +143,24 @@ b.euc_dist <- dist(b.clr, method = "euclidean")
 b.euc_clust <- hclust(b.euc_dist, method="ward.D2")
 
 # let's make it a little nicer...
-b.euc_dend <- as.dendrogram(b.euc_clust, hang=0.2)
-b.dend_cols <- as.character(dust_meta$SampMonth_Color[order.dendrogram(b.euc_dend)])
+b.euc_dend <- as.dendrogram(b.euc_clust, hang=0.02)
+b.dend_cols <- as.character(dust_meta$SCY_Color[order.dendrogram(b.euc_dend)])
 labels_colors(b.euc_dend) <- b.dend_cols
 
-## DO NOT RUN THIS LINE, THIS IS YOUR COLOR REFERENCE!!!!
-#(August.2021="#ef781c",December.2021="#03045e",April.2022="#059c3f")
+colorset7 # color dendrogram by seasonal collection
+png(filename="figures/BetaDiversity/SSD_16S_CLR_EucDist_Dendrogram1.png",width = 7, height = 7, units = "in",res = 800)
+plot(b.euc_dend, ylab="CLR Euclidean Distance", cex = 0.6) + title(main = "Bacteria/Archaea Clustering Dendrogram", cex.main = 1, font.main= 1, cex.sub = 0.8, font.sub = 2)
+legend("topright",legend = colorset7$Seas_Coll_Year,cex=.8,col = colorset7$SCY_Color,pch = 15, bty = "n")
+dev.off()
 
-plot(b.euc_dend, ylab="CLR Euclidean Distance",cex = 0.5) + title(main = "Bacteria/Archaea Clustering Dendrogram", cex.main = 1, font.main= 1, cex.sub = 0.8, font.sub = 2)
-#legend("topright",legend = c("August 2021","December 2021","April 2022"),cex=.8,col = c("#ef781c","#03045e","#059c3f"),pch = 15, bty = "n")
-# Control is dark blue ("#218380"), #Alternaria is light blue ("#73d2de")
+b.euc_dend1 <- as.dendrogram(b.euc_clust, hang=0.06)
+b.dend_cols1 <- as.character(dust_meta$SampMonth_Color[order.dendrogram(b.euc_dend1)])
+labels_colors(b.euc_dend1) <- b.dend_cols1
+
+colorset2 # color dendrogram by month of collection
+png(filename="figures/BetaDiversity/SSD_16S_CLR_EucDist_Dendrogram2.png",width = 7, height = 7, units = "in",res = 800)
+plot(b.euc_dend1, ylab="CLR Euclidean Distance", cex = 0.6) + title(main = "Bacteria/Archaea Clustering Dendrogram", cex.main = 1, font.main= 1, cex.sub = 0.8, font.sub = 2)
+legend("topright",legend = colorset2$SampleMonth,cex=.8,col = colorset2$SampMonth_Color,pch = 15, bty = "n")
 dev.off()
 
 # PCOA w/ Euclidean distance matrix (of CLR data)
@@ -369,6 +377,25 @@ twntytwnty1.pc1<-ggplot(b.pcoa1.21, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(col
   xlab("PC1 [23.63%]") + ylab("PC2 [9.73%]")
 
 ggsave(twntytwnty1.pc1,filename = "figures/BetaDiversity/SSD_16S_CLR_SeasCollYr_2021_PCOA1.png", width=12, height=10, dpi=600)
+
+#### Visualize Location & Date with PC Axes ####
+dust.time.site<-subset(dust_meta, select=c(SampleID, Site, SampDate))
+b.pcoa.dts<-merge(b.pcoa.vectors, dust.time.site, by.x="SampleID", by.y="SampleID")
+
+head(b.pcoa.dts)
+s.t.pcoa<-melt(b.pcoa.dts[,-1], by=c("Site","SampDate"))
+colnames(s.t.pcoa)[which(names(s.t.pcoa) == "variable")] <- "PCoA_Axis"
+colnames(s.t.pcoa)[which(names(s.t.pcoa) == "value")] <- "PC_Axis_Value"
+
+ggplot(s.t.pcoa, aes(Site, SampDate, PCoA_Axis, fill=PC_Axis_Value)) +
+  geom_tile(colour="white",size=0.25) +
+  scale_fill_gradient(low="blue", high="red",labels=c(),breaks=c()) + labs(title="PCoA by Sample Date & Site",subtitle="Using CLR-Transformed 16S Data",fill="PC Axis Value") +
+  theme(axis.title.x = element_text(size=20),axis.title.y = element_text(size=20),legend.title.align=0.5, legend.title = element_text(size=18),
+        axis.text = element_text(size=15),axis.text.x = element_text(angle=45, hjust=1),legend.text = element_text(size=15),plot.title = element_text(size=22),
+        axis.ticks=element_line(size=0.4),panel.grid = element_blank(),plot.subtitle=element_text(size=14)) +
+  xlab("") + ylab("") + scale_y_discrete(expand=c(0, 0))+scale_x_discrete(expand=c(0, 0))
+
+ggsave(sulf.hm1a,filename = "figures/MGM_Figs/FxnDiv/Sulfur/Sulfur_KOFxns_MGMs_SampID_by_Function_heatmap.png", width=18, height=13, dpi=600)
 
 #### CLR Transform 2020 Comp Data ####
 d.meta_20<-dust_meta[which(dust_meta$CollectionYear=="2020"),]
