@@ -1822,7 +1822,9 @@ ggsave(PD.tg1c,filename = "figures/RelativeAbundance/PalmDesert/SSD_PD_16S_Gener
 
 
 
-#### Find Unique Genera from WI ####
+#### Find Unique Genera Per Site ####
+head(dust_meta)
+head(b.genus_m)
 
 site_list<-data.frame(Site=dust_meta$Site,SampleID=dust_meta$SampleID)
 

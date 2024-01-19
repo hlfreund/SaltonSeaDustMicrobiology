@@ -40,8 +40,8 @@ suppressPackageStartupMessages({ # load packages quietly
 })
 
 #### Load Global Env to Import Count/ASV Tables ####
-load("data/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
-#load("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+load("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
+#load("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 head(b.dust.all)
 bac.ASV_table[1:4,1:4]
@@ -75,7 +75,7 @@ dev.off()
 
 # PCOA w/ Euclidean distance matrix (of CLR data)
 raw.b.pcoa <- pcoa(raw.b.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
-#save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+#save.image("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 # The proportion of variances explained is in its element values$Relative_eig
 raw.b.pcoa$values
@@ -165,7 +165,7 @@ dev.off()
 
 # PCOA w/ Euclidean distance matrix (of CLR data)
 b.pcoa <- pcoa(b.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
-#save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+#save.image("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 # The proportion of variances explained is in its element values$Relative_eig
 b.pcoa$values
@@ -184,7 +184,7 @@ head(b.pcoa.meta)
 head(b.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axes labels
 # PC1 = 23.63%, PC2 = 9.73%
 
-save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+save.image("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 #### Visualize PCoAs - All Data ####
 
@@ -436,7 +436,7 @@ dev.off()
 
 # PCOA w/ Euclidean distance matrix (of CLR data)
 b.20.pcoa <- pcoa(b.20.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
-#save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+#save.image("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 # The proportion of variances explained is in its element values$Relative_eig
 b.20.pcoa$values
@@ -455,7 +455,7 @@ head(b.20.pcoa.meta)
 head(b.20.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axes labels
 # PC1 = 23.63%, PC2 = 9.73%
 
-save.image("data/SSD_16S_2020_CLR_EucDist_Ready.Rdata")
+save.image("data/Amplicon/SSD_16S_2020_CLR_EucDist_Ready.Rdata")
 
 #### Visualize PCoAs - 2020 Data ####
 
@@ -545,7 +545,7 @@ dev.off()
 
 # PCOA w/ Euclidean distance matrix (of CLR data)
 b.21.pcoa <- pcoa(b.21.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
-#save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+#save.image("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 # The proportion of variances explained is in its element values$Relative_eig
 b.21.pcoa$values
@@ -564,7 +564,7 @@ head(b.21.pcoa.meta)
 head(b.21.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axes labels
 # PC1 = 24.72%, PC2 = 15.13%
 
-save.image("data/SSD_16S_2021_CLR_EucDist_Ready.Rdata")
+save.image("data/Amplicon/SSD_16S_2021_CLR_EucDist_Ready.Rdata")
 
 #### Visualize PCoAs - 2021 Data ####
 
@@ -836,7 +836,7 @@ dev.off()
 
 # PCOA w/ Euclidean distance matrix (of CLR data)
 b.s120.pcoa <- pcoa(b.s120.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
-#save.image("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+#save.image("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 # The proportion of variances explained is in its element values$Relative_eig
 b.s120.pcoa$values
@@ -920,7 +920,7 @@ head(b.near.pcoa.meta)
 head(b.near.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axes labels
 # PC1 = 24.03%, PC2 = 14.26%
 
-save.image("data/SSD_NearSitesOnly_16S_CLR_EucDist_Ready.Rdata")
+save.image("data/Amplicon/SSD_NearSitesOnly_16S_CLR_EucDist_Ready.Rdata")
 
 #### Visualize PCoAs - Exclude Control Sites Data ####
 plot_ly(b.near.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~Season_Specific, colors = c(unique(b.near.pcoa.meta$SeasonSpec_Color[order(b.near.pcoa.meta$Season_Specific)])),

@@ -43,6 +43,7 @@ suppressPackageStartupMessages({ # load packages quietly
 
 requestToken(apikey = "KunTxSCUqjGlu9CBtKJJRmxjYHnFc6PK4uPoDgcUOg")
 
+getparams()
 #### Retrieve Data for Sites of Interest ####
 # MesoWest variables: https://developers.synopticdata.com/mesonet/v2/api-variables/
 # air_temp (ºC)
@@ -96,11 +97,11 @@ write_rds(sites, 'data/MesoWest_SaltonSea_2020-2021_SiteData.rds')
 
 i.STID <- sites$STID[1]
 
-metdata <- lapply(sites$STID, function(i.STID){
+time_series_data <- lapply(sites$STID, function(i.STID){
   dt <- mw(service = 'timeseries', stid =i.STID,
            vars = c('wind_speed','wind_gust','wind_direction',
                     'wind_cardinal_direction', 'air_temp','relative_humidity','precip_accum',
-                    'PM_25_concentration','incoming_radiation_uv','PM_10_concentration'),
+                    'incoming_radiation_uv'),
            start = '202006010001', end = '202201010001', jsonsimplify= TRUE)
 
   obs <- dt[['STATION']][['OBSERVATIONS']]
@@ -113,33 +114,37 @@ metdata <- lapply(sites$STID, function(i.STID){
   return(obs)
 }) %>% rbindlist(fill=TRUE)
 
-setnames(metdata, names(metdata) %>% str_remove_all('_set_1(d?)'))
+setnames(time_series_data, names(time_series_data) %>% str_remove_all('_set_1(d?)'))
+# ^ remove '_set_1(d?)' from column names in time_series_data
 
-metdata[, date_time:=ymd_hms(date_time)]
-metdata[, date_time_hour:=ceiling_date(date_time, 'hour')]
-# metdata[, DateLST:=ymd_hms(date_time, tz = 'America/Los_Angeles')]
-# metdata[, DateLST:=ceiling_date(DateLST, 'hour')]
+time_series_data[, date_time:=ymd_hms(date_time)]
+time_series_data[, date_time_hour:=ceiling_date(date_time, 'hour')]
+# time_series_data[, DateLST:=ymd_hms(date_time, tz = 'America/Los_Angeles')]
+# time_series_data[, DateLST:=ceiling_date(DateLST, 'hour')]
 
-metdata[, wd:=circular(wind_direction, template='geographics', units='degrees')]
+time_series_data[, wd:=circular(wind_direction, template='geographics', units='degrees')]
+# ^ create column $wd which is the wind direction in degrees, not sure why we need to create this since wind_direction has the same info?
 
-metdata_scalar <- metdata[, .(air_temp = mean(air_temp, na.rm=TRUE),
+time_series_data_scalar <- time_series_data[, .(air_temp = mean(air_temp, na.rm=TRUE),
                               wind_speed=mean(wind_speed, na.rm=TRUE),
                               wind_gust=max(wind_gust, na.rm=TRUE)),
                           .(STID, date_time_hour)]
 
-metdata_dir <- metdata[!is.na(wd) & !is.na(wind_speed) & wind_speed > 0,
+time_series_data_dir <- time_series_data[!is.na(wd) & !is.na(wind_speed) & wind_speed > 0,
                            .(wind_direction=weighted.mean.circular(wd,
                                                                    w=wind_speed,
                                                                    template='geographics',
                                                                    units='degrees')),
                            .(STID, date_time_hour)]
-metdata_dir[wind_direction < 0, wind_direction := wind_direction + 360]
 
-metdata_out <- full_join(metdata_scalar, metdata_dir)
+time_series_data_dir[wind_direction < 0, wind_direction := wind_direction + 360]
+
+time_series_data_out <- full_join(time_series_data_scalar, time_series_data_dir)
 
 #### Pull Out Precipitation Data for Sites Near Salton Sea ####
 ## info on precipitation data can be found here: https://docs.synopticdata.com/services/precipitation
-mw(service = 'precipitation', stid='UP612', start =  '202007010001', end ='202201010001', pmode='intervals', interval = 'hour', jsonsimplify = TRUE, returnURL =FALSE)
+d<-mw(service = 'precipitation', stid='UP612', start =  '202007010001', end ='202201010001', pmode='intervals', interval = 'hour', jsonsimplify = TRUE, returnURL =FALSE)
+clim <- data.frame( lapply( d$STATION$OBSERVATIONS, unlist) )
 
 
-write_rds(metdata_out, 'data/MesoWest_SaltonSea_2013-2020.rds')
+write_rds(time_series_data_out, 'data/MesoWest_SaltonSea_2013-2020.rds')
