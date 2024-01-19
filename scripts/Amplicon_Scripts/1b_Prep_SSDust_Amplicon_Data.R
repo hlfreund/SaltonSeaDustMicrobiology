@@ -36,7 +36,7 @@ suppressPackageStartupMessages({ # load packages quietly
 # dust samples were sequenced with some soil & lungs via UCR Core, MiSeq (targeting 16S V3V4)
 # contaminants removed with decontam, also control ASVs removed as well as singletons, zero ASVs, and eukaryotic hits
 # taxonomy file also had those contaminating ASVs removed
-# ^ you can remove all of this steps in the script titled 1_Prep_Amplicon_Data_All.R
+# ^ you can remove all of this steps in the script titled 1a_Prep_Amplicon_Data_All.R
 
 #### Import and Prepare Data for Analyses ####
 
