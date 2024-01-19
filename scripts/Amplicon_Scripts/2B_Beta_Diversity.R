@@ -149,7 +149,7 @@ labels_colors(b.euc_dend) <- b.dend_cols
 
 colorset7 # color dendrogram by seasonal collection
 png(filename="figures/BetaDiversity/SSD_16S_CLR_EucDist_Dendrogram1.png",width = 7, height = 7, units = "in",res = 800)
-plot(b.euc_dend, ylab="CLR Euclidean Distance", cex = 0.6) + title(main = "Bacteria/Archaea Clustering Dendrogram", cex.main = 1, font.main= 1, cex.sub = 0.8, font.sub = 2)
+plot(b.euc_dend, ylab="CLR Euclidean Distance", cex = 0.1) + title(main = "Bacteria/Archaea Clustering Dendrogram", cex.main = 1, font.main= 1, cex.sub = 0.8, font.sub = 2)
 legend("topright",legend = colorset7$Seas_Coll_Year,cex=.8,col = colorset7$SCY_Color,pch = 15, bty = "n")
 dev.off()
 
@@ -379,10 +379,51 @@ twntytwnty1.pc1<-ggplot(b.pcoa1.21, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(col
 ggsave(twntytwnty1.pc1,filename = "figures/BetaDiversity/SSD_16S_CLR_SeasCollYr_2021_PCOA1.png", width=12, height=10, dpi=600)
 
 #### Visualize Location & Date with PC Axes ####
+# this idea was suggested by Dr. Will Porter as a way to see if we can identify compositional similiarites or dissimilarites by site and sample collection date
+# using PC axes as input data, where x axis is site and y axis is the sample date in the heat map
+
 dust.time.site<-subset(dust_meta, select=c(SampleID, Site, SampDate))
 b.pcoa.dts<-merge(b.pcoa.vectors, dust.time.site, by.x="SampleID", by.y="SampleID")
 
 head(b.pcoa.dts)
+
+ggplot(b.pcoa.dts, aes(Site, SampDate)) +
+  geom_tile(aes(fill = Axis.1)) +
+  geom_text(aes(label = round(Axis.1, 1))) +
+  scale_fill_gradient(low = "white", high = "red")
+
+# For heatmap color gradient, PC1
+max(b.pcoa.dts$Axis.1, na.rm=TRUE)
+max(b.pcoa.dts$Axis.1, na.rm=TRUE)/2
+min(b.pcoa.dts$Axis.1, na.rm=TRUE)
+
+pcoa.axis1.hm<-ggplot(b.pcoa.dts, aes(Site, SampDate, Axis.1, fill=Axis.1)) +
+  geom_tile(colour="white",size=0.25) +
+  scale_fill_gradient(low="blue", high="red",labels=c("25","-36.5","-95"),breaks=c(25,-36,-95)) + labs(title="Salton Sea Dust Microbial PCoA Axis 1 by Sample Date & Site",subtitle="Using CLR-Transformed 16S Data",fill="PC1 Values") +
+  theme(axis.title.x = element_text(size=20),axis.title.y = element_text(size=20),legend.title.align=0.5, legend.title = element_text(size=18),
+        axis.text = element_text(size=15),axis.text.x = element_text(angle=45, hjust=1),legend.text = element_text(size=15),plot.title = element_text(size=22),
+        axis.ticks=element_line(size=0.4),panel.grid = element_blank(),plot.subtitle=element_text(size=14)) +
+  xlab("") + ylab("") + scale_y_discrete(expand=c(0, 0))+scale_x_discrete(expand=c(0, 0)) + geom_text(aes(label = round(Axis.1, 2)),size=9)
+
+ggsave(pcoa.axis1.hm,filename = "figures/BetaDiversity/SSD_16S_CLR_PCoA_PC1_Site_by_SampDate.png", width=18, height=13, dpi=600)
+
+# For heatmap color gradient, PC2
+max(b.pcoa.dts$Axis.2, na.rm=TRUE)
+max(b.pcoa.dts$Axis.2, na.rm=TRUE)/2
+min(b.pcoa.dts$Axis.2, na.rm=TRUE)
+
+pcoa.axis2.hm<-ggplot(b.pcoa.dts, aes(Site, SampDate, Axis.2, fill=Axis.2)) +
+  geom_tile(colour="white",size=0.25) +
+  scale_fill_gradient(low="blue", high="red",labels=c("45","-36","-115"),breaks=c(45,-36,-115)) + labs(title="Salton Sea Dust Microbial PCoA Axis 2 by Sample Date & Site",subtitle="Using CLR-Transformed 16S Data",fill="PC2 Values") +
+  geom_text(aes(label = round(Axis.2, 2)),size=9) +
+  theme(axis.title.x = element_text(size=20),axis.title.y = element_text(size=20),legend.title.align=0.5, legend.title = element_text(size=18),
+        axis.text = element_text(size=15),axis.text.x = element_text(angle=45, hjust=1),legend.text = element_text(size=15),plot.title = element_text(size=22),
+        axis.ticks=element_line(size=0.4),panel.grid = element_blank(),plot.subtitle=element_text(size=14)) +
+  xlab("") + ylab("") + scale_y_discrete(expand=c(0, 0))+scale_x_discrete(expand=c(0, 0))
+
+ggsave(pcoa.axis2.hm,filename = "figures/BetaDiversity/SSD_16S_CLR_PCoA_PC2_Site_by_SampDate.png", width=18, height=13, dpi=600)
+
+
 s.t.pcoa<-melt(b.pcoa.dts[,-1], by=c("Site","SampDate"))
 colnames(s.t.pcoa)[which(names(s.t.pcoa) == "variable")] <- "PCoA_Axis"
 colnames(s.t.pcoa)[which(names(s.t.pcoa) == "value")] <- "PC_Axis_Value"
@@ -1051,11 +1092,15 @@ ggsave(pcoa.n.2021.3,filename = "figures/BetaDiversity/SSD_16S_NearSitesOnly_202
 #(analogous to Levene's test for equal variances). The vegan function for this test is “betadisper”:
 ## * need a distance matrix!
 
+head(dust_meta)
+head(b.clr)
 rownames(dust_meta) %in% rownames(b.clr) #b.clr was used to make the distance matrix b.euc_dist
 
 # first by compare dispersions by sampling date
-b.disper1<-betadisper((vegdist(b.clr,method="euclidean")), dust_meta$SampDate)
+b.disper1<-betadisper((vegdist(b.clr,method="euclidean")), dust_meta$Site)
 b.disper1
+# NOTE: SB and RHB have less samples than other sites since they are supposed to represent similar locations
+# maybe we should remove these sites and then rerun the PERMANOVA?
 
 ## Significant differences in homogeneities can be tested using either parametric or permutational tests,
 ##and parametric post hoc contrasts can also be investigated:
@@ -1063,10 +1108,6 @@ b.disper1
 permutest(b.disper1, pairwise=TRUE) # compare dispersions to each other via permutation test to see significant differences in dispersion by pairwise comparisons
 #Pairwise comparisons:
 #  (Observed p-value below diagonal, permuted p-value above diagonal)
-#                 August.2021 December.2021 April.2022
-# August.2021                   0.0040000      0.001
-# December.2021   0.0073988                    0.115
-# April.2022      0.0012603     0.1201286
 
 anova(b.disper1) # p = 0.0003451 --> reject the Null H, spatial medians (a measure of dispersion) are significantly difference across sample dates
 # ANOVA adjusted p-value
