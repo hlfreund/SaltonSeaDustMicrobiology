@@ -41,17 +41,17 @@ suppressPackageStartupMessages({ # load packages quietly
 #### Import and Prepare Data for Analyses ####
 
 ## Import ALL env plate bacterial ASV count data
-bac.ASV_table<-as.data.frame(readRDS("data/SaltonSeaDust_16S.V3V4_ASVTable_Robject.rds", refhook = NULL))
+bac.ASV_table<-as.data.frame(readRDS("data/Amplicon/SaltonSeaDust_16S.V3V4_ASVTable_Robject.rds", refhook = NULL))
 dim(bac.ASV_table)
 bac.ASV_table[1:5,1:5]
 #bac.ASV_table<-bac.ASV_table[, !duplicated(colnames(bac.ASV_table))] # remove col duplicates
 
 ## Import ASV taxonomic data
-bac.ASV_tax<-data.frame(readRDS("data/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Clean_Robject.rds", refhook = NULL))
+bac.ASV_tax<-data.frame(readRDS("data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Clean_Robject.rds", refhook = NULL))
 head(bac.ASV_tax)
 
 ### Import & Update Metadata ####
-dust_meta<-as.data.frame(read_excel("data/Metadata_EnvMiSeqPlate_Winter23.xlsx", sheet="SSea_Dust_Metadata_Updated"), header=TRUE)
+dust_meta<-as.data.frame(read_excel("data/Amplicon/Metadata_EnvMiSeqPlate_Winter23.xlsx", sheet="SSea_Dust_Metadata_Updated"), header=TRUE)
 head(dust_meta)
 
 # confirm that categorical variables of interest are factors
@@ -157,8 +157,34 @@ unique(dust_meta$SampDate)
 dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020","October.2020","November.2020",
                                                         "July.2021","August.2021","September.2021","December.2021"))
 
-#### Import Wind Back Trajectory Data ####
+# check brewer palette for 8 different colors for SampDate variable, then create colorset8 for SampDate
+display.brewer.pal(n = 8, name = 'Dark2')
+colorset8=data.frame(SampDate_Color=(brewer.pal(n = 8, name = "Dark2")))
+rownames(colorset8)<-unique(dust_meta$SampDate[order(dust_meta$SampDate)])
+colorset8
+colorset8$SampDate<-rownames(colorset8)
+
+# merge metadata and colors together
+dust_meta<-merge(dust_meta, colorset8, by="SampDate")
+head(dust_meta)
+dust_meta$SampDate_Color <- as.character(dust_meta$SampDate_Color)
+rownames(dust_meta)<-dust_meta$SampleID
+
+# check if SampDate still has its factor levels
+unique(dust_meta$SampDate)
+
+#### Import Surface Type Frequencies Data ####
 # data from Will Porter's group
+# predicted source material by site, by time --> % from shrubs, urban, etc
+# describes what land was covered by wind trajectory, indicating how much dust can be attributed from that area based on wind trajectory
+#look at all points passed over by each trajectory on its way to the dust collector, and weight them
+## weighted by wind speed (higher wind = more contribution), estimated erodibility of the surface (based on published sediment availability maps), & proximity (closer surfaces are more likely to contribute than distant ones due to gravitational settling)
+
+
+SurfTypFreq<-as.data.frame(read.csv("data/Climate/PorterLab_SSD_SurfaceTypeFrequencies_Amplicon_SOI_Only.csv",header = TRUE, sep = ",", quote = "",))
+head(SurfTypFreq)
+rownames(SurfTypFreq)<-SurfTypFreq$SampleID
+head(SurfTypFreq) #sanity check
 
 # back.traj<-read.fst("data/SaltonSeaDust_PorterLab_TrajectoryData.fst")
 # colnames(back.traj)[which(names(back.traj) == "site")] <- "Site"
@@ -168,16 +194,6 @@ dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020
 # _add --> additional back trajectory points, moving backwards in time (5 min increments)
 # so back trajectory info was used to determine which surface the wind traveled over
 # this raw model output data
-
-perc.cov.bck.trj<-as.data.frame(read_xls("data/PorterLab_SSD_SurfaceTypeFrequencies.xls",sheet="SSD_SitesOnly_byColl",col_names=TRUE))
-head(perc.cov.bck.trj)
-perc.cov.bck.trj[is.na(perc.cov.bck.trj)] <- 0
-head(perc.cov.bck.trj)
-
-# ^ predicted source material by site, by time --> % from shrubs, urban, etc
-# describes what land was covered by wind trajectory, indicating how much dust can be attributed from that area based on wind trajectory
-#look at all points passed over by each trajectory on its way to the dust collector, and weight them
-## weighted by wind speed (higher wind = more contribution), estimated erodibility of the surface (based on published sediment availability maps), & proximity (closer surfaces are more likely to contribute than distant ones due to gravitational settling)
 
 #### Scale Environmental Metadata ####
 #head(metadata)
@@ -213,7 +229,7 @@ head(b.dust.all)
 dim(bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),])
 
 # update ASV table
-bac.ASV_table<-bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),]
+bac.ASV_table<-bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),] # drop technical reps of samples
 
 #### Drop Rep Letter from Sample Names ####
 
@@ -232,17 +248,23 @@ b.dust.all$SampleID<-gsub("(.*\\..*)\\..*","\\1", b.dust.all$SampleID)
 b.dust.all$SampleID # sanity check
 head(b.dust.all)
 
+
 # check if sampleIDs match between metadata & ASV table
 rownames(dust_meta) %in% rownames(bac.ASV_table)
 
 # reorder metadata based off of ASV table
 dust_meta=dust_meta[rownames(bac.ASV_table),] ## will drop rows that are not shared by both dataframes!
 
+#### Merge Surface Type Freqs with Metadata ####
+
+dust.meta.surf<-merge(dust_meta,SurfTypFreq,by=c("Site","SampleID"))
+head(dust.meta.surf)
+
 #### Check Read Distribution Across Samples ####
 rowSums(bac.ASV_table[,-1])
 
 #### Save Global Env for Import into Other Scripts ####
 
-save.image("data/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
+save.image("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
 
 ## ^ this will be loaded into other scripts for downstream analyses

@@ -41,8 +41,8 @@ suppressPackageStartupMessages({ # load packages quietly
 })
 
 #### Load Global Env to Import Count/ASV Tables ####
-load("data/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
-#load("data/SSD_16S_CLR_EucDist_Ready.Rdata")
+load("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
+#load("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 head(b.dust.all)
 bac.ASV_table[1:4,1:4]
@@ -2605,7 +2605,7 @@ wi.uniq.tg1c<-ggplot(WI.uniq.b.meta[WI.uniq.b.meta$Count>0.15,], aes(Genus_speci
 ggsave(wi.uniq.tg1c,filename = "figures/RelativeAbundance/Wister/SSD_16S_WI_Genera.RA_taxasum_15perc.png", width=15, height=10, dpi=600)
 
 #### Save Everything ####
-save.image("data/SSeawater_RelAb_Data.Rdata")
+save.image("data/Amplicon/SSeawater_RelAb_Data.Rdata")
 
 # Version Information
 sessionInfo()
