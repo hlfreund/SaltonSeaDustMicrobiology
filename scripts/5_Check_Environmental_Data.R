@@ -121,9 +121,9 @@ head(STFs)
 STF.clr<-decostand(STFs,method = "clr", pseudocount = 1) # clr transformation of STF data before scaling
 STF.clr[1:4,1:4]
 
-# check rownames of clr transformed STFironmental data & metadata
-rownames(STF.clr) %in% rownames(dust_meta)
-dust_meta=dust_meta[rownames(STF.clr),] ## reorder metadata to match order of clr data
+# check rownames of clr transformed STF data & metadata
+rownames(STF.clr) %in% rownames(dust.meta.surf)
+dust.meta.surf=dust.meta.surf[rownames(STF.clr),] ## reorder metadata to match order of clr data
 
 # calculate our Euclidean distance matrix using clr data
 STF.euc_dist <- dist(STF.clr, method = "euclidean")
@@ -136,7 +136,7 @@ STF.euc_dend <- as.dendrogram(STF.euc_clust, hang=0.2)
 STF.dend_cols <- as.character(dust_meta$SampDate_Color[order.dendrogram(STF.euc_dend)])
 labels_colors(STF.euc_dend) <- STF.dend_cols
 
-plot(STF.euc_dend, ylab="clr Euclidean Distance",cex = 0.8) + title(main = "Surface Type Clustering Dendrogram", font.main= 1, cex.sub = 0.8, font.sub = 3)
+plot(STF.euc_dend, ylab="clr Euclidean Distance", horiz=TRUE,cex=03) + title(main = "Surface Type Frequencies Clustering Dendrogram", font.main= 1, cex.sub = 0.8, font.sub = 3)
 #legend("topright",legend = c("August 2021","December 2021","April 2022"),cex=.8,col = c( "#ef781c","#03045e","#32cbff","#059c3f"),pch = 15, bty = "n")
 # Control is dark blue ("#218380"), #Alternaria is light blue ("#73d2de")
 dev.off()
@@ -153,33 +153,49 @@ STF.pca.vectors<-data.frame(STF.pca$x)
 STF.pca.vectors$SampleID<-rownames(STF.pca$x)
 
 # merge pca coordinates w/ metadata
-STF.pca.meta<-merge(STF.pca.vectors, dust_meta, by.x="SampleID", by.y="SampleID")
-STF.pca.meta$SampleMonth
-STF.pca.meta$SampDate
+STF.pca.meta<-merge(STF.pca.vectors, dust.meta.surf, by.x="SampleID", by.y="SampleID")
+STF.pca.meta$STF_Date
 
 head(STF.pca.meta)
 summary(STF.pca)$importance # percentage of variation explained for pca below
 
 # create pca ggplot fig
-pca1<-ggplot(STF.pca.meta, aes(x=PC1, y=PC2)) +geom_point(aes(color=factor(SampDate),shape=Site), size=5)+theme_bw()+
+pca1a<-ggplot(STF.pca.meta, aes(x=PC1, y=PC2)) +geom_point(aes(color=factor(SampDate),shape=Site), size=5)+theme_bw()+
   labs(title="PCA: Surface Type Frequencies in Salton Sea Dust",subtitle="Using CLR Transformed Surface Type Frequencies",color="Collection Date",shape="Site")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
   scale_color_manual(name ="Collection Date",values=unique(STF.pca.meta$SampDate_Color[order(STF.pca.meta$SampDate)]),
                      labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +
   scale_shape_manual(values = c(7,8, 15,16,17,18)) +
-  xlab("PC1 [62.69%]") + ylab("PC2 [14.53%]")
+  xlab("PC1 [63.78%]") + ylab("PC2 [17.03%]")
 
-ggsave(pca1,filename = "figures/SurfaceTypeFrequencies/SSD_CLR_STFs_PCA.png", width=15, height=10, dpi=600)
+ggsave(pca1a,filename = "figures/SurfaceTypeFrequencies/SSD_CLR_STFs_PCA.png", width=15, height=10, dpi=600)
+
+pca1b<-ggplot(STF.pca.meta, aes(x=PC1, y=PC2)) +geom_point(aes(color=factor(SampDate),shape=Site,size=CollectionYear))+theme_bw()+
+  labs(title="PCA: Surface Type Frequencies in Salton Sea Dust",subtitle="Using CLR Transformed Surface Type Frequencies",color="Collection Date",shape="Site",size="Collection Year")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  scale_color_manual(name ="Collection Date",values=unique(STF.pca.meta$SampDate_Color[order(STF.pca.meta$SampDate)]),
+                     labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +
+  scale_shape_manual(values = c(7,8, 15,16,17,18)) +
+  xlab("PC1 [63.78%]") + ylab("PC2 [17.03%]") + scale_size_manual(values = c("2020" = 7, "2021"=4)) +   guides(shape = guide_legend(override.aes = list(size = 5)))
+
+ggsave(pca1b,filename = "figures/SurfaceTypeFrequencies/SSD_CLR_STFs_PCA_v2.png", width=15, height=10, dpi=600)
+
+pca1c<-ggplot(STF.pca.meta, aes(x=PC1, y=PC2)) +geom_point(aes(color=factor(STF_Date),shape=Site,size=CollectionYear))+theme_bw()+
+  labs(title="PCA: Surface Type Frequencies in Salton Sea Dust",subtitle="Using CLR Transformed Surface Type Frequencies",color="Surface Date",shape="Site",size="Collection Year")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+  scale_shape_manual(values = c(7,8, 15,16,17,18)) + scale_color_manual(name ="Date Ranges",values=brewer.pal(n = 7, name = "Dark2"), labels=c("5/13/20 - 7/10/20", "7/10/20 - 8/30/20", "8/30/20 - 10/10/20","10/10/20 - 11/6/20",
+                                                                                                     "6/5/21 - 8/19/21", "8/19/21 - 10/1/21", "10/1/21 - 12/8/21")) +
+  xlab("PC1 [63.78%]") + ylab("PC2 [17.03%]") + scale_size_manual(values = c("2020" = 7, "2021"=4)) +   guides(shape = guide_legend(override.aes = list(size = 5)))
+
+ggsave(pca1c,filename = "figures/SurfaceTypeFrequencies/SSD_CLR_STFs_PCA_v3.png", width=15, height=10, dpi=600)
 
 # sample month shape, depth color
-pca2<-ggplot(STF.pca.meta, aes(x=PC1, y=PC2)) +
-  geom_point(aes(color=as.numeric(Depth_m),shape=SampleMonth), size=5)+theme_bw()+
-  labs(title="PCA: STFironmental Variables in Salton Seawater",subtitle="Using clr Transformed Data",xlab="Axis 1", ylab="Axis 2",color="Depth (m)")+
-  theme_classic()+ theme(axis.title.x = element_text(size=15),axis.title.y = element_text(size=15),legend.title.align=0.5, legend.title = element_text(size=15),axis.text = element_text(size=12),axis.text.x = element_text(vjust=1),legend.text = element_text(size=12),plot.title = element_text(size=17))+
-  scale_color_continuous(low="blue3",high="red",trans = 'reverse') + scale_shape_discrete(labels=c("August 2021","December 2021","April 2022"),name="Sample Date") +
-  xlab("Axis 1 [62.69%]") + ylab("Axis 2 [14.53%]")
-
-ggsave(pca2,filename = "figures/STFVariablesOnly/SSD_clrSTFOnly_PCA_Depth_SampDate.png", width=12, height=10, dpi=600)
+# pca2<-ggplot(STF.pca.meta, aes(x=PC1, y=PC2)) +
+#   geom_point(aes(color=as.numeric(Depth_m),shape=SampleMonth), size=5)+theme_bw()+
+#   labs(title="PCA: STFironmental Variables in Salton Seawater",subtitle="Using clr Transformed Data",xlab="Axis 1", ylab="Axis 2",color="Depth (m)")+
+#   theme_classic()+ theme(axis.title.x = element_text(size=15),axis.title.y = element_text(size=15),legend.title.align=0.5, legend.title = element_text(size=15),axis.text = element_text(size=12),axis.text.x = element_text(vjust=1),legend.text = element_text(size=12),plot.title = element_text(size=17))+
+#   scale_color_continuous(low="blue3",high="red",trans = 'reverse') + scale_shape_discrete(labels=c("August 2021","December 2021","April 2022"),name="Sample Date") +
+#   xlab("Axis 1 [63.78%]") + ylab("Axis 2 [17.03%]")
+#
+# ggsave(pca2,filename = "figures/STFVariablesOnly/SSD_clrSTFOnly_PCA_Depth_SampDate.png", width=12, height=10, dpi=600)
 
 #### Compare Env Samples Variance by Sample Date ####
 # Kruskal-Wallis test = nonparametric one-way ANOVA
