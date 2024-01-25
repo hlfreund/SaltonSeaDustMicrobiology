@@ -425,6 +425,67 @@ pcoa.axis2.hm<-ggplot(b.pcoa.dts, aes(Site, SampDate, Axis.2, fill=Axis.2)) +
 
 ggsave(pcoa.axis2.hm,filename = "figures/BetaDiversity/SSD_16S_CLR_PCoA_PC2_Site_by_SampDate.png", width=18, height=13, dpi=600)
 
+## Loop to Generate Heat Map for Each PC Axis
+
+pc.plot.list<-list() # create empty list for each plot to be stored in
+pc.axes<-names(b.pcoa.dts)[grepl("Axis",names(b.pcoa.dts))] # pull out names of columns in df that contain "Axis" in name
+
+# heatmap function that you will use to generate each heatmap
+hm.fxn<-function(df, x_var, y_var, f_var) {
+  a <- ggplot(df, aes(x = x_var, y = y_var, fill = f_var)) +
+    geom_tile(color = "black") +
+    scale_fill_gradient(low = "blue", high = "red") +
+    geom_text(aes(label = round(f_var,2)), color = "white", size = 4) +
+    coord_fixed() +
+    theme_classic() +
+    theme(axis.title.x = element_text(size=20),axis.title.y = element_text(size=20),legend.title.align=0.5, legend.title = element_text(size=18),
+          axis.text = element_text(size=15),axis.text.x = element_text(),legend.text = element_text(size=15),plot.title = element_text(size=22),
+          axis.ticks=element_line(size=0.4),panel.grid = element_blank(),plot.subtitle=element_text(size=14),text=element_text(size=14)) +
+    labs(x = "",
+         y = "",
+         fill = "R",
+         title = as.character(f_var))
+
+
+  return(a)
+}
+
+# loop through variable containing col names in df of interest
+# create heatmap, then adjust title and legend title, add plot to a list of plots, then save plot to file
+for (i in pc.axes) {
+  pc.heatmap=hm.fxn(b.pcoa.dts, b.pcoa.dts$Site, b.pcoa.dts$SampDate, b.pcoa.dts[,i])
+  hm_titled = pc.heatmap + ggtitle(as.character(i)) + guides(fill=guide_legend(title="PC Values"))
+  pc.plot.list[[i]]=hm_titled
+  ggsave(hm_titled,filename = paste("figures/BetaDiversity/PCoA_Axes_Heatmaps/SSD_16S_PCoA_Site_SampDate_heatmap_",i,".png",sep=""), width=18, height=13, dpi=600) # i will be the unique identifier. and change the extension from .png to whatever you like (eps, pdf etc).
+
+}
+
+
+# call each plot in list by index to view plots
+pc.plot.list[[1]] # PC 1
+pc.plot.list[[2]] # PC 2
+pc.plot.list[[9]] # PC 9
+pc.plot.list[[27]] # PC 27
+
+#
+# loop.hm<-function(df, x_var, y_var, f_var) {
+#   a <- ggplot(df, aes(x = x_var, y = y_var, fill = f_var)) +
+#     geom_tile(color = "black") +
+#     scale_fill_gradient(low = "blue", high = "red") +
+#     geom_text(aes(label = round(f_var,2)), color = "white", size = 4) +
+#     coord_fixed() +
+#     theme_minimal() +
+#     labs(x = "",
+#          y = "",
+#          fill = "R", # Want the legend title to be each of the column names that are looped
+#          title = as.character(f_var))
+#
+#   #ggsave(a, file = paste0("figures/BetaDiversity/SSD_16S.PCoA_heatmap_", f_var,".png"), device = png, width = 15, height = 15, units = "cm")
+#
+#   return(a)
+# }
+# # loop with heatmap function to create heatmap
+
 
 s.t.pcoa<-melt(b.pcoa.dts[,-1], by=c("Site","SampDate"))
 colnames(s.t.pcoa)[which(names(s.t.pcoa) == "variable")] <- "PCoA_Axis"
