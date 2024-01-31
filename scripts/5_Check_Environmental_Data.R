@@ -47,6 +47,50 @@ bac.ASV_table[(nrow(bac.ASV_table)-4):(nrow(bac.ASV_table)),(ncol(bac.ASV_table)
 head(dust_meta)
 head(SurfTypFreq)
 
+#### Look at Surface Type Frequencies by Sample for Modeling Later ####
+
+# melt down data so that we can make a stacked barplot
+STF.melt<-melt(SurfTypFreq[,c(1,3:12,15:16)],by=c("Site","SampleID","STF_Date"))
+colnames(STF.melt)[which(names(STF.melt) == "variable")] <- "SurfaceType"
+colnames(STF.melt)[which(names(STF.melt) == "value")] <- "Frequency"
+head(STF.melt)
+
+# create palette
+colorset9 = melt(c("BarrenLand"="peachpuff2","CropLand"="gold1","Developed"="gray","Forest"="darkgreen","Herbaceous"="limegreen",
+                   "Mexico"="red1","OpenWater"="mediumblue","Others"="black","SaltonSea"="darkturquoise","Shrub"="saddlebrown"))
+colorset9$SurfaceType<-rownames(colorset9)
+colnames(colorset9)[which(names(colorset9) == "value")] <- "ST_Color"
+colorset9
+
+# merge color palette and STF data together
+STF.melt<-merge(STF.melt, colorset9, by="SurfaceType")
+head(STF.melt)
+STF.melt$SampDate_Color <- as.character(STF.melt$ST_Color)
+head(SurfTypFreq)
+
+# create factors for organizing data in plot
+STF.melt$Site<-factor(STF.melt$Site,levels=c("PD","BDC","DP","WI"))
+unique(STF.melt$STF_Date)
+STF.melt$SampleID = factor(STF.melt$SampleID, levels=unique(STF.melt$SampleID[order(STF.melt$Site,STF.melt$STF_Date)]), ordered=TRUE)
+
+# plot time
+stfplt1<-ggplot(STF.melt, aes(x=SampleID, y=Frequency, fill=SurfaceType))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
+  labs(title = "Surface Type Frequencies in Salton Sea Dust", x="SampleID", y="Frequency", subtitle="",fill="Surface Type")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+  guides(fill=guide_legend(ncol=1))+
+  scale_fill_manual(name ="Surface Type",values=unique(STF.melt$ST_Color[order(STF.melt$SurfaceType)]),labels=c("Barren Land","Crop Land","Developed","Forest","Herbaceous","Mexico","Open Water","Others","Salton Sea","Shrub"))
+
+ggsave(stfplt1,filename = "figures/SurfaceTypeFrequencies/SSD_STFs_Barplot.png", width=15, height=10, dpi=600)
+
+stfplt2<-ggplot(STF.melt, aes(x=SampleID, y=Frequency, fill=SurfaceType))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
+  labs(title = "Surface Type Frequencies in Salton Sea Dust", x="SampleID", y="Frequency", subtitle="",fill="Surface Type")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+  guides(fill=guide_legend(ncol=1))+
+  scale_fill_manual(name ="Surface Type",values=unique(STF.melt$ST_Color[order(STF.melt$SurfaceType)]),labels=c("Barren Land","Crop Land","Developed","Forest","Herbaceous","Mexico","Open Water","Others","Salton Sea","Shrub")) +
+  facet_wrap(vars(Site), scales = "free")
+
+ggsave(stfplt2,filename = "figures/SurfaceTypeFrequencies/SSD_STFs_Barplot2.png", width=15, height=15, dpi=600)
+
 #### Using Shapiro-Wilk test for Normality ####
 
 shapiro.test(SurfTypFreq$BarrenLand) # what is the p-value?
