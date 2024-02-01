@@ -65,7 +65,7 @@ colorset9
 # merge color palette and STF data together
 STF.melt<-merge(STF.melt, colorset9, by="SurfaceType")
 head(STF.melt)
-STF.melt$SampDate_Color <- as.character(STF.melt$ST_Color)
+STF.melt$ST_Color <- as.character(STF.melt$ST_Color)
 head(SurfTypFreq)
 
 # create factors for organizing data in plot
