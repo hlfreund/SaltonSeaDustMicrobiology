@@ -82,6 +82,8 @@ sites <- sites %>%
 # distHaversine - shortest distance between 2 points (i.e., great-circle-distance or as the crow flies), according to the 'haversine method'
 # ^^ this method assumes a spherical Earth
 
+# ** NEED TO FILTER AND FIND SITE THAT IS CLOSEST TO EACH SITE, MONTH/YEAR
+
 ## Then filter the sites by the following info:
 ### distance between site + Salton Sea coordinates is <= 40km
 ### site has data between time points of dust collections that we are looking at
@@ -95,7 +97,7 @@ write_rds(sites, 'data/MesoWest_SaltonSea_2020-2021_SiteData.rds')
 #### Pull Out TimeSeries Data for Sites Near Salton Sea ####
 ## full timeseries variable list: https://demos.synopticdata.com/variables/index.html
 
-i.STID <- sites$STID[1]
+i.STID <- sites$STID[1] # checking the index (1)
 
 time_series_data <- lapply(sites$STID, function(i.STID){
   dt <- mw(service = 'timeseries', stid =i.STID,
