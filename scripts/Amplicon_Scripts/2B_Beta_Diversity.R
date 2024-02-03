@@ -185,6 +185,7 @@ b.pcoa.meta$SampleMonth
 b.pcoa.meta$SampDate
 
 head(b.pcoa.meta)
+rownames(b.pcoa.meta)<-b.pcoa.meta$SampleID
 
 head(b.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axes labels
 # PC1 = 22.18%, PC2 = 10.31%
@@ -1005,112 +1006,167 @@ png('figures/BetaDiversity/SSD_boxplot_centroid_distance_site_2020_only.png',wid
 boxplot(b.disper5,xlab="By Site (2020 Only)", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
 dev.off()
 
-#### PERMANOVAs to Env Variables Across Groups ####
+#### Linear Models with Surface Type Frequencies & PC Axes ####
+head(b.pcoa.meta)
 
-## The currently preferred analysis for evaluating differences among groups is PERMANOVA.
-## This analysis partitions sums of squares using dissimilarities,
-##  evaluating differences in the centroids of groups in multivariate space.
-##  The vegan functions “adonis” and “adonis2” are used to compute PERMANOVA in R.
+SurfTypFreq[,3:12]
 
-help(adonis)
+sft.pcoa.meta<-merge(SurfTypFreq,b.pcoa.meta,by=c("SampleID","Site"))
+# loop through list containing each site's metadata and use match_dat to pair with CLR data
 
-## can specify dataframes for analysis, or we can alternatively specify a dissimilarity matrix:
+# glm.loop<-function(comp.df, df2){
+#   glm.res<-glm(formula = Bac_Shannon_Diversity ~ DO_Percent_Local, data=bac.div.metadat)%>%
+#     adjust_pvalue(method="bonferroni")
+# }
 
-#Other advantages of using PERMANOVA are that we can test for interactions between predictor variables,
-## and we can use both categorical and continuous predictor variables.
-## An advantage of adonis2 is that we can test for overall model fit, setting by=NULL, or by individual terms (w/ by="terms")
-## w/ distance matrices - The adonis2 tests are identical to anova.cca of dbrda. With Euclidean distances, the tests are also identical to anova.cca of rda.
 
-# create column for Depth that is a numeric version of this variable, rather than a factor
-dust_meta$Depth.num<-as.numeric(as.character(dust_meta$Depth_m))
+for (i in names(sft.pcoa.meta[,grep("Axis*",colnames(sft.pcoa.meta))])){
 
-# now make sure your data frames you're comparing are in the same exact order!!
-rownames(b.clr) %in% rownames(dust_meta)
-dust_meta=dust_meta[rownames(b.clr),] ## reorder metadata to match order of CLR data
-perm <- with(dust_meta, how(nperm = 1000)) # using SampDate as block because there is a significant difference between sample dates, trying to remove this effect when looking at permanovas
+  print(sft.pcoa.meta[,i]) # shows what is in each element within list
+  #print(names(site_subsets[i]))
+  # new.clr.df<-match_dat(b.clr,site_subsets[[i]])
+  #
+  # <-glm(formula = Bac_Shannon_Diversity ~ DO_Percent_Local, data=bac.div.metadat)%>%
+  #   adjust_pvalue(method="bonferroni")
+  #
+  # # model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
+  # summary(s.div.glm.fit1)
+  #
+  # assign(paste0("b.clr_",names(site_subsets[i])), new.clr.df,envir = .GlobalEnv)
+}
 
-pnova1<-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Depth.num*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
-pnova1
-# nothing
+glm.pcs.sfts <- list() # create empty list to hold output
 
-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Depth.num*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
-#         Df SumOfSqs     R2    F Pr(>F)
-#Model    23    25343  1
-#Residual  0        0  0
-#Total    23    25343  1
+for(i in 1:length(sft.pcoa.meta[,grep("Axis*",colnames(sft.pcoa.meta))])){
+  for (j in 1:length(SurfTypFreq[,3:12])){
+    print(sft.pcoa.meta[[i]])
+    print(SurfTypFreq[[j]])
+    #glm.pcs.sfts[[i]] <- glm(sft.pcoa.meta[[i]]~SurfTypFreq[[j]], data = SurfTypFreq, family=gaussian)
+    #assign(paste0(names(sft.pcoa.meta[[i]]),"~",names(SurfTypFreq[[j]])), glm.pcs.sfts[[i]], envir = .GlobalEnv)
+    #names(glm.pcs.sfts)[i] <- capture.output(frmlas[[i]]) # name each entry in output list for each identification
+  }
 
-pnova2<-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
-pnova2
-# nothing significant
+}
 
-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
-#         Df SumOfSqs      R2      F   Pr(>F)
-#Model    23    34412 0.73114 1.8918 0.4615
-#Residual 16    12654 0.26886
-#Total    39    47066 1.00000
+STFs_only<-SurfTypFreq[,3:12]
+pcoa.axes<-b.pcoa.vectors[,-(ncol(b.pcoa.vectors))]
 
-pnova3<-adonis2(b.clr ~ DO_Percent_Local*ORP_mV*Temp_DegC*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
-pnova3
+glm_<- vector('list', ncol(pcoa.axes) * ncol(STFs_only))
+results_<- vector('list', ncol(pcoa.axes) * ncol(STFs_only))
+mdlnum <- 1
 
-adonis2(b.clr ~ ORP_mV*DO_Percent_Local*Dissolved_OrganicMatter_RFU*Sulfate_milliM*Sulfide_microM,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
 
-pnova4<-adonis2(b.clr ~ ORP_mV*DO_Percent_Local*Dissolved_OrganicMatter_RFU*Sulfate_milliM,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
-pnova4
-#                                         Df SumOfSqs      R2       F   Pr(>F)
-# ORP_mV                                                              1   3435.1 0.13555  8.0320 0.000999 ***
-# DO_Percent_Local                                                    1   4009.5 0.15821  9.3749 0.000999 ***
-# Dissolved_OrganicMatter_RFU                                         1   5843.0 0.23056 13.6620 0.000999 ***
-# Sulfate_milliM                                                      1    961.4 0.03794  2.2480 0.042957 *
-# ORP_mV:DO_Percent_Local                                             1   1322.9 0.05220  3.0932 0.002997 **
-# DO_Percent_Local:Dissolved_OrganicMatter_RFU                        1   1413.3 0.05577  3.3045 0.005994 **
-# DO_Percent_Local:Sulfate_milliM                                     1    794.0 0.03133  1.8566 0.072927 .
-p.adjust(pnova4$`Pr(>F)`,method="bonferroni",n=length(pnova4$`Pr(>F)`)) # adjusted pval
+for (i in 1:ncol(pcoa.axes)){
+  for (j in 1:ncol(STFs_only)){
+    glm.form<-paste0(colnames(pcoa.axes[,i]),"~",colnames(STFs_only[j]))
+    glm_[[mdlnum]] <-glm(pcoa.axes[,i]~STFs_only[,j], family=gaussian)
+    results_[[mdlnum]] <-summary(glm_[[mdlnum]])
+    #names(results_[[mdlnum]])<-glm.form
+    #assign(glm.form, summary(glm(pcoa.axes[,i]~STFs_only[,j]), family=gaussian),envir = .GlobalEnv)
+    mdlnum <- mdlnum + 1
+    #print(colnames(STFs_only[j]))
+    #print(colnames(pcoa.axes))
+  }
+}
 
-adonis2(b.clr ~ ORP_mV*DO_Percent_Local*Dissolved_OrganicMatter_RFU*Sulfate_milliM,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
-#         Df SumOfSqs      R2      F   Pr(>F)
-#Model    15  21921.1 0.86499 3.417 0.000999 ***
-#Residual  8   3421.5 0.13501
-#Total    23  25342.6 1.00000
 
-pnova4b<-adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU*ORP_mV,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
-pnova4b
-#                                   Df SumOfSqs      R2       F   Pr(>F)
-# DO_Percent_Local                                     1   5830.3 0.23006 12.2377 0.000999 ***
-#Dissolved_OrganicMatter_RFU                          1   6344.6 0.25036 13.3172 0.000999 ***
-# ORP_mV                                               1   1112.7 0.04391  2.3355 0.027972 *
-# DO_Percent_Local:Dissolved_OrganicMatter_RFU         1   1268.0 0.05004  2.6616 0.010989 *
-# DO_Percent_Local:ORP_mV                              1   1792.5 0.07073  3.7624 0.000999 ***
-# Dissolved_OrganicMatter_RFU:ORP_mV                   1    652.0 0.02573  1.3686 0.173826
-# DO_Percent_Local:Dissolved_OrganicMatter_RFU:ORP_mV  1    719.5 0.02839  1.5103 0.159840
-# Residual                                            16   7622.8 0.30079
-# Total                                               23  25342.6 1.00000
+#### Linear Regression Comparisons - Shannon Diversity ####
+## here the focus is comparing dust complexity to alpha diversity, species richness, & elevation
+head(bac.div.metadat)
 
-p.adjust(pnova4b$`Pr(>F)`,method="bonferroni",n=length(pnova4b$`Pr(>F)`)) # adjusted pval
+# just look at everything at once in step-wise fashion
+step1<-step(glm(formula = Bac_Shannon_Diversity ~ ., data=bac.div.metadat[,c(3,11,13:14,18:20)]))
+#                 Estimate Std. Error t value Pr(>|t|)
+# ORP_mV           -7.049      3.865  -1.824 0.083128 .
+# Temp_DegC       -20.691      4.716  -4.387 0.000285 ***
+# Sulfate_milliM  -10.211      4.099  -2.491 0.021651 *
 
-pnova5<-adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU,data=dust_meta,method = "euclidean",by="terms",permutations=perm)
-pnova5
-#                                               Df SumOfSqs      R2       F   Pr(>F)
-# DO_Percent_Local                              1   5830.3 0.23006  9.5297 0.000999 ***
-#   Dissolved_OrganicMatter_RFU                   1   6344.6 0.25036 10.3704 0.000999 ***
-#   DO_Percent_Local:Dissolved_OrganicMatter_RFU  1    931.5 0.03676  1.5226 0.134865
-# Residual                                     20  12236.1 0.48283
-# Total                                        23  25342.6 1.00000
+div.glm.all<-glm(formula = Bac_Shannon_Diversity ~ ., data=bac.div.metadat[,c(3,11,13:14,18:20)])
+summary(div.glm.all)
 
-p.adjust(pnova5$`Pr(>F)`,method="bonferroni",n=length(pnova5$`Pr(>F)`)) # adjusted pval
+div.glm.p<-coef(summary(div.glm.all))[,4] # p-values
+Div.GLM.Pval<-data.frame(Div.GLM.AdjPval=p.adjust(div.glm.p, method="bonferroni",n=length(div.glm.p)),Div.GLM.Pval=div.glm.p)
+#                               Div.GLM.AdjPval Div.GLM.Pval
+# (Intercept)                    1.209565e-14 1.727951e-15
+# DO_Percent_Local               1.000000e+00 5.749260e-01
+# ORP_mV                         1.000000e+00 3.469644e-01
+# Temp_DegC                      7.803731e-02 1.114819e-02 -- near sig after adjustment
+# Dissolved_OrganicMatter_RFU    1.000000e+00 9.064130e-01
+# Sulfate_milliM                 3.569710e-01 5.099586e-02
+# Sulfide_microM                 1.000000e+00 6.472779e-01
 
-adonis2(b.clr ~ DO_Percent_Local*Dissolved_OrganicMatter_RFU,data=dust_meta,method = "euclidean",by=NULL,permutations=perm)
-#         Df SumOfSqs      R2      F   Pr(>F)
-#Model     3    13106 0.51717 7.1409 0.000999 ***
-#Residual 20    12236 0.48283
-#Total    23    25343 1.00000
+# [Example Code for Different Models]
 
-### SELF REMINDER FOR R^2
-### Coefficient of Determination, denoted R2 or r2
-### is the proportion of the variance in the dependent variable that is predictable from the independent variable(s)
+s.div.glm.fit1<-glm(formula = Bac_Shannon_Diversity ~ DO_Percent_Local, data=bac.div.metadat)%>%
+  adjust_pvalue(method="bonferroni")
 
-### Pseudo F stat for PERMANOVA
-### pseudo F-ratio: It compares the total sum of squared dissimilarities (or ranked dissimilarities) among objects belonging to different groups to that of objects belonging to the same group.
-### Larger F-ratios indicate more pronounced group separation, however, the significance of this ratio is usually of more interest than its magnitude.
+# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
+summary(s.div.glm.fit1)
+
+# sanity check that lm() vs glm(familiy=Gaussian) is the same thing - and it is!
+summary(lm(formula = Bac_Shannon_Diversity ~ DO_Percent_Local, data=bac.div.metadat)%>%
+          adjust_pvalue(method="bonferroni"))
+
+# code for mixed effects model
+mixed1 = lmer(Bac_Shannon_Diversity ~ DO_Percent_Local+ (1 | Depth_m), data = bac.div.metadat)
+summary(mixed1)
+
+# Shan Div ~ DO%
+plot(Bac_Shannon_Diversity ~ DO_Percent_Local, data=bac.div.metadat,col=SampDate_Color)
+
+# Shan Div ~ ORP
+
+plot(Bac_Shannon_Diversity ~ ORP_mV, data=bac.div.metadat,col=SampDate_Color)
+
+# Shan Div ~ Temp (C)
+
+plot(Bac_Shannon_Diversity ~ Temp_DegC, data=bac.div.metadat,col=SampDate_Color)
+
+# Shan Div ~ DOM
+
+plot(Bac_Shannon_Diversity ~ Dissolved_OrganicMatter_RFU, data=bac.div.metadat,col=SampDate_Color)
+
+# Shan Div ~ Sulfate
+
+plot(Bac_Shannon_Diversity ~ Sulfate_milliM, data=bac.div.metadat,col=SampDate_Color)
+
+# Shan Div ~ Sulfide
+
+plot(Bac_Shannon_Diversity ~ Sulfide_microM, data=bac.div.metadat,col=SampDate_Color)
+
+# Shan Div ~ Depth
+plot(Bac_Shannon_Diversity ~ Depth.num, data=bac.div.metadat,col=SampDate_Color)
+
+fit1<-aov(Bac_Shannon_Diversity ~ SampDate, data=bac.div.metadat)
+#pairwise.adonis(bac.div.metadat$Bac_Shannon_Diversity, bac.div.metadat$SampDate, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
+
+summary(fit1)
+#Df           Sum Sq Mean Sq    F value   Pr(>F)
+#SampDate     2   3214  1607.1   5.317 0.0135 *
+#Residuals   21   6347   302.2
+
+# Tukey test - tells us which groups are significantly different from each other (more here: https://www.r-bloggers.com/2013/06/anova-and-tukeys-test-on-r/)
+Tuk1<-TukeyHSD(fit1)
+Tuk1$SampDate
+#                             diff        lwr      upr      p adj
+# December.2021-August.2021 24.7566611   2.846671 46.66665 0.02503300 *
+# April.2022-August.2021    24.3365005   2.426510 46.24649 0.02778694 *
+# April.2022-December.2021  -0.4201606 -22.330151 21.48983 0.99871280
+
+# fit.0<-aov(DustComplexity ~ as.factor(Elevation), data=bac.div.metadat)
+# summary(fit.0)
+# TukeyHSD(fit.0)
+# Levene's test with one independent variable
+## Levene's tests whether variances of 2 samples are equal
+## we want variances to be the same -- want NON SIGNIFICANCE!
+## t test assumes that variances are the same, so Levene's test needs to be non significant
+## Fligner's test is a Levene's test for data that are not normally distributed
+## more here: https://www.geeksforgeeks.org/fligner-killeen-test-in-r-programming/
+fligner.test(Bac_Shannon_Diversity ~ SampDate, data = bac.div.metadat)
+# Fligner-Killeen:med chi-squared = 1.1963, df = 7, p-value = 0.991
+# Which shows that the data do not deviate significantly from homogeneity.
+compare_means(Bac_Shannon_Diversity ~ SampDate, data=bac.div.metadat, method="anova",p.adjust.method = "bonferroni") # won't take as.factor(Elevation) as input
+
 
 #### Save Everything ####
 save.image("data/SSea Dust_BetaDiv_Data.Rdata")
