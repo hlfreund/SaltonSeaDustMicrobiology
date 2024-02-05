@@ -397,7 +397,9 @@ rda.all.d2$anova # see significance of individual terms in model
 rownames(WI) %in% rownames(b.clr_WI) # check order of DFs
 head(WI)
 
-rda.WI.0<-rda(b.clr_WI ~ DO_Percent_Local+ORP_mV+Dissolved_OrganicMatter_RFU+Sulfate_milliM+Sulfide_microM+Depth.num,data=WI)
+# included all Surface type frequencies and it overfit the model so pulling some out...
+## dropping forest, open waters, others first
+rda.WI.0<-rda(b.clr_WI ~ Herbaceous+Shrub,data=WI)
 
 # check summary of RDA
 rda.WI.0
@@ -423,10 +425,8 @@ anova(rda.WI.0, by = "terms", permutations = how(nperm=999)) ### by variables
 # Calculating variance inflation factor (VIF) for each predictor variable to check multicolinearity of predictor variables
 ## VIF helps determien which predictors are too strongly correlated with other predictor variables to explain variation observed
 vif.cca(rda.WI.0)
-#  DO_Percent_Local           ORP_mV        Dissolved_OrganicMatter_RFU              Sulfate_milliM              Sulfide_microM
-# 51.647076                   39.906439                  152.528418                    3.064175                   24.074013
-# Depth.num
-# 62.700985
+# BarrenLand   CropLand  Developed     Forest Herbaceous     Mexico  OpenWater     Others  SaltonSea      Shrub
+# 46.92171   17.93014   14.81736   23.98465  127.78411   32.43178         NA         NA         NA         NA
 
 ## Understanding VIF results...
 # A value of 1 indicates there is no correlation between a given predictor variable and any other predictor variables in the model.
@@ -435,7 +435,7 @@ vif.cca(rda.WI.0)
 # when to ignore high VIF values: https://statisticalhorizons.com/multicollinearity/
 head(WI)
 ## we can use model selection instead of picking variables we think are important (by p values)
-rda.WI.a = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(8,10,14:16,18)]),
+rda.WI.a = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(23:32)]),
                          scope=formula(rda.WI.0),
                          direction = "forward",
                          permutations = how(nperm=999))
@@ -443,7 +443,7 @@ rda.WI.a = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(8,10,14:16,18)]),
 rda.WI.a$anova # see significance of individual terms in model
 
 # can also use model seletion to pick most important variables by which increases variation (R^2) the most
-rda.WI.a2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(8,10,14:16,18)]),
+rda.WI.a2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(23:32)]),
                             scope=formula(rda.WI.0),
                             permutations = how(nperm=999))
 # none
@@ -587,7 +587,7 @@ rda.WI.e2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(14,16)]),
 rownames(DP) %in% rownames(b.clr_DP) # check order of DFs
 head(DP)
 
-rda.DP.0<-rda(b.clr_DP ~ DO_Percent_Local+ORP_mV+Dissolved_OrganicMatter_RFU+Sulfate_milliM+Sulfide_microM+Depth.num,data=DP)
+rda.DP.0<-rda(b.clr_DP ~ BarrenLand+CropLand+Developed+Forest+Herbaceous+Mexico+OpenWater+Others+SaltonSea+Shrub,data=DP)
 
 # check summary of RDA
 rda.DP.0
@@ -766,7 +766,7 @@ rda.DP.e2 = ordiR2step(rda(b.clr_DP ~ 1, data = DP[,c(10,15)]),
 rownames(BDC) %in% rownames(b.clr_BDC) # check order of DFs
 head(BDC)
 
-rda.BDC.0<-rda(b.clr_BDC ~ DO_Percent_Local+ORP_mV+Dissolved_OrganicMatter_RFU+Sulfate_milliM+Sulfide_microM+Depth.num,data=BDC)
+rda.BDC.0<-rda(b.clr_BDC ~ BarrenLand+CropLand+Developed+Forest+Herbaceous+Mexico+OpenWater+Others+SaltonSea+Shrub,data=BDC)
 
 # check summary of RDA
 rda.BDC.0
@@ -911,7 +911,7 @@ rda.BDC.e2 = ordiR2step(rda(b.clr_BDC ~ 1, data = BDC[,c(14:15)]),
 rownames(PD) %in% rownames(b.clr_PD) # check order of DFs
 head(PD)
 
-rda.PD.0<-rda(b.clr_PD ~ DO_Percent_Local+ORP_mV+Dissolved_OrganicMatter_RFU+Sulfate_milliM+Sulfide_microM+Depth.num,data=PD)
+rda.PD.0<-rda(b.clr_PD ~ BarrenLand+CropLand+Developed+Forest+Herbaceous+Mexico+OpenWater+Others+SaltonSea+Shrub,data=PD)
 
 # check summary of RDA
 rda.PD.0
