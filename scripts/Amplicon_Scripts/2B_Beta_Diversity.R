@@ -1006,69 +1006,110 @@ png('figures/BetaDiversity/SSD_boxplot_centroid_distance_site_2020_only.png',wid
 boxplot(b.disper5,xlab="By Site (2020 Only)", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
 dev.off()
 
+#### Using Shapiro-Wilk test for Checking Normality of PCoA Axes ####
+shapiro.test(b.pcoa.vectors$Axis.1) # what is the p-value?
+# p-value = 0.5816
+# p > 0.05 states distribution of data are not significantly different from normal distribution
+# p < 0.05 means that data is significantly different from a normal distribution
+hist(b.pcoa.vectors$Axis.1, col="blue") # with outliars
+
+# visualize Q-Q plot for alpha div
+# The Q-Q plot, or quantile-quantile plot, is a graphical tool to help us assess if a set of data plausibly came from some theoretical distribution such as a normal or exponential.
+# For example, if we run a statistical analysis that assumes our residuals are normally distributed, we can use a normal Q-Q plot to check that assumption
+# more on Q-Q plots here: https://data.library.virginia.edu/understanding-q-q-plots/
+# more here too: https://grodri.github.io/glms/notes/c2s9#:~:text=8%20The%20Q%2DQ%20Plot,versus%20quantiles%20of%20a%20distribution.
+qqnorm(b.pcoa.vectors$Axis.1, pch = 1, frame = FALSE)
+qqline(b.pcoa.vectors$Axis.1, col = "red", lwd = 2)
+
 #### Linear Models with Surface Type Frequencies & PC Axes ####
 head(b.pcoa.meta)
 
 SurfTypFreq[,3:12]
 
-sft.pcoa.meta<-merge(SurfTypFreq,b.pcoa.meta,by=c("SampleID","Site"))
-# loop through list containing each site's metadata and use match_dat to pair with CLR data
-
-# glm.loop<-function(comp.df, df2){
-#   glm.res<-glm(formula = Bac_Shannon_Diversity ~ DO_Percent_Local, data=bac.div.metadat)%>%
-#     adjust_pvalue(method="bonferroni")
-# }
-
-
-for (i in names(sft.pcoa.meta[,grep("Axis*",colnames(sft.pcoa.meta))])){
-
-  print(sft.pcoa.meta[,i]) # shows what is in each element within list
-  #print(names(site_subsets[i]))
-  # new.clr.df<-match_dat(b.clr,site_subsets[[i]])
-  #
-  # <-glm(formula = Bac_Shannon_Diversity ~ DO_Percent_Local, data=bac.div.metadat)%>%
-  #   adjust_pvalue(method="bonferroni")
-  #
-  # # model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-  # summary(s.div.glm.fit1)
-  #
-  # assign(paste0("b.clr_",names(site_subsets[i])), new.clr.df,envir = .GlobalEnv)
-}
-
-glm.pcs.sfts <- list() # create empty list to hold output
-
-for(i in 1:length(sft.pcoa.meta[,grep("Axis*",colnames(sft.pcoa.meta))])){
-  for (j in 1:length(SurfTypFreq[,3:12])){
-    print(sft.pcoa.meta[[i]])
-    print(SurfTypFreq[[j]])
-    #glm.pcs.sfts[[i]] <- glm(sft.pcoa.meta[[i]]~SurfTypFreq[[j]], data = SurfTypFreq, family=gaussian)
-    #assign(paste0(names(sft.pcoa.meta[[i]]),"~",names(SurfTypFreq[[j]])), glm.pcs.sfts[[i]], envir = .GlobalEnv)
-    #names(glm.pcs.sfts)[i] <- capture.output(frmlas[[i]]) # name each entry in output list for each identification
-  }
-
-}
-
+# create dfs of only surface type freq data and only the pcoa axes of interest
 STFs_only<-SurfTypFreq[,3:12]
+head(STFs_only)
 pcoa.axes<-b.pcoa.vectors[,-(ncol(b.pcoa.vectors))]
+head(pcoa.axes)
 
-glm_<- vector('list', ncol(pcoa.axes) * ncol(STFs_only))
-results_<- vector('list', ncol(pcoa.axes) * ncol(STFs_only))
-mdlnum <- 1
+dim(STFs_only) # confirming that both data frames have the same # of rows
+dim(pcoa.axes)
 
+rownames(STFs_only) # check rownames to see if they are in the same order in both data frames
+rownames(pcoa.axes)
 
-for (i in 1:ncol(pcoa.axes)){
-  for (j in 1:ncol(STFs_only)){
-    glm.form<-paste0(colnames(pcoa.axes[,i]),"~",colnames(STFs_only[j]))
-    glm_[[mdlnum]] <-glm(pcoa.axes[,i]~STFs_only[,j], family=gaussian)
-    results_[[mdlnum]] <-summary(glm_[[mdlnum]])
-    #names(results_[[mdlnum]])<-glm.form
-    #assign(glm.form, summary(glm(pcoa.axes[,i]~STFs_only[,j]), family=gaussian),envir = .GlobalEnv)
-    mdlnum <- mdlnum + 1
-    #print(colnames(STFs_only[j]))
-    #print(colnames(pcoa.axes))
+# reorder data frames so they are in the same order by row (SampleID)
+STFs_only=STFs_only[rownames(pcoa.axes),] ## reorder metadata to match order of CLR data
+
+rownames(STFs_only) # check rownames to see if they are in the same order in both data frames after reordering
+rownames(pcoa.axes)
+
+glm_<- vector('list', ncol(pcoa.axes) * ncol(STFs_only)) # create empty list where the GLM output is stored
+results_<- vector('list', ncol(pcoa.axes) * ncol(STFs_only)) # create an empty list where the GLM summaries are stored
+sig.results<-vector('list', ncol(pcoa.axes) * ncol(STFs_only))
+mdlnum <- 1 # counting our model numbers for indexes purposes in the loop
+
+# use a loop to run a bunch of GLMs
+## pcoa.axes[i] is dependent variable (y), STFs_only[j] is independent variable (x) in GLM
+for (i in 1:ncol(pcoa.axes)){ # for each column in pcoa.axes
+  for (j in 1:ncol(STFs_only)){ # for each column in STFs_only
+    glm_[[mdlnum]] <-glm(pcoa.axes[,i]~STFs_only[,j], family=gaussian) # run the GLM with the gaussian distribution, where df1[i] is your dependent variable and df2[j] is your independent variable
+    results_[[mdlnum]] <-summary(glm_[[mdlnum]]) # save results of glm into list called results
+    names(results_)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STFs_only)[j]) # rename list element to contain the name of the columns used in the model
+    mdlnum <- mdlnum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
+
   }
 }
 
+## pcoa.axes[i] is dependent variable (y), STFs_only[j] is independent variable (x) in GLM
+for (i in 1:ncol(pcoa.axes)){ # for each column in pcoa.axes
+  for (j in 1:ncol(STFs_only)){ # for each column in STFs_only
+    glm_[[mdlnum]] <-glm(pcoa.axes[,i]~STFs_only[,j], family=gaussian) # run the GLM with the gaussian distribution, where df1[i] is your dependent variable and df2[j] is your independent variable
+    results_[[mdlnum]] <-summary(glm_[[mdlnum]]) # save results of glm into list called results
+    names(results_)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STFs_only)[j]) # rename list element to contain the name of the columns used in the model
+
+    ifelse(coef(results_[[mdlnum]])[,4] < 0.05, sig.results[[mdlnum]]<-results_[[mdlnum]], "Not Sig")
+    names(sig.results)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STFs_only)[j])
+    mdlnum <- mdlnum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
+
+  }
+}
+sig.results[sapply(sig.results, is.null)] <- NULL
+
+multi.univar.glm.fxn<-function(dep.var.df,indep.var.df,distro){
+  # create empty lists to store stuff & model number (mdlnum) to keep track of models each iteration of loop in fxn
+  glm_<- vector('list', ncol(dep.var.df) * ncol(indep.var.df)) # create empty list where the GLM output is stored
+  results_<- vector('list', ncol(dep.var.df) * ncol(indep.var.df)) # create an empty list where the GLM summaries are stored
+  sig.results<-vector('list', ncol(dep.var.df) * ncol(indep.var.df))
+  mdlnum <- 1 # counting our model numbers for indexes purposes in the loop
+
+  # run the nested loop that generates GLMs from each data frame
+  ## dep.var.df[i] is dependent variable (y), indep.var.df[j] is independent variable (x) in GLM
+  for (i in 1:ncol(dep.var.df)){ # for each column in dep.var.df
+    for (j in 1:ncol(indep.var.df)){ # for each column in indep.var.df
+      glm_[[mdlnum]] <-glm(dep.var.df[,i]~indep.var.df[,j], family=distro) # run the GLM with the gaussian distribution, where df1[i] is your dependent variable and df2[j] is your independent variable
+      results_[[mdlnum]] <-summary(glm_[[mdlnum]]) # save results of glm into list called results
+      names(results_)[mdlnum]<-paste(names(dep.var.df)[i],"~",names(indep.var.df)[j]) # rename list element to contain the name of the columns used in the model
+
+      # save only significant GLMs to another list called sig.results
+      ## if p-value < 0.05, save to sig.results list
+      ifelse(coef(results_[[mdlnum]])[,4] < 0.05, sig.results[[mdlnum]]<-results_[[mdlnum]], "Not Sig")
+      names(sig.results)[mdlnum]<-paste(names(dep.var.df)[i],"~",names(indep.var.df)[j])
+      mdlnum <- mdlnum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
+
+    }
+  }
+
+  # drop all NULL elements from sig.results list so it only includes significant GLMs
+  sig.results[sapply(sig.results, is.null)] <- NULL
+
+  # assign lists to global env so they are saved there are function ends
+  assign("results.glms", results_,envir = .GlobalEnv)
+  assign("sig.results.glms", sig.results,envir = .GlobalEnv)
+
+}
+
+multi.univar.glm.fxn(pcoa.axes,STFs_only,gaussian) # test the function!
 
 #### Linear Regression Comparisons - Shannon Diversity ####
 ## here the focus is comparing dust complexity to alpha diversity, species richness, & elevation
