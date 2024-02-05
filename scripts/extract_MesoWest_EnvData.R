@@ -88,11 +88,21 @@ sites <- sites %>%
 ### distance between site + Salton Sea coordinates is <= 40km
 ### site has data between time points of dust collections that we are looking at
 sites <- sites %>%
-  filter(dist <= 40000) %>%
+  filter(dist <= 200000) %>%
   filter(start <= as.Date('2020-06-01')) %>%
   filter(end >= as.Date('2021-12-31'))
 
-write_rds(sites, 'data/MesoWest_SaltonSea_2020-2021_SiteData.rds')
+# pull out only sites that we are interested in
+# BDC’s closest weather station - D0742
+# PD’s closest weather station - C2285
+# DP’s closest weather station - DPMC1
+# WI’s closest weather station - UP614
+
+our.site.list<-c("D0742","C2285","DPMC1","UP614")
+
+sites<-sites[sites$STID %in% our.site.list,] # only keep sites of interest
+
+#write_rds(sites, 'data/MesoWest_SaltonSea_2020-2021_SiteData.rds')
 
 #### Pull Out TimeSeries Data for Sites Near Salton Sea ####
 ## full timeseries variable list: https://demos.synopticdata.com/variables/index.html
@@ -102,7 +112,7 @@ i.STID <- sites$STID[1] # checking the index (1)
 time_series_data <- lapply(sites$STID, function(i.STID){
   dt <- mw(service = 'timeseries', stid =i.STID,
            vars = c('wind_speed','wind_gust','wind_direction',
-                    'wind_cardinal_direction', 'air_temp','relative_humidity','precip_accum',
+                    'air_temp','relative_humidity','precip_accum',
                     'incoming_radiation_uv'),
            start = '202006010001', end = '202201010001', jsonsimplify= TRUE)
 
@@ -145,7 +155,7 @@ time_series_data_out <- full_join(time_series_data_scalar, time_series_data_dir)
 
 #### Pull Out Precipitation Data for Sites Near Salton Sea ####
 ## info on precipitation data can be found here: https://docs.synopticdata.com/services/precipitation
-d<-mw(service = 'precipitation', stid='UP612', start =  '202007010001', end ='202201010001', pmode='intervals', interval = 'hour', jsonsimplify = TRUE, returnURL =FALSE)
+d<-mw(service = 'precipitation', stid='UP614', start =  '202007010001', end ='202201010001', pmode='intervals', interval = 'hour', jsonsimplify = TRUE, returnURL =FALSE)
 clim <- data.frame( lapply( d$STATION$OBSERVATIONS, unlist) )
 
 
