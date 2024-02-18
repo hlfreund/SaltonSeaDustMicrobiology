@@ -85,7 +85,7 @@ sites <- sites %>%
 # ** NEED TO FILTER AND FIND SITE THAT IS CLOSEST TO EACH SITE, MONTH/YEAR
 
 ## Then filter the sites by the following info:
-### distance between site + Salton Sea coordinates is <= 40km
+### increase distance to find stations near all sample sites
 ### site has data between time points of dust collections that we are looking at
 sites <- sites %>%
   filter(dist <= 200000) %>%
@@ -114,7 +114,7 @@ time_series_data <- lapply(sites$STID, function(i.STID){
            vars = c('wind_speed','wind_gust','wind_direction',
                     'air_temp','relative_humidity','precip_accum',
                     'incoming_radiation_uv'),
-           start = '202006010001', end = '202201010001', jsonsimplify= TRUE)
+           start = '202005130001', end = '202112090001', jsonsimplify= TRUE)
 
   obs <- dt[['STATION']][['OBSERVATIONS']]
 
