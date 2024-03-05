@@ -457,6 +457,10 @@ b.genus_RA_meta<-merge(b.genus_m,dust_meta, by="SampleID")
 head(b.genus_RA_meta) ## relative abundance based on sum of counts by genus!
 max(b.genus_RA_meta$Count)
 b.genus_RA_meta$SampleID = factor(b.genus_RA_meta$SampleID, levels=unique(b.genus_RA_meta$SampleID[order(b.genus_RA_meta$Site,b.genus_RA_meta$Seas_Coll_Year)]), ordered=TRUE)
+b.genus_RA_meta$Sample_Type<-"Dust"
+
+saveRDS(b.genus_RA_meta, file = "data/Amplicon/SSD_GenusSpecies_RelativeAbundance_Robject.rds", ascii = FALSE, version = NULL,
+        compress = TRUE, refhook = NULL)
 
 # separate genera RelAb data by site for downstream figs
 WI.gen.RA<-subset(b.genus_RA_meta,b.genus_RA_meta$Site=="WI")
