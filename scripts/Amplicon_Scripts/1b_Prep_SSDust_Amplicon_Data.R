@@ -78,10 +78,10 @@ unique(dust_meta$SampleMonth)
 dust_meta$SampleMonth<-factor(dust_meta$SampleMonth, levels=c("July","August","September","October","November","December"))
 
 # create sample month palette
-colorset2 = melt(c(July="#2b9348",August="#ffd60a",September="#CA6702",October="#d00000",November="#6930c3",December="#03045e"))
+colorset2 = as.data.frame(t(data.frame("July"="#2b9348","August"="#ffd60a","September"="#CA6702","October"="#d00000","November"="#6930c3","December"="#03045e")))
 
 colorset2$SampleMonth<-rownames(colorset2)
-colnames(colorset2)[which(names(colorset2) == "value")] <- "SampMonth_Color"
+colnames(colorset2)[which(names(colorset2) == "V1")] <- "SampMonth_Color"
 colorset2
 
 dust_meta<-merge(dust_meta, colorset2, by="SampleMonth")
@@ -92,10 +92,10 @@ head(dust_meta)
 
 # create Summer vs Fall palette
 unique(dust_meta$Season_General)
-colorset3 = melt(c(Summer="#4361ee",Fall="#9a031e"))
+colorset3 = as.data.frame(t(data.frame("Summer"="#4361ee","Fall"="#9a031e")))
 
 colorset3$Season_General<-rownames(colorset3)
-colnames(colorset3)[which(names(colorset3) == "value")] <- "SeasonGen_Color"
+colnames(colorset3)[which(names(colorset3) == "V1")] <- "SeasonGen_Color"
 colorset3
 
 dust_meta<-merge(dust_meta, colorset3, by="Season_General")
@@ -107,10 +107,10 @@ head(dust_meta)
 
 # create more specific seasons palette
 unique(dust_meta$Season_Specific)
-colorset4 = melt(c(Early.Summer="#4cc9f0",Late.Summer="#5e60ce",Late.Fall="#e85d04",Fall.Winter="#63003a"))
+colorset4 = as.data.frame(t(data.frame("Early.Summer"="#4cc9f0","Late.Summer"="#5e60ce","Late.Fall"="#e85d04","Fall.Winter"="#63003a")))
 
 colorset4$Season_Specific<-rownames(colorset4)
-colnames(colorset4)[which(names(colorset4) == "value")] <- "SeasonSpec_Color"
+colnames(colorset4)[which(names(colorset4) == "V1")] <- "SeasonSpec_Color"
 colorset4
 
 dust_meta<-merge(dust_meta, colorset4, by="Season_Specific")
@@ -123,10 +123,10 @@ head(dust_meta)
 
 # create year palette
 unique(dust_meta$CollectionYear)
-colorset5 = melt(c("2020"="#751966","2021"="#135767"))
+colorset5 = as.data.frame(t(data.frame("2020"="#751966","2021"="#135767")))
 
-colorset5$CollectionYear<-rownames(colorset5)
-colnames(colorset5)[which(names(colorset5) == "value")] <- "Year_Color"
+colorset5$CollectionYear<-gsub("X","",rownames(colorset5))
+colnames(colorset5)[which(names(colorset5) == "V1")] <- "Year_Color"
 colorset5
 
 dust_meta<-merge(dust_meta, colorset5, by="CollectionYear")
@@ -140,10 +140,10 @@ head(dust_meta)
 # create site palette
 unique(dust_meta$Site) # dropped SB, RHB
 # "RHB"="#a11d33","SB"="#0077b6"
-colorset6 = melt(c("BDC"="#390099","DP"="#ffbd00","PD"="#eb5e28","WI"="#008000"))
+colorset6 = as.data.frame(t(data.frame("BDC"="#390099","DP"="#ffbd00","PD"="#eb5e28","WI"="#008000")))
 
 colorset6$Site<-rownames(colorset6)
-colnames(colorset6)[which(names(colorset6) == "value")] <- "Site_Color"
+colnames(colorset6)[which(names(colorset6) == "V1")] <- "Site_Color"
 colorset6
 
 dust_meta<-merge(dust_meta, colorset6, by="Site")
@@ -156,10 +156,10 @@ head(dust_meta)
 
 # create collection palette
 unique(dust_meta$Seas_Coll_Year)
-colorset7 = melt(c("S.1.2020"="#14c9cb","S.2.2020"="#2962ff","S.3.2020"="#9500ff","F.1.2020"="#ff0059",
-                   "S.1.2021"="#ff8c00","S.2.2021"="#0B6623","F.1.2021"="#ffd500"))
+colorset7 = as.data.frame(t(data.frame("S.1.2020"="#14c9cb","S.2.2020"="#2962ff","S.3.2020"="#9500ff","F.1.2020"="#ff0059",
+                   "S.1.2021"="#ff8c00","S.2.2021"="#0B6623","F.1.2021"="#ffd500")))
 colorset7$Seas_Coll_Year<-rownames(colorset7)
-colnames(colorset7)[which(names(colorset7) == "value")] <- "SCY_Color"
+colnames(colorset7)[which(names(colorset7) == "V1")] <- "SCY_Color"
 colorset7
 
 dust_meta<-merge(dust_meta, colorset7, by="Seas_Coll_Year")
@@ -187,10 +187,10 @@ dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020
 
 # create collection palette
 unique(dust_meta$SampDate)
-colorset8 = melt(c("July.2020"="green2","August.2020"="orange","October.2020"="red","November.2020"="purple",
-                   "July.2021"="darkgreen","August.2021"="darkorange3","September.2021"="red4","December.2021"="purple4"))
+colorset8 = as.data.frame(t(data.frame("July.2020"="green2","August.2020"="orange","October.2020"="red","November.2020"="purple",
+                   "July.2021"="darkgreen","August.2021"="darkorange3","September.2021"="red4","December.2021"="purple4")))
 colorset8$SampDate<-rownames(colorset8)
-colnames(colorset8)[which(names(colorset8) == "value")] <- "SampDate_Color"
+colnames(colorset8)[which(names(colorset8) == "V1")] <- "SampDate_Color"
 colorset8
 
 dust_meta<-merge(dust_meta, colorset8, by="SampDate")
@@ -305,6 +305,16 @@ rownames(dust.meta.surf)<-dust.meta.surf$SampleID
 
 #### Check ASV Count Distribution Across Samples ####
 rowSums(bac.ASV_table[,-1])
+
+#### Import Synoptic Climate Data & Merge with Metadata ####
+
+clim.data<-data.frame(readRDS("data/Climate/SaltonSea_SynopticClimateData_Robject.rds", refhook = NULL))
+head(clim.data)
+
+# which column names match in the dfs
+colnames(clim.data)[which(colnames(clim.data) %in% colnames(dust.meta.surf))]
+
+dust.meta.all<-merge(clim.data,dust.meta.surf,by=c("CollectionNum","STID","Deploy_dth","Collect_dth"))
 
 #### Save Global Env for Import into Other Scripts ####
 
