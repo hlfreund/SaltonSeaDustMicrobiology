@@ -213,36 +213,36 @@ SubsetTimeSeries<-function(stations_df,timeseries_df){
 }
 
 SubsetTimeSeries(stids,time_series_data_out) # this works
-SubsetTimeSeries(sites,sites) # this is a test to show what happens if you do not have the necessary column headers in your 1st input df
+#SubsetTimeSeries(sites,sites) # this is a test to show what happens if you do not have the necessary column headers in your 1st input df
 
 # collapse the list of time series averages into 1 df
 #timeseries.ave = do.call(rbind, timeseries.aves.list)
 
 ### here is the loop I made first before building the function; this is for subsetting time_series data using input from metadata
-for (i in seq_len(nrow(stids))){
-  row<-stids[i,]
-  STIDname<-row$STID # column with station ID info
-  DeployDT<-row$Deploy_dth # dust collector deployment date-time info
-  CollDT<-row$Collect_dth # dust collector collection date-time info
-  ColNum<-row$CollectionNum # dust collection #
-
-  df<-subset(time_series_data_out, date_time_hour >= ymd_hms(DeployDT) & date_time_hour <= ymd_hms(CollDT) & STID==STIDname)
-  #print(ymd_hms(DeployDT))
-  #print(ymd_hms(CollDT))
-  #print(ColNum)
-
-  #assign(paste0(STIDname,".Coll",ColNum), df,envir = .GlobalEnv)
-  nums <- unlist(lapply(df, is.numeric), use.names = FALSE)
-
-  df
-  #df.ave1<-colMeans(df[df.nums],na.rm=TRUE)
-  #df.ave<-rbind(STIDname,DeployDT,CollDT,df.ave1)
-
-  #assign(paste0(STIDname,".Coll",ColNum), df,envir = .GlobalEnv)
-  #assign(paste0(STIDname,".Coll",ColNum,".Ave"), df.ave,envir = .GlobalEnv)
-
-
-}
+# for (i in seq_len(nrow(stids))){
+#   row<-stids[i,]
+#   STIDname<-row$STID # column with station ID info
+#   DeployDT<-row$Deploy_dth # dust collector deployment date-time info
+#   CollDT<-row$Collect_dth # dust collector collection date-time info
+#   ColNum<-row$CollectionNum # dust collection #
+#
+#   df<-subset(time_series_data_out, date_time_hour >= ymd_hms(DeployDT) & date_time_hour <= ymd_hms(CollDT) & STID==STIDname)
+#   #print(ymd_hms(DeployDT))
+#   #print(ymd_hms(CollDT))
+#   #print(ColNum)
+#
+#   #assign(paste0(STIDname,".Coll",ColNum), df,envir = .GlobalEnv)
+#   nums <- unlist(lapply(df, is.numeric), use.names = FALSE)
+#
+#   df
+#   #df.ave1<-colMeans(df[df.nums],na.rm=TRUE)
+#   #df.ave<-rbind(STIDname,DeployDT,CollDT,df.ave1)
+#
+#   #assign(paste0(STIDname,".Coll",ColNum), df,envir = .GlobalEnv)
+#   #assign(paste0(STIDname,".Coll",ColNum,".Ave"), df.ave,envir = .GlobalEnv)
+#
+#
+# }
 
 
 ### below is the code I was using to figure out how to subset before creating my function
@@ -295,7 +295,9 @@ write_rds(time_series_data_out, 'data/Climate/MesoWest_SaltonSea_2013-2020.rds')
 
 #### Save Output ####
 
-dust_meta_clim<-merge(dust_meta,timeseries.ave,by=c("STID","Deploy_dth","Collect_dth"))
-saveRDS(dust_meta_clim, file = "data/Climate/SaltonSea_SynopticClimateData_Robject.rds", ascii = FALSE, version = NULL,
+dust_meta_clim<-merge(dust_meta,timeseries.aves,by=c("CollectionNum","STID","Deploy_dth","Collect_dth"))
+head(dust_meta_clim)
+
+saveRDS(timeseries.aves, file = "data/Climate/SaltonSea_SynopticClimateData_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 save.image("data/Climate/SSD_Synoptic_ClimateData_All.Rdata")
