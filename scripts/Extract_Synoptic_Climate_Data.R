@@ -246,42 +246,42 @@ for (i in seq_len(nrow(stids))){
 
 
 ### below is the code I was using to figure out how to subset before creating my function
-# D0742 - for BDC
-D0742.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-05-13 12:00:00") & date_time_hour <= ymd_hms("2020-07-09 17:00:00") & STID=="D0742")
-D0742.Coll2<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-07-09 12:00:00") & date_time_hour <= ymd_hms("2020-08-14 17:00:00") & STID=="D0742")
-D0742.Coll3<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-08-14 12:00:00") & date_time_hour <= ymd_hms("2020-10-08 17:00:00") & STID=="D0742")
-D0742.Coll4<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-10-08 12:00:00") & date_time_hour <= ymd_hms("2020-11-06 17:00:00") & STID=="D0742")
-D0742.Coll5<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-06-05 12:00:00") & date_time_hour <= ymd_hms("2021-07-27 17:00:00") & STID=="D0742")
-D0742.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-07-27 12:00:00") & date_time_hour <= ymd_hms("2021-09-29 17:00:00") & STID=="D0742")
-D0742.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-29 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="D0742")
-
-#C2285 - for PD
-C2285.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-05-13 12:00:00") & date_time_hour <= ymd_hms("2020-07-09 17:00:00") & STID=="C2285")
-C2285.Coll2<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-07-09 12:00:00") & date_time_hour <= ymd_hms("2020-08-14 17:00:00") & STID=="C2285")
-C2285.Coll3<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-08-14 12:00:00") & date_time_hour <= ymd_hms("2020-10-08 17:00:00") & STID=="C2285")
-C2285.Coll4<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-10-08 12:00:00") & date_time_hour <= ymd_hms("2020-11-06 17:00:00") & STID=="C2285")
-C2285.Coll5<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-06-05 12:00:00") & date_time_hour <= ymd_hms("2021-07-27 17:00:00") & STID=="C2285")
-C2285.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-07-27 12:00:00") & date_time_hour <= ymd_hms("2021-09-18 17:00:00") & STID=="C2285")
-C2285.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-18 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="C2285")
-
-# UP614 - for WI
-UP614.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-06-01 12:00:00") & date_time_hour <= ymd_hms("2020-07-10 17:00:00") & STID=="UP614")
-UP614.Coll2<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-07-10 12:00:00") & date_time_hour <= ymd_hms("2020-08-30 17:00:00") & STID=="UP614")
-UP614.Coll3<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-08-30 12:00:00") & date_time_hour <= ymd_hms("2020-10-10 17:00:00") & STID=="UP614")
-UP614.Coll4<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-10-10 12:00:00") & date_time_hour <= ymd_hms("2020-11-05 17:00:00") & STID=="UP614")
-UP614.Coll5<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-06-08 12:00:00") & date_time_hour <= ymd_hms("2021-07-29 17:00:00") & STID=="UP614")
-UP614.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-07-29 12:00:00") & date_time_hour <= ymd_hms("2021-09-18 17:00:00") & STID=="UP614")
-UP614.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-18 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="UP614")
-
-# DPMC1 - for DP
-DPMC1.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-06-01 12:00:00") & date_time_hour <= ymd_hms("2020-07-10 17:00:00") & STID=="DPMC1")
-DPMC1.Coll2<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-07-10 12:00:00") & date_time_hour <= ymd_hms("2020-08-30 17:00:00") & STID=="DPMC1")
-DPMC1.Coll3<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-08-30 12:00:00") & date_time_hour <= ymd_hms("2020-10-10 17:00:00") & STID=="DPMC1")
-DPMC1.Coll4<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-10-10 12:00:00") & date_time_hour <= ymd_hms("2020-11-05 17:00:00") & STID=="DPMC1")
-DPMC1.Coll5<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-06-08 12:00:00") & date_time_hour <= ymd_hms("2021-08-19 17:00:00") & STID=="DPMC1")
-DPMC1.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-08-19 12:00:00") & date_time_hour <= ymd_hms("2021-09-18 17:00:00") & STID=="DPMC1")
-DPMC1.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-18 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="DPMC1")
-
+# # D0742 - for BDC
+# D0742.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-05-13 12:00:00") & date_time_hour <= ymd_hms("2020-07-09 17:00:00") & STID=="D0742")
+# D0742.Coll2<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-07-09 12:00:00") & date_time_hour <= ymd_hms("2020-08-14 17:00:00") & STID=="D0742")
+# D0742.Coll3<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-08-14 12:00:00") & date_time_hour <= ymd_hms("2020-10-08 17:00:00") & STID=="D0742")
+# D0742.Coll4<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-10-08 12:00:00") & date_time_hour <= ymd_hms("2020-11-06 17:00:00") & STID=="D0742")
+# D0742.Coll5<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-06-05 12:00:00") & date_time_hour <= ymd_hms("2021-07-27 17:00:00") & STID=="D0742")
+# D0742.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-07-27 12:00:00") & date_time_hour <= ymd_hms("2021-09-29 17:00:00") & STID=="D0742")
+# D0742.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-29 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="D0742")
+#
+# #C2285 - for PD
+# C2285.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-05-13 12:00:00") & date_time_hour <= ymd_hms("2020-07-09 17:00:00") & STID=="C2285")
+# C2285.Coll2<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-07-09 12:00:00") & date_time_hour <= ymd_hms("2020-08-14 17:00:00") & STID=="C2285")
+# C2285.Coll3<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-08-14 12:00:00") & date_time_hour <= ymd_hms("2020-10-08 17:00:00") & STID=="C2285")
+# C2285.Coll4<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-10-08 12:00:00") & date_time_hour <= ymd_hms("2020-11-06 17:00:00") & STID=="C2285")
+# C2285.Coll5<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-06-05 12:00:00") & date_time_hour <= ymd_hms("2021-07-27 17:00:00") & STID=="C2285")
+# C2285.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-07-27 12:00:00") & date_time_hour <= ymd_hms("2021-09-18 17:00:00") & STID=="C2285")
+# C2285.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-18 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="C2285")
+#
+# # UP614 - for WI
+# UP614.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-06-01 12:00:00") & date_time_hour <= ymd_hms("2020-07-10 17:00:00") & STID=="UP614")
+# UP614.Coll2<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-07-10 12:00:00") & date_time_hour <= ymd_hms("2020-08-30 17:00:00") & STID=="UP614")
+# UP614.Coll3<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-08-30 12:00:00") & date_time_hour <= ymd_hms("2020-10-10 17:00:00") & STID=="UP614")
+# UP614.Coll4<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-10-10 12:00:00") & date_time_hour <= ymd_hms("2020-11-05 17:00:00") & STID=="UP614")
+# UP614.Coll5<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-06-08 12:00:00") & date_time_hour <= ymd_hms("2021-07-29 17:00:00") & STID=="UP614")
+# UP614.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-07-29 12:00:00") & date_time_hour <= ymd_hms("2021-09-18 17:00:00") & STID=="UP614")
+# UP614.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-18 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="UP614")
+#
+# # DPMC1 - for DP
+# DPMC1.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-06-01 12:00:00") & date_time_hour <= ymd_hms("2020-07-10 17:00:00") & STID=="DPMC1")
+# DPMC1.Coll2<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-07-10 12:00:00") & date_time_hour <= ymd_hms("2020-08-30 17:00:00") & STID=="DPMC1")
+# DPMC1.Coll3<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-08-30 12:00:00") & date_time_hour <= ymd_hms("2020-10-10 17:00:00") & STID=="DPMC1")
+# DPMC1.Coll4<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-10-10 12:00:00") & date_time_hour <= ymd_hms("2020-11-05 17:00:00") & STID=="DPMC1")
+# DPMC1.Coll5<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-06-08 12:00:00") & date_time_hour <= ymd_hms("2021-08-19 17:00:00") & STID=="DPMC1")
+# DPMC1.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-08-19 12:00:00") & date_time_hour <= ymd_hms("2021-09-18 17:00:00") & STID=="DPMC1")
+# DPMC1.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-18 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="DPMC1")
+#
 
 
 
@@ -295,4 +295,7 @@ write_rds(time_series_data_out, 'data/Climate/MesoWest_SaltonSea_2013-2020.rds')
 
 #### Save Output ####
 
+dust_meta_clim<-merge(dust_meta,timeseries.ave,by=c("STID","Deploy_dth","Collect_dth"))
+saveRDS(dust_meta_clim, file = "data/Climate/SaltonSea_SynopticClimateData_Robject.rds", ascii = FALSE, version = NULL,
+        compress = TRUE, refhook = NULL)
 save.image("data/Climate/SSD_Synoptic_ClimateData_All.Rdata")
