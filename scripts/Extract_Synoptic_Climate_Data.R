@@ -145,10 +145,18 @@ time_series_data[, date_time_hour:=ceiling_date(date_time, 'hour')]
 time_series_data[, wd:=circular(wind_direction, template='geographics', units='degrees')]
 # ^ create column $wd which is the wind direction in degrees, not sure why we need to create this since wind_direction has the same info?
 
+head(time_series_data)
+
+# note: [,.()] is data.table notation; just keeps data in data.table format
+# https://stackoverflow.com/questions/33808705/dot-preceding-parentheses-in-data-table
+# looks like we are taking the mean of air temp & wind speed to get averages per hour rather than values per 5 minutes
 time_series_data_scalar <- time_series_data[, .(air_temp = mean(air_temp, na.rm=TRUE),
                               wind_speed=mean(wind_speed, na.rm=TRUE),
-                              wind_gust=max(wind_gust, na.rm=TRUE)),
+                              wind_gust=max(wind_gust, na.rm=TRUE),
+                              precip_accum=mean(precip_accum,na.rm=TRUE),
+                              relative_humidity=mean(relative_humidity,na.rm=TRUE)),
                           .(STID, date_time_hour)]
+# ^ need to add accumulated precip & relative humidity in here, want to make sure I am treating the data the same way as Will
 
 time_series_data_dir <- time_series_data[!is.na(wd) & !is.na(wind_speed) & wind_speed > 0,
                            .(wind_direction=weighted.mean.circular(wd,
@@ -156,6 +164,7 @@ time_series_data_dir <- time_series_data[!is.na(wd) & !is.na(wind_speed) & wind_
                                                                    template='geographics',
                                                                    units='degrees')),
                            .(STID, date_time_hour)]
+# ^ time_series_data_dir only contains STID, date_time_hour, & wind_direction in degrees
 
 time_series_data_dir[wind_direction < 0, wind_direction := wind_direction + 360]
 
@@ -294,6 +303,7 @@ clim <- data.frame( lapply( d$STATION$OBSERVATIONS, unlist) )
 write_rds(time_series_data_out, 'data/Climate/MesoWest_SaltonSea_2013-2020.rds')
 
 #### Save Output ####
+head(timeseries.aves)
 
 dust_meta_clim<-merge(dust_meta,timeseries.aves,by=c("CollectionNum","STID","Deploy_dth","Collect_dth"))
 head(dust_meta_clim)
