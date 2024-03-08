@@ -41,13 +41,15 @@ head(b.dust.all)
 bac.ASV_table[1:4,1:4]
 bac.ASV_table[(nrow(bac.ASV_table)-4):(nrow(bac.ASV_table)),(ncol(bac.ASV_table)-4):(ncol(bac.ASV_table))] # last 4 rows & cols
 head(dust_meta)
-head(dust.meta.surf)
+head(meta.all.scaled)
 
 #### Create Centered Log-Ratio Table from ASV table ####
 bac.ASV_table[1:4,1:4]
 b.clr<-decostand(bac.ASV_table[,-1],method = "clr", pseudocount = 1) #CLR transformation
 b.clr[1:4,1:4]
-# df must have rownames are SampleIDs, columns are ASV IDs for vegan functions below\
+# df must have rownames are SampleIDs, columns are ASV IDs for vegan functions below
+
+rownames(b.clr) %in% rownames(meta.all.scaled) # check if metadata and micro comp data have matching rownames
 
 #### Look at Surface Type Frequencies by Sample for Modeling Later ####
 
@@ -91,15 +93,15 @@ ggplot(STF.melt, aes(x=SampleID, y=Frequency, fill=SurfaceType))+geom_bar(stat="
 
 #### Separate All Data by Time points ####
 # create metadata df that will contain scaled chemical data
-head(dust.meta.surf)
+head(meta.all.scaled)
 
-site_list<-unique(dust.meta.surf$Site) #define an array of string values
+site_list<-unique(meta.all.scaled$Site) #define an array of string values
 # go through metadata & create a list of data frames
 ## when metadata$Variable == element in site_list (aka x in this case), subset metadata by said element into elements of a list
 
 # here the function(x) is using site_list aka x to subset metadata, when $Variable column == site_list
 # Run the function so it's stored in Global Env
-site_subsets<-lapply(site_list, function(x) {subset(dust.meta.surf, Site==x)})
+site_subsets<-lapply(site_list, function(x) {subset(meta.all.scaled, Site==x)})
 
 site_subsets # sanity check1 (should see all elements in list)
 site_subsets[[1]] # sanity check2 (see 1st element in list)
@@ -144,9 +146,10 @@ WI[1:5,] # double check that our new Variable (here Site) data frames still have
 rownames(WI)
 
 # matching data with user defined function -- here is the function, must run to store function in Global env
+# note: metadata must have rownames for this to work!
 match_dat<-function(compdata, subset_metadata){
-  subset_comp_data = pullrow<-(is.element(row.names(compdata), row.names(subset_metadata)))
   ### * comp data and metadata need to have row names - rownames should be Sample IDs
+  subset_comp_data = pullrow<-(is.element(row.names(compdata), row.names(subset_metadata)))
   subset_comp_data=compdata[pullrow,]
   return(subset_comp_data)
 }
@@ -204,10 +207,10 @@ b.PD.dca #DCA1 axis length = 0.52948; use RDA
 
 #### RDA w/ All Data ####
 
-rownames(dust.meta.surf) %in% rownames(b.clr) # check order of DFs
-head(dust.meta.surf)
+rownames(meta.all.scaled) %in% rownames(b.clr) # check order of DFs
+head(meta.all.scaled)
 
-rda.all.0<-rda(b.clr ~ BarrenLand+CropLand+Developed+Forest+Herbaceous+Mexico+OpenWater+Others+SaltonSea+Shrub,data=dust.meta.surf)
+rda.all.0<-rda(b.clr ~ ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+BarrenLand+CropLand+Developed+Forest+Herbaceous+Mexico+OpenWater+Others+SaltonSea+Shrub,data=meta.all.scaled)
 
 # check summary of RDA
 rda.all.0
@@ -215,7 +218,7 @@ summary(rda.all.0)
 
 # how much variation does our model explain?
 ## reminder: R^2 = % of variation in dependent variable explained by model
-RsquareAdj(rda.all.0) # -0.01712694 -- bad model!
+RsquareAdj(rda.all.0) # -0.01438676 -- bad model!
 ## ^^ use this b/c chance correlations can inflate R^2
 
 # we can then test for significance of the model by permutation
@@ -228,15 +231,18 @@ anova(rda.all.0, permutations = how(nperm=999)) # p = 0.607
 anova(rda.all.0, by = "terms", permutations = how(nperm=999)) ### by variables
 ## this will help us interpret our RDA and we can see some variable are not significant
 #        Df Variance      F Pr(>F)
-#Developed   1    567.1 1.5630  0.065 .
+#ave.wind_speed      1    519.7 1.4361  0.099 .
+#ave.wind_gust       1    639.1 1.7661  0.039 *
 
 # Calculating variance inflation factor (VIF) for each predictor variable to check multicolinearity of predictor variables
 ## VIF helps determien which predictors are too strongly correlated with other predictor variables to explain variation observed
 vif.cca(rda.all.0)
-# BarrenLand   CropLand  Developed     Forest Herbaceous     Mexico  OpenWater     Others  SaltonSea
-# 19.621677  22.242389   2.211668   8.933791   4.592905   9.905607   2.623602  19.000430  13.792275
-# Shrub
-# NA
+# ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction         BarrenLand           CropLand
+# 9.103113         120.337131          79.913952           6.467531          53.587445          27.364864
+# Developed             Forest         Herbaceous             Mexico          OpenWater             Others
+# 14.033592          18.422991          20.376398          20.427801           7.477958          31.848762
+# SaltonSea              Shrub
+# 17.653942                 NA
 
 ## Understanding VIF results...
 # A value of 1 indicates there is no correlation between a given predictor variable and any other predictor variables in the model.
@@ -244,153 +250,261 @@ vif.cca(rda.all.0)
 # A value greater than 5 indicates potentially severe correlation between a given predictor variable and other predictor variables in the model. In this case, the coefficient estimates and p-values in the regression output are likely unreliable.
 # when to ignore high VIF values: https://statisticalhorizons.com/multicollinearity/
 
-head(dust.meta.surf[,c(23:32)])
+head(meta.all.scaled[,c(5:7,10,33:42)])
 ## we can use model selection instead of picking variables we think are important (by p values)
 # more info on ordistep & ordiR2step here: https://www.davidzeleny.net/anadat-r/doku.php/en:forward_sel_examples
-rda.all.a = ordistep(rda(b.clr ~ 1, data = dust.meta.surf[,c(23:32)]),
+rda.all.a = ordistep(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,33:42)]),
                      scope=formula(rda.all.0),
                      direction = "forward",
                      permutations = how(nperm=999))
-# b.clr ~ Developed = best model
+# b.clr ~ ave.wind_gust + ave.air_temp
 rda.all.a$anova # see significance of individual terms in model
 #                               Df    AIC      F Pr(>F)
 
 # can also use model seletion to pick most important variables by which increases variation (R^2) the most
-rda.all.a2 = ordiR2step(rda(b.clr ~ 1, data = dust.meta.surf[,c(23:32)]),
+rda.all.a2 = ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,33:42)]),
                         scope=formula(rda.all.0),
                         permutations = how(nperm=999))
 rda.all.a2$anova # see significance of individual terms in model
 #                               R2.adj Df    AIC      F Pr(>F)
+# nothing sig
 
 # check best fit model based on above results
-anova(rda.all.a, permutations = how(nperm=999)) # p =  0.001, significant
+anova(rda.all.a, permutations = how(nperm=999)) # p =  0.007, significant
 
-# Let's check again removing Shrub
-rda.all1<-rda(b.clr ~ BarrenLand+CropLand+Developed+Herbaceous+Others+SaltonSea+Mexico,data=dust.meta.surf)
+# Let's check again removing OpenWater & Others since they overall have little contribution
+rda.all1<-rda(b.clr ~ ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+BarrenLand+CropLand+Developed+Herbaceous+SaltonSea+Mexico+Shrub+Forest,data=meta.all.scaled)
 summary(rda.all1)
-RsquareAdj(rda.all1) # how much variation is explained by our model? %
+RsquareAdj(rda.all1) # how much variation is explained by our model? % -0.004701317
 anova(rda.all1, by = "terms", permutations = how(nperm=999)) ### by variables
-# Developed  near sig
+#                   Df Variance      F Pr(>F)
+# ave.wind_speed      1    519.7 1.4559  0.081 .
+# ave.wind_gust       1    639.1 1.7903  0.042 *
 
 ## this will help us interpret our RDA and we can see some variable are not significant
 vif.cca(rda.all1)
-# BarrenLand   CropLand  Developed Herbaceous     Others  SaltonSea     Mexico
-# 12.256833  13.818835   2.180833   3.817406   7.054276  13.679534   9.664598
+# ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction         BarrenLand           CropLand
+# 5.077477         120.035138          79.141682           4.890668        1284.095777         108.157727
+# Developed         Herbaceous          SaltonSea             Mexico              Shrub             Forest
+# 780.066017          49.286151         374.765973          21.207899        1910.187696          31.580231
 
-head(dust.meta.surf[,c(23:32)])
+head(meta.all.scaled[,c(5:7,10,33:38,41:42)])
 ## we can use model selection instead of picking variables we think are important -- based on p values
-rda.all.b1 = ordistep(rda(b.clr ~ 1, data = dust.meta.surf[,c(23:31)]),
+rda.all.b1 = ordistep(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,33:38,41:42)]),
                       scope=formula(rda.all1),
                       direction = "forward",
                       permutations = how(nperm=999))
 # b.clr ~  Developed = best model
 rda.all.b1$anova # see significance of individual terms in model
 #                               Df    AIC      F Pr(>F)
-# b.clr ~ Developed
+# b.clr ~ ave.wind_gust + ave.air_temp
 
 # Can also use model selection to pick variables by which ones increase variation (R^2)
-rda.all.b2 = ordiR2step(rda(b.clr ~ 1, data = dust.meta.surf[,c(23:31)]),
+rda.all.b2 = ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,33:38,41:42)]),
                         scope=formula(rda.all1),
                         permutations = how(nperm=999))
-# b.clr ~  = best model
+# nothing
 rda.all.b2$anova # see significance of individual terms in model
 #                               R2.adj Df    AIC      F Pr(>F)
 # nothing significant
 
 # check best fit model based on above results
-anova(rda.all.b1, permutations = how(nperm=999)) # p =  0.001, significant
+anova(rda.all.b1, permutations = how(nperm=999)) # p =  0.007, significant
 
 # compare model fits to each other
 anova(rda.all.0, rda.all.b1)
 
 # now let's remove Shrub + Open Water + Others
-rda.all2<-rda(b.clr ~  BarrenLand+CropLand+Developed+Herbaceous+Forest+SaltonSea+Mexico,data=dust.meta.surf)
+rda.all2<-rda(b.clr ~ ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+BarrenLand+CropLand+Developed+Herbaceous+Forest+SaltonSea+Mexico,data=meta.all.scaled)
 summary(rda.all2)
-RsquareAdj(rda.all2) # how much variation is explained by our model?
+RsquareAdj(rda.all2) # how much variation is explained by our model? # 0.005726867
 anova(rda.all2, by = "terms", permutations = how(nperm=999)) ### by variables
-# Developed is sig
+# ave.wind_speed      1    519.7 1.4652  0.090 .
+# ave.wind_gust       1    639.1 1.8018  0.038 *
+# Developed           1    491.8 1.3865  0.096 .
 
 ## this will help us interpret our RDA and we can see some variable are not significant
 vif.cca(rda.all2)
-#BarrenLand   CropLand  Developed Herbaceous     Forest  SaltonSea     Mexico
-#16.413506   9.768607   2.172474   3.267892   3.849897  12.015852   9.617201
+#ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction         BarrenLand           CropLand          Developed
+# 3.692272         119.215337          78.545885           4.865429          49.363743          12.921990          12.579899
+# Herbaceous             Forest          SaltonSea             Mexico
+# 17.308532          11.547484          13.962061          15.298904
 
-head(dust.meta.surf[,c(23:32)])
+head(meta.all.scaled[,c(5:7,10,33:38,41)])
 ## we can use model selection instead of picking variables we think are important -- based on p values
-rda.all.c1 = ordistep(rda(b.clr ~ 1, data = dust.meta.surf[,c(23:28,31)]),
+rda.all.c1 = ordistep(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,33:38,41)]),
                       scope=formula(rda.all2),
                       direction = "forward",
                       permutations = how(nperm=999))
-# b.clr ~ Developed
+# b.clr ~ ave.wind_gust + ave.air_temp
 rda.all.c1$anova # see significance of individual terms in model
 #                               Df    AIC      F Pr(>F)
-# Developed
 
 # Can also use model selection to pick variables by which ones increase variation (R^2)
-rda.all.c2 = ordiR2step(rda(b.clr ~ 1, data = dust.meta.surf[,c(23:28,31)]),
+rda.all.c2 = ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,33:38,41)]),
                         scope=formula(rda.all2),
                         permutations = how(nperm=999))
-# Developed
+#
 rda.all.c2$anova # see significance of individual terms in model
 
 # messed around with a bunch of variables and Developed is always significant, and Salton Sea doens't contribute much to the variation
 
-rda.all3<-rda(b.clr ~  Developed+SaltonSea,data=dust.meta.surf)
+# Remove Forest & Mexico from model
+rda.all3<-rda(b.clr ~  ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+BarrenLand+CropLand+Developed+Herbaceous+SaltonSea,data=meta.all.scaled)
 summary(rda.all3)
-RsquareAdj(rda.all3) # how much variation is explained by our model?
+RsquareAdj(rda.all3) # how much variation is explained by our model? 0.01872894
 anova(rda.all3, by = "terms", permutations = how(nperm=999)) ### by variables
-# Developed near sig
+# ave.wind_speed      1    519.7 1.4846  0.064 .
+# ave.wind_gust       1    639.1 1.8257  0.032 *
 
 ## this will help us interpret our RDA and we can see some variable are not significant
 vif.cca(rda.all3)
-# BarrenLand   CropLand  Developed  SaltonSea      Shrub
-# 43.17708   14.77166   43.34301   30.04297  122.83459
+#ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction         BarrenLand           CropLand          Developed
+# 2.905281          92.917279          63.741495           3.483810          29.758033           5.158057           9.875250
+# Herbaceous          SaltonSea
+# 12.380115          11.130141
 
-head(dust.meta.surf[,c(23:32)])
+head(meta.all.scaled[,c(5:7,10,33:35,37,41)])
 ## we can use model selection instead of picking variables we think are important -- based on p values
-rda.all.d1 = ordistep(rda(b.clr ~ 1, data = dust.meta.surf[,c(25,31)]),
+rda.all.d1 = ordistep(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,33:35,37,41)]),
                       scope=formula(rda.all3),
                       direction = "forward",
                       permutations = how(nperm=999))
-# b.clr ~ Developed
+# b.clr ~ ave.wind_gust + ave.air_temp
 rda.all.d1$anova # see significance of individual terms in model
 #                               Df    AIC      F Pr(>F)
 
 # Can also use model selection to pick variables by which ones increase variation (R^2)
-rda.all.d2 = ordiR2step(rda(b.clr ~ 1, data = dust.meta.surf[,c(25,31)]),
+rda.all.d2 = ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,33:35,37,41)]),
                         scope=formula(rda.all3),
                         permutations = how(nperm=999))
 # b.clr ~ Dissolved_OrganicMatter_RFU + Temp_DegC  + DO_%Local = best model
 rda.all.d2$anova # see significance of individual terms in model
 
-# # now let's remove Mexico + Open Water + Others + Herbaceous + Shrub
-# rda.all4<-rda(b.clr ~  BarrenLand+CropLand+Developed+SaltonSea,data=dust.meta.surf)
-# summary(rda.all4)
-# RsquareAdj(rda.all4) # how much variation is explained by our model?
-# anova(rda.all4, by = "terms", permutations = how(nperm=999)) ### by variables
-# # Developed near sig
-#
-# ## this will help us interpret our RDA and we can see some variable are not significant
-# vif.cca(rda.all4)
-# # BarrenLand   CropLand  Developed  SaltonSea      Shrub
-# # 43.17708   14.77166   43.34301   30.04297  122.83459
-#
-# head(dust.meta.surf[,c(23:32)])
-# ## we can use model selection instead of picking variables we think are important -- based on p values
-# rda.all.e1 = ordistep(rda(b.clr ~ 1, data = dust.meta.surf[,c(23:25,27:28,31:32)]),
-#                       scope=formula(rda.all4),
-#                       direction = "forward",
-#                       permutations = how(nperm=999))
-# # b.clr ~ Developed
-# rda.all.e1$anova # see significance of individual terms in model
-# #                               Df    AIC      F Pr(>F)
-#
-# # Can also use model selection to pick variables by which ones increase variation (R^2)
-# rda.all.e2 = ordiR2step(rda(b.clr ~ 1, data = dust.meta.surf[,c(23:25,27:28,31:32)]),
-#                         scope=formula(rda.all4),
-#                         permutations = how(nperm=999))
-# # b.clr ~ Dissolved_OrganicMatter_RFU + Temp_DegC  + DO_%Local = best model
-# rda.all.e2$anova # see significance of individual terms in model
+# Remove Herbaceous & BarrenLand
+rda.all4<-rda(b.clr ~  ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+CropLand+Developed+SaltonSea,data=meta.all.scaled)
+summary(rda.all4)
+RsquareAdj(rda.all4) # how much variation is explained by our model? 0.02960742
+anova(rda.all4, by = "terms", permutations = how(nperm=999)) ### by variables
+#ave.air_temp        1    471.3 1.3613  0.095 .
+# ave.wind_speed      1    519.7 1.5013  0.074 .
+#ave.wind_gust       1    639.1 1.8461  0.025 *
+
+## this will help us interpret our RDA and we can see some variable are not significant
+vif.cca(rda.all4)
+#ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction           CropLand          Developed          SaltonSea
+# 2.475890          25.171008          24.561732           2.676141           4.904833           3.747255           5.554783
+
+head(meta.all.scaled[,c(5:7,10,34:35,37,41)])
+## we can use model selection instead of picking variables we think are important -- based on p values
+rda.all.d1 = ordistep(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,34:35,37,41)]),
+                      scope=formula(rda.all4),
+                      direction = "forward",
+                      permutations = how(nperm=999))
+# b.clr ~ ave.wind_gust + ave.air_temp + Developed slightly
+rda.all.d1$anova # see significance of individual terms in model
+#                               Df    AIC      F Pr(>F)
+
+# Can also use model selection to pick variables by which ones increase variation (R^2)
+rda.all.d2 = ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,34:35,37,41)]),
+                        scope=formula(rda.all4),
+                        permutations = how(nperm=999))
+#nothing
+rda.all.d2$anova # see significance of individual terms in model
+
+# Remove CropLand
+rda.all5<-rda(b.clr ~  ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+Developed+SaltonSea,data=meta.all.scaled)
+summary(rda.all5)
+RsquareAdj(rda.all5) # how much variation is explained by our model? 0.05818993
+anova(rda.all5, by = "terms", permutations = how(nperm=999)) ### by variables
+#ave.air_temp        1    471.3 1.3613  0.095 .
+# ave.wind_speed      1    519.7 1.5013  0.074 .
+#ave.wind_gust       1    639.1 1.8461  0.025 *
+
+## this will help us interpret our RDA and we can see some variable are not significant
+vif.cca(rda.all5)
+#ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction          Developed          SaltonSea
+#2.393376          18.716710          19.579387           2.558826           3.743855           4.396717
+
+head(meta.all.scaled[,c(5:7,10,35,41)])
+## we can use model selection instead of picking variables we think are important -- based on p values
+rda.all.e1 = ordistep(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,35,41)]),
+                      scope=formula(rda.all5),
+                      direction = "forward",
+                      permutations = how(nperm=999))
+# b.clr ~ ave.wind_gust + ave.air_temp
+rda.all.e1$anova # see significance of individual terms in model
+#                               Df    AIC      F Pr(>F)
+
+# Can also use model selection to pick variables by which ones increase variation (R^2)
+rda.all.e2 = ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,10,35,41)]),
+                        scope=formula(rda.all5),
+                        permutations = how(nperm=999))
+#nothing
+rda.all.e2$anova # see significance of individual terms in model
+
+# drop SaltonSea + Wind Direction
+rda.all6<-rda(b.clr ~  ave.air_temp+ave.wind_speed+ave.wind_gust+Developed,data=meta.all.scaled)
+summary(rda.all6)
+RsquareAdj(rda.all6) # how much variation is explained by our model? 0.07339442
+anova(rda.all6, by = "terms", permutations = how(nperm=999)) ### by variables
+#ave.air_temp    1    471.3 1.4257  0.097 .
+# ave.wind_speed  1    519.7 1.5722  0.050 *
+#   ave.wind_gust   1    639.1 1.9334  0.016 *
+#   Developed       1    399.1 1.2074  0.194
+
+## this will help us interpret our RDA and we can see some variable are not significant
+vif.cca(rda.all6)
+#ave.air_temp ave.wind_speed  ave.wind_gust      Developed
+#1.126212       9.471902      14.179739       3.148465
+
+head(meta.all.scaled[,c(5:7,35)])
+## we can use model selection instead of picking variables we think are important -- based on p values
+rda.all.f1 = ordistep(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,35)]),
+                      scope=formula(rda.all6),
+                      direction = "forward",
+                      permutations = how(nperm=999))
+# b.clr ~ ave.wind_gust + ave.air_temp
+rda.all.f1$anova # see significance of individual terms in model
+#                               Df    AIC      F Pr(>F)
+
+# Can also use model selection to pick variables by which ones increase variation (R^2)
+rda.all.f2 = ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled[,c(5:7,35)]),
+                        scope=formula(rda.all6),
+                        permutations = how(nperm=999))
+#nothing
+rda.all.f2$anova # see significance of individual terms in model
+
+# drop wind speed
+rda.all7<-rda(b.clr ~  ave.air_temp+ave.wind_gust+Developed,data=meta.all.scaled)
+summary(rda.all7)
+RsquareAdj(rda.all7) # how much variation is explained by our model? 0.07076976
+anova(rda.all7, by = "terms", permutations = how(nperm=999)) ### by variables
+#ave.air_temp   1    471.3 1.4216  0.098 .
+# ave.wind_gust  1    774.9 2.3375  0.009 **
+#   Developed      1    430.0 1.2972  0.133
+
+## this will help us interpret our RDA and we can see some variable are not significant
+vif.cca(rda.all7)
+#ave.air_temp ave.wind_gust     Developed
+#1.115160      1.681600      1.704302
+
+head(meta.all.scaled[,c(5,7,35)])
+## we can use model selection instead of picking variables we think are important -- based on p values
+rda.all.g1 = ordistep(rda(b.clr ~ 1, data = meta.all.scaled[,c(5,7,35)]),
+                      scope=formula(rda.all7),
+                      direction = "forward",
+                      permutations = how(nperm=999))
+# b.clr ~ ave.wind_gust + ave.air_temp
+rda.all.g1$anova # see significance of individual terms in model
+#                               Df    AIC      F Pr(>F)
+
+# Can also use model selection to pick variables by which ones increase variation (R^2)
+rda.all.g2 = ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled[,c(5,7,35)]),
+                        scope=formula(rda.all7),
+                        permutations = how(nperm=999))
+#nothing
+rda.all.g2$anova # see significance of individual terms in model
 
 #### RDA - Wister ####
 
@@ -399,7 +513,7 @@ head(WI)
 
 # included all Surface type frequencies and it overfit the model so pulling some out...
 ## dropping forest, open waters, others, and shrub first (after some experimenting)
-rda.WI.0<-rda(b.clr_WI ~ BarrenLand+CropLand+Developed+Forest+Herbaceous+Mexico+OpenWater+Others+SaltonSea+Shrub,data=WI)
+rda.WI.0<-rda(b.clr_WI ~ ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+BarrenLand+CropLand+Developed+Forest+Herbaceous+Mexico+OpenWater+Others+SaltonSea+Shrub,data=WI)
 
 # check summary of RDA
 rda.WI.0
@@ -424,25 +538,28 @@ anova(rda.WI.0, by = "terms", permutations = how(nperm=999)) ### by variables
 # Calculating variance inflation factor (VIF) for each predictor variable to check multicolinearity of predictor variables
 ## VIF helps determien which predictors are too strongly correlated with other predictor variables to explain variation observed
 vif.cca(rda.WI.0)
-# BarrenLand   CropLand  Developed     Forest Herbaceous     Mexico  OpenWater     Others  SaltonSea      Shrub
-# 46.92171   17.93014   14.81736   23.98465  127.78411   32.43178         NA         NA         NA         NA
+# ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction         BarrenLand           CropLand          Developed
+# 172.99090          837.17854          669.64301          254.24173           17.10031           32.75442                 NA
+# Forest         Herbaceous             Mexico          OpenWater             Others          SaltonSea              Shrub
+# NA                 NA                 NA                 NA                 NA                 NA                 NA
 
 ## Understanding VIF results...
 # A value of 1 indicates there is no correlation between a given predictor variable and any other predictor variables in the model.
 # A value between 1 and 5 indicates moderate correlation between a given predictor variable and other predictor variables in the model, but this is often not severe enough to require attention.
 # A value greater than 5 indicates potentially severe correlation between a given predictor variable and other predictor variables in the model. In this case, the coefficient estimates and p-values in the regression output are likely unreliable.
 # when to ignore high VIF values: https://statisticalhorizons.com/multicollinearity/
-head(WI)
+head(WI[,c(5:7,10,33:42)])
 ## we can use model selection instead of picking variables we think are important (by p values)
-rda.WI.a = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(23:32)]),
+rda.WI.a = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(5:7,10,33:42)]),
                          scope=formula(rda.WI.0),
                          direction = "forward",
                          permutations = how(nperm=999))
 rda.WI.a$anova # see significance of individual terms in model
-# OpenWater near sig but appears in 1 sample...
+# + OpenWater           1 63.384 2.0387  0.059 .
+# + ave.air_temp        1 63.882 1.5552  0.090 .
 
 # can also use model seletion to pick most important variables by which increases variation (R^2) the most
-rda.WI.a2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(23:32)]),
+rda.WI.a2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(5:7,10,33:42)]),
                             scope=formula(rda.WI.0),
                             permutations = how(nperm=999))
 # too many terms
@@ -451,8 +568,8 @@ rda.WI.a2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(23:32)]),
 anova(rda.WI.a, permutations = how(nperm=999)) #not significant
 #anova(rda.WI.a2, permutations = how(nperm=999)) # p =  0.001, significant
 
-# Dropping Open Water. because it's in 1 sample, dropping Forest because neglible values across samples, & Developed and Others because it's evenly distributed across samples
-rda.WI.1<-rda(b.clr_WI ~ BarrenLand+CropLand+Herbaceous+Mexico+SaltonSea+Shrub,data=WI)
+# Dropping Open Water. because it's in 1 sample, dropping Forest because neglible values across samples
+rda.WI.1<-rda(b.clr_WI ~ ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+BarrenLand+CropLand+Developed+Herbaceous+Mexico+Others+SaltonSea+Shrub,data=WI)
 summary(rda.WI.1)
 RsquareAdj(rda.WI.1) # how much variation is explained by our model?
 anova(rda.WI.1, by = "terms", permutations = how(nperm=999)) ### by variables
@@ -460,19 +577,23 @@ anova(rda.WI.1, by = "terms", permutations = how(nperm=999)) ### by variables
 
 ## this will help us interpret our RDA and we can see some variable are not significant
 vif.cca(rda.WI.1)
-#  BarrenLand   CropLand Herbaceous     Mexico  SaltonSea      Shrub
-# 5016.8130   989.6582   336.7180   262.7472  2793.3171 28085.3330
+# ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction         BarrenLand           CropLand          Developed
+# 172.99090          837.17854          669.64301          254.24173           17.10031           32.75442                 NA
+# Herbaceous             Mexico             Others          SaltonSea              Shrub
+# NA                 NA                 NA                 NA                 NA
 
-head(WI)
+head(WI[,c(5:7,10,33:42)])
 ## we can use model selection instead of picking variables we think are important -- based on p values
-rda.WI.b1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(23:24,27:28,31:32)]),
+rda.WI.b1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(5:7,10,33:35,37:38,40:42)]),
                           scope=formula(rda.WI.1),
                           direction = "forward",
                           permutations = how(nperm=999))
+#                      Df    AIC      F Pr(>F)
+#+ ave.air_temp        1 63.882 1.5552  0.083 .
 rda.WI.b1$anova
 #
 # Can also use model selection to pick variables by which ones increase variation (R^2)
-rda.WI.b2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(23:24,27:28,31:32)]),
+rda.WI.b2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(5:7,10,33:35,37:38,40:42)]),
                             scope=formula(rda.WI.1),
                             permutations = how(nperm=999))
 # too many variables
@@ -483,42 +604,44 @@ anova(rda.WI.b1, permutations = how(nperm=999)) # p =  0.001, significant
 
 anova(rda.WI.0, rda.WI.1) #
 
-# dropping Shrub because much higher VIF...
-rda.WI.2<-rda(b.clr_WI ~ BarrenLand+CropLand+Herbaceous+Mexico+SaltonSea,data=WI)
+# dropping Others
+rda.WI.2<-rda(b.clr_WI ~ ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+BarrenLand+CropLand+Developed+Herbaceous+Mexico+SaltonSea+Shrub,data=WI)
 summary(rda.WI.2)
-RsquareAdj(rda.WI.2) # how much variation is explained by our model? 0.04954029
+RsquareAdj(rda.WI.2) # how much variation is explained by our model? NA
 anova(rda.WI.2, by = "terms", permutations = how(nperm=999)) ### by variables
 ## this will help us interpret our RDA and we can see some variable are not significant
 
 anova(rda.WI.2, by=NULL,permutations = how(nperm=999)) # p =  0.472
 
 vif.cca(rda.WI.2)
-#BarrenLand   CropLand Herbaceous     Mexico  SaltonSea
-#17.48460   13.77561   39.03967   30.43097   30.03854
+#ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction         BarrenLand           CropLand          Developed
+# 172.99090          837.17854          669.64301          254.24173           17.10031           32.75442                 NA
+# Herbaceous             Mexico          SaltonSea              Shrub
+# NA                 NA                 NA                 NA
 
 # check if ORP & Sulfide are significantly correlated in August, which they are [strong, sig negative corr]
-#cor.test(dust.meta.surf[metadata$SampDate=="WI",]$Sulfide_microM, dust.meta.surf[metadata$SampDate=="WI",]$ORP_mV, method="pearson") # ******
+#cor.test(meta.all.scaled[metadata$SampDate=="WI",]$Sulfide_microM, meta.all.scaled[metadata$SampDate=="WI",]$ORP_mV, method="pearson") # ******
 
-head(WI)
+head(WI[,c(5:7,10,33:42)])
 ## we can use model selection instead of picking variables we think are important -- based on p values
-rda.WI.c1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(23:24,27:28,31)]),
+rda.WI.c1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(5:7,10,33:35,37:38,41:42)]),
                           scope=formula(rda.WI.2),
                           direction = "forward",
                           permutations = how(nperm=999))
-#
+# air temp near sig
 # Can also use model selection to pick variables by which ones increase variation (R^2)
-rda.WI.c2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(23:24,27:28,31)]),
+rda.WI.c2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(5:7,10,33:35,37:38,41:42)]),
                             scope=formula(rda.WI.2),
                             permutations = how(nperm=999))
-# BarrenLand?/ not sig though
+# too many terms
 
 # check best fit model based on above results
 anova(rda.WI.c1, permutations = how(nperm=999)) #
 
-
-rda.WI.3<-rda(b.clr_WI ~ BarrenLand+CropLand+Mexico+SaltonSea,data=WI)
+# dropped Developed
+rda.WI.3<-rda(b.clr_WI ~ ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+BarrenLand+CropLand+Herbaceous+Mexico+SaltonSea+Shrub,data=WI)
 summary(rda.WI.3)
-RsquareAdj(rda.WI.3) # how much variation is explained by our model? 0.07253236%
+RsquareAdj(rda.WI.3) # how much variation is explained by our model? NA%
 anova(rda.WI.3, by = "terms", permutations = how(nperm=999)) ### by variables
 ## this will help us interpret our RDA and we can see some variable are not significant
 #                             Df Variance      F Pr(>F)
@@ -526,77 +649,131 @@ anova(rda.WI.3, by = "terms", permutations = how(nperm=999)) ### by variables
 anova(rda.WI.3, by=NULL,permutations = how(nperm=999)) # p =  0.877
 
 vif.cca(rda.WI.3)
-#BarrenLand   CropLand     Mexico  SaltonSea
-#8.786964  13.247242  30.220219  23.164521
+# ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction         BarrenLand           CropLand         Herbaceous
+# 172.99090          837.17854          669.64301          254.24173           17.10031           32.75442                 NA
+# Mexico          SaltonSea              Shrub
+# NA                 NA                 NA
 
-head(WI)
+head(WI[,c(5:7,10,33:42)])
 ## we can use model selection instead of picking variables we think are important -- based on p values
-rda.WI.d1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(23:24,28,31)]),
+rda.WI.d1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(5:7,10,33:34,37:38,41:42)]),
                           scope=formula(rda.WI.3),
                           direction = "forward",
                           permutations = how(nperm=999))
-# nothing significant
+# ave air temp
 # Can also use model selection to pick variables by which ones increase variation (R^2)
-rda.WI.d2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(23:24,28,31)]),
+rda.WI.d2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(5:7,10,33:34,37:38,41:42)]),
                             scope=formula(rda.WI.3),
                             permutations = how(nperm=999))
 # nothing sig
 
-rda.WI.4<-rda(b.clr_WI ~ BarrenLand+CropLand+SaltonSea,data=WI)
+# drop Herbaceous and Mexico
+rda.WI.4<-rda(b.clr_WI ~ ave.air_temp+ave.wind_speed+ave.wind_gust+ave.wind_direction+BarrenLand+CropLand+SaltonSea+Shrub,data=WI)
 summary(rda.WI.4)
-RsquareAdj(rda.WI.4) # how much variation is explained by our model? -0.2086308
+RsquareAdj(rda.WI.4) # how much variation is explained by our model? NA
 anova(rda.WI.4, by = "terms", permutations = how(nperm=999)) ### by variables
 ## this will help us interpret our RDA and we can see some variable are not significant
 #                             Df Variance      F Pr(>F)
-
+# ave air
 anova(rda.WI.4, by=NULL,permutations = how(nperm=999)) # p =  0.909
 
 vif.cca(rda.WI.4)
-#BarrenLand   CropLand  SaltonSea
-#4.954979   1.769520   6.515210
+#      ave.air_temp     ave.wind_speed      ave.wind_gust ave.wind_direction         BarrenLand           CropLand          SaltonSea
+# 172.99090          837.17854          669.64301          254.24173           17.10031           32.75442                 NA
+# Shrub
+# NA
 
-head(WI)
+head(WI[,c(5:7,10,33:42)])
 ## we can use model selection instead of picking variables we think are important -- based on p values
-rda.WI.e1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(23:24,31)]),
+rda.WI.e1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(5:7,10,33:34,41:42)]),
                      scope=formula(rda.WI.4),
                      direction = "forward",
                      permutations = how(nperm=999))
-# nothing significant
+# ave air temp is near sig
 # Can also use model selection to pick variables by which ones increase variation (R^2)
-rda.WI.e2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(23:24,31)]),
+rda.WI.e2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(5:7,10,33:34,41:42)]),
                        scope=formula(rda.WI.4),
                        permutations = how(nperm=999))
 # nothing sig
 
-
-rda.WI.5<-rda(b.clr_WI ~ BarrenLand+SaltonSea,data=WI)
+# dropped barren land and ave wind speed and crop land
+rda.WI.5<-rda(b.clr_WI ~ ave.air_temp+ave.wind_gust+ave.wind_direction+SaltonSea+Shrub,data=WI)
 summary(rda.WI.5)
-RsquareAdj(rda.WI.5) # how much variation is explained by our model? -0.02387236
+RsquareAdj(rda.WI.5) # how much variation is explained by our model? -0.5715959
 anova(rda.WI.5, by = "terms", permutations = how(nperm=999)) ### by variables
 ## this will help us interpret our RDA and we can see some variable are not significant
 #                             Df Variance      F Pr(>F)
 
-anova(rda.WI.5, by=NULL,permutations = how(nperm=999)) # p =  0.909
+anova(rda.WI.5, by=NULL,permutations = how(nperm=999)) # p
 
 vif.cca(rda.WI.5)
-#BarrenLand  SaltonSea
-#4.434495   4.434495
+#ave.air_temp      ave.wind_gust ave.wind_direction          SaltonSea              Shrub
+#17.54526           15.19286           15.46338           73.71971           38.29629
 
-head(WI)
+head(WI[,c(5:7,10,33:42)])
 ## we can use model selection instead of picking variables we think are important -- based on p values
-rda.WI.f1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(23,31)]),
+rda.WI.f1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(5,7,10,41:42)]),
                      scope=formula(rda.WI.5),
                      direction = "forward",
                      permutations = how(nperm=999))
-# nothing significant
+# ave air temp near sig
 # Can also use model selection to pick variables by which ones increase variation (R^2)
-rda.WI.f2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(23,31)]),
+rda.WI.f2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(5,7,10,41:42)]),
                        scope=formula(rda.WI.5),
                        permutations = how(nperm=999))
 # nothing sig
 
-anova(rda(b.clr_WI ~ BarrenLand,data=WI), by=NULL,permutations = how(nperm=999)) # p =  0.386
+# dropped salton sea & wind direction
+rda.WI.6<-rda(b.clr_WI ~ ave.air_temp+ave.wind_gust+Shrub,data=WI)
+summary(rda.WI.6)
+RsquareAdj(rda.WI.6) # how much variation is explained by our model? 0.2284503
+anova(rda.WI.6, by = "terms", permutations = how(nperm=999)) ### by variables
+## this will help us interpret our RDA and we can see some variable are not significant
+#                             Df Variance      F Pr(>F)
+# ave.air_temp   1   1883.6 1.8450  0.082 .
 
+anova(rda.WI.6, by=NULL,permutations = how(nperm=999)) # p = 0.083 .
+
+vif.cca(rda.WI.6)
+#ave.air_temp ave.wind_gust         Shrub
+#7.000397      5.243932     15.156672
+
+head(WI[,c(5:7,10,33:42)])
+## we can use model selection instead of picking variables we think are important -- based on p values
+rda.WI.e1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(5,7,42)]),
+                     scope=formula(rda.WI.6),
+                     direction = "forward",
+                     permutations = how(nperm=999))
+# ave air temp near sig
+# Can also use model selection to pick variables by which ones increase variation (R^2)
+rda.WI.e2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(5,7,42)]),
+                       scope=formula(rda.WI.6),
+                       permutations = how(nperm=999))
+# ave air temp near sig
+
+
+rda.WI.7<-rda(b.clr_WI ~ ave.air_temp,data=WI)
+summary(rda.WI.7)
+RsquareAdj(rda.WI.7) # how much variation is explained by our model? 0.08469961
+anova(rda.WI.7, by = "terms", permutations = how(nperm=999)) ### by variables
+## this will help us interpret our RDA and we can see some variable are not significant
+#                             Df Variance      F Pr(>F)
+# ave.air_temp  1   1883.6 1.5552  0.088 .
+
+anova(rda.WI.7, by=NULL,permutations = how(nperm=999)) # p = 0.089 .
+
+head(WI[,c(5:7,10,33:42)])
+## we can use model selection instead of picking variables we think are important -- based on p values
+# rda.WI.f1 = ordistep(rda(b.clr_WI ~ 1, data = WI[,c(5)]),
+#                      scope=formula(rda.WI.7),
+#                      direction = "forward",
+#                      permutations = how(nperm=999))
+# # ave air temp near sig
+# # Can also use model selection to pick variables by which ones increase variation (R^2)
+# rda.WI.f2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(5,7,42)]),
+#                        scope=formula(rda.WI.7),
+#                        permutations = how(nperm=999))
+# # ave air temp near sig
 
 #### RDA - DP ####
 
@@ -639,7 +816,7 @@ vif.cca(rda.DP.0)
 # when to ignore high VIF values: https://statisticalhorizons.com/multicollinearity/
 head(DP)
 ## we can use model selection instead of picking variables we think are important (by p values)
-rda.DP.a = ordistep(rda(b.clr_DP ~ 1, data = DP[,c(23:32)]),
+rda.DP.a = ordistep(rda(b.clr_DP ~ 1, data = DP[,c(5:7,10,33:42)]),
                          scope=formula(rda.DP.0),
                          direction = "forward",
                          permutations = how(nperm=999))
@@ -647,7 +824,7 @@ rda.DP.a = ordistep(rda(b.clr_DP ~ 1, data = DP[,c(23:32)]),
 rda.DP.a$anova # see significance of individual terms in model
 
 # can also use model seletion to pick most important variables by which increases variation (R^2) the most
-rda.DP.a2 = ordiR2step(rda(b.clr_DP ~ 1, data = DP[,c(23:32)]),
+rda.DP.a2 = ordiR2step(rda(b.clr_DP ~ 1, data = DP[,c(5:7,10,33:42)]),
                             scope=formula(rda.DP.0),
                             permutations = how(nperm=999))
 # nothing sig
@@ -866,7 +1043,7 @@ vif.cca(rda.BDC.0)
 # when to ignore high VIF values: https://statisticalhorizons.com/multicollinearity/
 head(BDC)
 ## we can use model selection instead of picking variables we think are important (by p values)
-rda.BDC.a = ordistep(rda(b.clr_BDC ~ 1, data = BDC[,c(23:32)]),
+rda.BDC.a = ordistep(rda(b.clr_BDC ~ 1, data = BDC[,c(5:7,10,33:42)]),
                          scope=formula(rda.BDC.0),
                          direction = "forward",
                          permutations = how(nperm=999))
@@ -874,7 +1051,7 @@ rda.BDC.a = ordistep(rda(b.clr_BDC ~ 1, data = BDC[,c(23:32)]),
 rda.BDC.a$anova # see significance of individual terms in model
 
 # can also use model seletion to pick most important variables by which increases variation (R^2) the most
-rda.BDC.a2 = ordiR2step(rda(b.clr_BDC ~ 1, data = BDC[,c(23:32)]),
+rda.BDC.a2 = ordiR2step(rda(b.clr_BDC ~ 1, data = BDC[,c(5:7,10,33:42)]),
                             scope=formula(rda.BDC.0),
                             permutations = how(nperm=999))
 # too many terms
@@ -1095,7 +1272,7 @@ vif.cca(rda.PD.0)
 # when to ignore high VIF values: https://statisticalhorizons.com/multicollinearity/
 head(PD)
 ## we can use model selection instead of picking variables we think are important (by p values)
-rda.PD.a = ordistep(rda(b.clr_PD ~ 1, data = PD[,c(23:32)]),
+rda.PD.a = ordistep(rda(b.clr_PD ~ 1, data = PD[,c(5:7,10,33:42)]),
                      scope=formula(rda.PD.0),
                      direction = "forward",
                      permutations = how(nperm=999))
@@ -1103,7 +1280,7 @@ rda.PD.a = ordistep(rda(b.clr_PD ~ 1, data = PD[,c(23:32)]),
 rda.PD.a$anova # see significance of individual terms in model
 
 # can also use model seletion to pick most important variables by which increases variation (R^2) the most
-rda.PD.a2 = ordiR2step(rda(b.clr_PD ~ 1, data = PD[,c(23:32)]),
+rda.PD.a2 = ordiR2step(rda(b.clr_PD ~ 1, data = PD[,c(5:7,10,33:42)]),
                         scope=formula(rda.PD.0),
                         permutations = how(nperm=999))
 # nothing
@@ -1256,14 +1433,14 @@ rda.PD.f2 = ordiR2step(rda(b.clr_PD ~ 1, data = PD[,c(23:24)]),
 
 #### Final RDAs ####
 # RDA by sampling timepoint
-head(dust.meta.surf)
+head(meta.all.scaled)
 head(b.clr)
-rownames(b.clr) %in% rownames(dust.meta.surf) # sanity check 1
+rownames(b.clr) %in% rownames(meta.all.scaled) # sanity check 1
 
 # all data
 #rda.all2$call # best model for all data
 
-rda.all<-rda(b.clr ~ Temp_DegC + Dissolved_OrganicMatter_RFU + DO_Percent_Local,data=dust.meta.surf)
+rda.all<-rda(b.clr ~ Temp_DegC + Dissolved_OrganicMatter_RFU + DO_Percent_Local,data=meta.all.scaled)
 rda.all
 summary(rda.all)
 RsquareAdj(rda.all) # how much variation is explained by our model? 49.56% variation
@@ -1351,7 +1528,7 @@ dev.off()
 
 
 # variance partitioning of RDA
-rda.all.part<-varpart(b.clr, dust.meta.surf$Temp_DegC, dust.meta.surf$Dissolved_OrganicMatter_RFU,dust.meta.surf$DO_Percent_Local)
+rda.all.part<-varpart(b.clr, meta.all.scaled$Temp_DegC, meta.all.scaled$Dissolved_OrganicMatter_RFU,meta.all.scaled$DO_Percent_Local)
 rda.all.part$part
 # plot variance partitioning results
 png('figures/EnvDrivers/SSW_AllData_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
@@ -1369,8 +1546,8 @@ rda.sum.all$cont #cumulative proportion of variance per axis
 
 # create data frame w/ RDA axes for sites
 # first check rownames of RDA & metadata, then make df
-rownames(rda.sum.all$sites) %in% rownames(dust.meta.surf)
-rda.axes.all<-data.frame(RDA1=rda.sum.all$sites[,1], RDA2=rda.sum.all$sites[,2], SampleID=rownames(rda.sum.all$sites), Depth_m=dust.meta.surf$Depth_m, SampDate=dust.meta.surf$SampDate)
+rownames(rda.sum.all$sites) %in% rownames(meta.all.scaled)
+rda.axes.all<-data.frame(RDA1=rda.sum.all$sites[,1], RDA2=rda.sum.all$sites[,2], SampleID=rownames(rda.sum.all$sites), Depth_m=meta.all.scaled$Depth_m, SampDate=meta.all.scaled$SampDate)
 
 # create data frame w/ RDA axes for variables
 arrows.all<-data.frame(RDA1=rda.sum.all$biplot[,1], RDA2=rda.sum.all$biplot[,2], Label=rownames(rda.sum.all$biplot))
