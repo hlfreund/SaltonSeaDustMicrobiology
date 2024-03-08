@@ -233,12 +233,6 @@ SurfTypFreq$STF_Date<-factor(SurfTypFreq$STF_Date, levels=c("July.2020","August.
 # so back trajectory info was used to determine which surface the wind traveled over
 # this raw model output data
 
-#### Scale Environmental Metadata ####
-#head(metadata)
-#meta_scaled<-metadata
-#meta_scaled[,8:15]<-scale(meta_scaled[,8:15],center=TRUE,scale=TRUE) # only scale chem env data
-#head(meta_scaled)
-
 #### Create Super DF with Count, Taxa, & Metadata ####
 # merge CLEAN aka contaminants/controls removed count & taxa tables
 bac.ASV_table[1:5,1:5]
@@ -315,6 +309,20 @@ head(clim.data)
 colnames(clim.data)[which(colnames(clim.data) %in% colnames(dust.meta.surf))]
 
 dust.meta.all<-merge(clim.data,dust.meta.surf,by=c("CollectionNum","STID","Deploy_dth","Collect_dth"))
+rownames(dust.meta.all)<-dust.meta.all$SampleID
+rownames(dust.meta.all) # sanity check
+
+# reorder metadata based off of ASV table
+dust.meta.all=dust.meta.all[rownames(bac.ASV_table),] ## will drop rows that are not shared by both dataframes!
+rownames(dust.meta.all) # sanity check
+
+#### Scale Environmental Metadata ####
+#head(metadata)
+meta.all.scaled<-dust.meta.all
+head(meta.all.scaled)
+meta.all.scaled[,c(5:10,33:42)]<-scale(meta.all.scaled[,c(5:10,33:42)],center=TRUE,scale=TRUE) # only scale chem env data
+head(meta.all.scaled)
+# meta.all.scaled should still have SampleIDs as rownames!
 
 #### Save Global Env for Import into Other Scripts ####
 
