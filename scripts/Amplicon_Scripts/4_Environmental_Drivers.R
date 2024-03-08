@@ -483,6 +483,7 @@ anova(rda.all7, by = "terms", permutations = how(nperm=999)) ### by variables
 #ave.air_temp   1    471.3 1.4216  0.098 .
 # ave.wind_gust  1    774.9 2.3375  0.009 **
 #   Developed      1    430.0 1.2972  0.133
+anova(rda.all7, by = NULL, permutations = how(nperm=999)) ### by model --> p = 0.005 **
 
 ## this will help us interpret our RDA and we can see some variable are not significant
 vif.cca(rda.all7)
