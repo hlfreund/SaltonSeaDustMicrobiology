@@ -88,7 +88,7 @@ sites <- sites %>%
 ### increase distance to find stations near all sample sites
 ### site has data between time points of dust collections that we are looking at
 sites <- sites %>%
-  filter(dist <= 200000) %>%
+  filter(dist <= 2000000) %>%
   filter(start <= as.Date('2020-06-01')) %>%
   filter(end >= as.Date('2021-12-31'))
 
@@ -96,9 +96,9 @@ sites <- sites %>%
 # BDC’s closest weather station - D0742
 # PD’s closest weather station - C2285
 # DP’s closest weather station - DPMC1
-# WI’s closest weather station - UP614
+# WI’s closest weather station - CQ125 or UP614
 
-our.site.list<-c("D0742","C2285","DPMC1","UP614")
+our.site.list<-c("D0742","C2285","DPMC1","CQ125")
 
 sites<-sites[sites$STID %in% our.site.list,] # only keep sites of interest
 
@@ -106,12 +106,15 @@ sites<-sites[sites$STID %in% our.site.list,] # only keep sites of interest
 
 #### Import Salton Sea Dust Microbiome Metadata ####
 
-dust_meta<-as.data.frame(read_excel("data/Amplicon/Metadata_EnvMiSeqPlate_Winter23.xlsx", sheet="SSea_Dust_Metadata_Updated"), header=TRUE)
+dust_meta<-as.data.frame(read_excel("data/Metadata_EnvMiSeqPlate_Winter23.xlsx", sheet="SSea_Dust_Metadata_Updated"), header=TRUE)
 head(dust_meta)
 
 # pull out station IDs and dust collector deployment/retrieval date/times
 stids<-unique(data.frame(dust_meta[,14:17]))
+stids # sanity check
 
+#stids$STID<-gsub("UP614","CQ125",stids$STID) # just to see what data we can get from CQ125 - is it more than UP614
+#stids
 #### Pull Out TimeSeries Data for Sites Near Salton Sea ####
 ## full timeseries variable list: https://demos.synopticdata.com/variables/index.html
 
@@ -273,14 +276,14 @@ SubsetTimeSeries(stids,time_series_data_out) # this works
 # C2285.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-07-27 12:00:00") & date_time_hour <= ymd_hms("2021-09-18 17:00:00") & STID=="C2285")
 # C2285.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-18 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="C2285")
 #
-# # UP614 - for WI
-# UP614.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-06-01 12:00:00") & date_time_hour <= ymd_hms("2020-07-10 17:00:00") & STID=="UP614")
-# UP614.Coll2<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-07-10 12:00:00") & date_time_hour <= ymd_hms("2020-08-30 17:00:00") & STID=="UP614")
-# UP614.Coll3<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-08-30 12:00:00") & date_time_hour <= ymd_hms("2020-10-10 17:00:00") & STID=="UP614")
-# UP614.Coll4<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-10-10 12:00:00") & date_time_hour <= ymd_hms("2020-11-05 17:00:00") & STID=="UP614")
-# UP614.Coll5<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-06-08 12:00:00") & date_time_hour <= ymd_hms("2021-07-29 17:00:00") & STID=="UP614")
-# UP614.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-07-29 12:00:00") & date_time_hour <= ymd_hms("2021-09-18 17:00:00") & STID=="UP614")
-# UP614.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-18 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="UP614")
+# # CQ125 - for WI
+# CQ125.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-06-01 12:00:00") & date_time_hour <= ymd_hms("2020-07-10 17:00:00") & STID=="CQ125")
+# CQ125.Coll2<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-07-10 12:00:00") & date_time_hour <= ymd_hms("2020-08-30 17:00:00") & STID=="CQ125")
+# CQ125.Coll3<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-08-30 12:00:00") & date_time_hour <= ymd_hms("2020-10-10 17:00:00") & STID=="CQ125")
+# CQ125.Coll4<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-10-10 12:00:00") & date_time_hour <= ymd_hms("2020-11-05 17:00:00") & STID=="CQ125")
+# CQ125.Coll5<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-06-08 12:00:00") & date_time_hour <= ymd_hms("2021-07-29 17:00:00") & STID=="CQ125")
+# CQ125.Coll6<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-07-29 12:00:00") & date_time_hour <= ymd_hms("2021-09-18 17:00:00") & STID=="CQ125")
+# CQ125.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-18 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="CQ125")
 #
 # # DPMC1 - for DP
 # DPMC1.Coll1<-subset(time_series_data_out, date_time_hour >= ymd_hms("2020-06-01 12:00:00") & date_time_hour <= ymd_hms("2020-07-10 17:00:00") & STID=="DPMC1")
@@ -296,11 +299,11 @@ SubsetTimeSeries(stids,time_series_data_out) # this works
 
 #### Pull Out Precipitation Data for Sites Near Salton Sea ####
 ## info on precipitation data can be found here: https://docs.synopticdata.com/services/precipitation
-d<-mw(service = 'precipitation', stid='UP614', start =  '202007010001', end ='202201010001', pmode='intervals', interval = 'hour', jsonsimplify = TRUE, returnURL =FALSE)
-clim <- data.frame( lapply( d$STATION$OBSERVATIONS, unlist) )
+#d<-mw(service = 'precipitation', stid='CQ125', start =  '202007010001', end ='202201010001', pmode='intervals', interval = 'hour', jsonsimplify = TRUE, returnURL =FALSE)
+#clim <- data.frame( lapply( d$STATION$OBSERVATIONS, unlist) )
 
 
-write_rds(time_series_data_out, 'data/Climate/MesoWest_SaltonSea_2013-2020.rds')
+#write_rds(time_series_data_out, 'data/Climate/MesoWest_SaltonSea_2013-2020.rds')
 
 #### Save Output ####
 head(timeseries.aves)
