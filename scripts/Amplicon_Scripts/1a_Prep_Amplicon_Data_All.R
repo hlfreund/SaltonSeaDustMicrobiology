@@ -71,6 +71,8 @@ head(bac.ASV_tax)
 
 # Import all metadata
 metadata<-as.data.frame(read_excel("data/Metadata_EnvMiSeqPlate_Winter23.xlsx", sheet="Metadata"), header=TRUE)
+# ^ for csv: as.data.frame(read.csv("file.csv",header = TRUE, sep = ",", quote = "",))
+
 head(metadata)
 metadata$SampleID<-gsub("_",".", metadata$SampleID)
 
@@ -133,14 +135,14 @@ colnames(bac.ASV_counts_CLEAN) # check for control sample IDs
 
 ## and now writing them out to files
 #write(asv_fasta_no_contam, "ASVs-no-contam.fa")
-write.table(bac.ASV_counts_CLEAN, "data/EnvMiSeq_W23_16S.V3V4_ASVs_Counts_NoContam.tsv",
+write.table(bac.ASV_counts_CLEAN, "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Counts_NoContam.tsv",
             sep="\t", quote=F, col.names=NA)
-saveRDS(bac.ASV_counts_CLEAN, file = "data/EnvMiSeq_W23_16S.V3V4_ASVs_Counts_NoContam_Robject.rds", ascii = FALSE, version = NULL,
+saveRDS(bac.ASV_counts_CLEAN, file = "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Counts_NoContam_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
-write.table(bac.ASV_taxa_CLEAN, "data/EnvMiSeq_W23_16S.V3V4_ASVs_Taxa_NoContam.tsv",
+write.table(bac.ASV_taxa_CLEAN, "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Taxa_NoContam.tsv",
             sep="\t", quote=F, col.names=NA)
-saveRDS(bac.ASV_taxa_CLEAN, file = "data/EnvMiSeq_W23_16S.V3V4_ASVs_Taxa_NoContam_Robject.rds", ascii = FALSE, version = NULL,
+saveRDS(bac.ASV_taxa_CLEAN, file = "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Taxa_NoContam_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
 #### Update Metadata ####
@@ -366,19 +368,19 @@ head(all_bac) # contains metadata, ASV counts, and taxonomic IDs for ASVs
 #### Save Files for Each Project ####
 
 # save ASV table for dust; includes no contaminants, zeros, singletons, or eukaryotic hits
-saveRDS(dust_b.ASV, file = "data/SaltonSeaDust_16S.V3V4_ASVTable_Robject.rds", ascii = FALSE, version = NULL,
+saveRDS(dust_b.ASV, file = "data/Amplicon/SaltonSeaDust_16S.V3V4_ASVTable_Robject.rds", ascii = FALSE, version = NULL,
        compress = TRUE, refhook = NULL)
-#saveRDS(soil_b.ASV, file = "data/SaltonSeaDust_16S.V3V4_ASVTable_Robject.rds", ascii = FALSE, version = NULL,
+#saveRDS(soil_b.ASV, file = "data/Amplicon/SaltonSeaDust_16S.V3V4_ASVTable_Robject.rds", ascii = FALSE, version = NULL,
 #        compress = TRUE, refhook = NULL)
-saveRDS(lung_b.ASV, file = "data/SaltonSea_Lungs_16S.V3V4_ASVTable_Robject.rds", ascii = FALSE, version = NULL,
+saveRDS(lung_b.ASV, file = "data/Amplicon/SaltonSea_Lungs_16S.V3V4_ASVTable_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
 # save updated taxa file
-saveRDS(bac.tax.clean, file = "data/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Clean_Robject.rds", ascii = FALSE, version = NULL,
+saveRDS(bac.tax.clean, file = "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Clean_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
 #### Save Global Env for Import into Other Scripts ####
 
-save.image("data/EnvMiSeq_W23_16S.V3V4_DataReady.Rdata") # save global env to Rdata file
+save.image("data/Amplicon/EnvMiSeq_W23_16S.V3V4_DataReady.Rdata") # save global env to Rdata file
 
 ## ^ this will be loaded into other scripts for downstream analyses

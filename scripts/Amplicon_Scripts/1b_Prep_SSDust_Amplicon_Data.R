@@ -69,7 +69,7 @@ bac.ASV_tax<-data.frame(readRDS("data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Taxono
 head(bac.ASV_tax)
 
 ### Import & Update Metadata ####
-dust_meta<-as.data.frame(read_excel("data/Amplicon/Metadata_EnvMiSeqPlate_Winter23.xlsx", sheet="SSea_Dust_Metadata_Updated"), header=TRUE)
+dust_meta<-as.data.frame(read_excel("data/Metadata_EnvMiSeqPlate_Winter23.xlsx", sheet="SSea_Dust_Metadata_Updated"), header=TRUE)
 head(dust_meta)
 
 # confirm that categorical variables of interest are factors
