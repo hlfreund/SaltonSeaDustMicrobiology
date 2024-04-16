@@ -318,11 +318,15 @@ rownames(dust.meta.all) # sanity check
 
 #### Scale Environmental Metadata ####
 #head(metadata)
+# first scale metadata in big df
 meta.all.scaled<-dust.meta.all
 head(meta.all.scaled)
-meta.all.scaled[,c(5:10,33:42)]<-scale(meta.all.scaled[,c(5:10,33:42)],center=TRUE,scale=TRUE) # only scale chem env data
+meta.all.scaled[,c(5:10,35:44)]<-scale(meta.all.scaled[,c(5:10,35:44)],center=TRUE,scale=TRUE) # only scale chem env data
 head(meta.all.scaled)
-# meta.all.scaled should still have SampleIDs as rownames!
+
+# move scaled metadata to its own df
+env.dat.scaled<-meta.all.scaled[,c(5:10,35:44)]
+head(env.dat.scaled)
 
 #### Save Global Env for Import into Other Scripts ####
 
