@@ -35,7 +35,6 @@ suppressPackageStartupMessages({ # load packages quietly
   library(geosphere)
   library(lubridate)
   library(circular)
-  #library(weatherData)
 
 })
 
@@ -86,20 +85,19 @@ sites <- sites %>%
 # ** NEED TO FILTER AND FIND SITE THAT IS CLOSEST TO EACH SITE, MONTH/YEAR
 
 ## Then filter the sites by the following info:
-### increase distance to find stations near all sample sites
+### removed distance threshold to find stations near all sample sites
 ### site has data between time points of dust collections that we are looking at
 sites <- sites %>%
-  filter(dist <= 2000000) %>%
   filter(start <= as.Date('2020-06-01')) %>%
   filter(end >= as.Date('2021-12-31'))
 
-# pull out only sites that we are interested in
-# BDC’s closest weather station - UCDE
-# PD’s closest weather station - CI200
-# DP’s closest weather station - DPMC1
-# WI’s closest weather station - CQ125 or UP614
+# pull out only sites that we are interested in FOR PRECIPITATION DATA ONLY
+# BDC’s closest weather station - COOPDEEC1
+# PD’s closest weather station - C2285
+# DP’s closest weather station - COOPMCAC1
+# WI’s closest weather station - D3583
 
-our.site.list<-c("UCDE","CI200","DPMC1","CQ125")
+our.site.list<-c("COOPDEEC1","C2285","COOPMCAC1","D3583")
 
 sites<-sites[sites$STID %in% our.site.list,] # only keep sites of interest
 
@@ -111,21 +109,17 @@ dust_meta<-as.data.frame(read_excel("data/Metadata_EnvMiSeqPlate_Winter23.xlsx",
 head(dust_meta)
 
 # pull out station IDs and dust collector deployment/retrieval date/times
-stids<-unique(data.frame(dust_meta[,14:17]))
-stids # sanity check
+stids<-unique(data.frame(dust_meta[,c(14,16:17,20)]))
+stids
 
-precip.stids<-unique(data.frame(dust_meta[,c(14,16:17,20)]))
-#stids$STID<-gsub("UP614","CQ125",stids$STID) # just to see what data we can get from CQ125 - is it more than UP614
-#stids
-#### Pull Out Climate TimeSeries Data for Sites Near Salton Sea ####
+#### Pull Out Precipitation TimeSeries Data for Sites Near Salton Sea ####
 ## full timeseries variable list: https://demos.synopticdata.com/variables/index.html
 
 i.STID <- sites$STID[1] # checking the index (1)
 
-time_series_data <- lapply(sites$STID, function(i.STID){
+precip_time_series_data <- lapply(sites$STID, function(i.STID){
   dt <- mw(service = 'timeseries', stid =i.STID,
-           vars = c('wind_speed','wind_gust','wind_direction',
-                    'air_temp','relative_humidity'),
+           vars = c('precip_accum_24_hour'),
            start = '202005130001', end = '202112090001', jsonsimplify= TRUE)
 
   obs <- dt[['STATION']][['OBSERVATIONS']]
@@ -138,93 +132,25 @@ time_series_data <- lapply(sites$STID, function(i.STID){
   return(obs)
 }) %>% rbindlist(fill=TRUE)
 
-setnames(time_series_data, names(time_series_data) %>% str_remove_all('_set_1(d?)'))
-# ^ remove '_set_1(d?)' from column names in time_series_data
+setnames(precip_time_series_data, names(precip_time_series_data) %>% str_remove_all('_set_1(d?)'))
+# ^ remove '_set_1(d?)' from column names in precip_time_series_data
 
-time_series_data[, date_time:=ymd_hms(date_time)]
-time_series_data[, date_time_hour:=ceiling_date(date_time, 'hour')]
-# time_series_data[, DateLST:=ymd_hms(date_time, tz = 'America/Los_Angeles')]
-# time_series_data[, DateLST:=ceiling_date(DateLST, 'hour')]
+precip_time_series_data[, date_time:=ymd_hms(date_time)]
+precip_time_series_data[, date_time_hour:=ceiling_date(date_time, 'hour')]
+# precip_time_series_data[, DateLST:=ymd_hms(date_time, tz = 'America/Los_Angeles')]
+# precip_time_series_data[, DateLST:=ceiling_date(DateLST, 'hour')]
 
-time_series_data[, wd:=circular(wind_direction, template='geographics', units='degrees')]
-# ^ create column $wd which is the wind direction in degrees, not sure why we need to create this since wind_direction has the same info?
-
-head(time_series_data)
+head(precip_time_series_data)
 
 # note: [,.()] is data.table notation; just keeps data in data.table format
 # https://stackoverflow.com/questions/33808705/dot-preceding-parentheses-in-data-table
 # looks like we are taking the mean of air temp & wind speed to get averages per hour rather than values per 5 minutes
-time_series_data_scalar <- time_series_data[, .(air_temp = mean(air_temp, na.rm=TRUE),
-                              wind_speed=mean(wind_speed, na.rm=TRUE),
-                              wind_gust=max(wind_gust, na.rm=TRUE),
-                              relative_humidity=mean(relative_humidity,na.rm=TRUE)),
-                          .(STID, date_time_hour)]
+precip_time_series_data_scalar <- precip_time_series_data[, .(precip_24hr_accum=mean(precip_accum_24_hour,na.rm=TRUE)),
+                                            .(STID, date_time_hour)]
 # ^ need to add accumulated precip & relative humidity in here, want to make sure I am treating the data the same way as Will
 
-time_series_data_dir <- time_series_data[!is.na(wd) & !is.na(wind_speed) & wind_speed > 0,
-                           .(wind_direction=weighted.mean.circular(wd,
-                                                                   w=wind_speed,
-                                                                   template='geographics',
-                                                                   units='degrees')),
-                           .(STID, date_time_hour)]
-# ^ time_series_data_dir only contains STID, date_time_hour, & wind_direction in degrees
+head(precip_time_series_data_scalar)
 
-time_series_data_dir[wind_direction < 0, wind_direction := wind_direction + 360]
-
-time_series_data_out <- full_join(time_series_data_scalar, time_series_data_dir)
-
-
-# #### Pull Out Precipitation TimeSeries Data for Sites Near Salton Sea ####
-# ## full timeseries variable list: https://demos.synopticdata.com/variables/index.html
-#
-# i.STID <- sites$STID[1] # checking the index (1)
-#
-# precip_time_series_data <- lapply(sites$STID, function(i.STID){
-#   dt <- mw(service = 'timeseries', stid =i.STID,
-#            vars = c('precip_accum_24_hour'),
-#            start = '202005130001', end = '202112090001', jsonsimplify= TRUE)
-#
-#   obs <- dt[['STATION']][['OBSERVATIONS']]
-#
-#   obs <- lapply(obs, unlist) %>%
-#     as.data.table
-#
-#   obs[, STID:=i.STID]
-#
-#   return(obs)
-# }) %>% rbindlist(fill=TRUE)
-#
-# setnames(precip_time_series_data, names(precip_time_series_data) %>% str_remove_all('_set_1(d?)'))
-# # ^ remove '_set_1(d?)' from column names in precip_time_series_data
-#
-# precip_time_series_data[, date_time:=ymd_hms(date_time)]
-# precip_time_series_data[, date_time_hour:=ceiling_date(date_time, 'hour')]
-# # precip_time_series_data[, DateLST:=ymd_hms(date_time, tz = 'America/Los_Angeles')]
-# # precip_time_series_data[, DateLST:=ceiling_date(DateLST, 'hour')]
-#
-# head(precip_time_series_data)
-#
-# # note: [,.()] is data.table notation; just keeps data in data.table format
-# # https://stackoverflow.com/questions/33808705/dot-preceding-parentheses-in-data-table
-# # looks like we are taking the mean of air temp & wind speed to get averages per hour rather than values per 5 minutes
-# precip_time_series_data_scalar <- precip_time_series_data[, .(precip_24_accum=mean(precip_accum_24_hour,na.rm=TRUE)),
-#                                             .(STID, date_time_hour)]
-# # ^ need to add accumulated precip & relative humidity in here, want to make sure I am treating the data the same way as Will
-#
-# precip_time_series_data_dir <- precip_time_series_data[!is.na(wd) & !is.na(wind_speed) & wind_speed > 0,
-#                                          .(wind_direction=weighted.mean.circular(wd,
-#                                                                                  w=wind_speed,
-#                                                                                  template='geographics',
-#                                                                                  units='degrees')),
-#                                          .(STID, date_precip_time_hour)]
-# # ^ precip_time_series_data_dir only contains STID, date_precip_time_hour, & wind_direction in degrees
-#
-# precip_time_series_data_dir[wind_direction < 0, wind_direction := wind_direction + 360]
-#
-# precip_time_series_data_out <- full_join(precip_time_series_data_scalar, precip_time_series_data_dir)
-#
-#
-#
 #### Parse TimeSeries Data ####
 
 # input for this function includes two data frames: the stations_df, and the timeseries_df
@@ -234,13 +160,13 @@ head(stids) # we are going to use this df, stids, as our stations_df input
 # the timeseries_df is the data frame containing the timeseries_df, and we are using the date_time_hour column to parse out the timeseries data
 # if the timeseries_df does not contain the column date_time_hour, the function will go to the error message.
 
-SubsetTimeSeries<-function(stations_df,timeseries_df){
+SubsetPrecipTimeSeries<-function(stations_df,timeseries_df){
   timeseries.aves.list<-list() # create empty list where we will store averages
-  if ("STID" %in% colnames(stations_df) & "Deploy_dth" %in% colnames(stations_df) & "Collect_dth" %in% colnames(stations_df)){
+  if ("Precip_STID" %in% colnames(stations_df) & "Deploy_dth" %in% colnames(stations_df) & "Collect_dth" %in% colnames(stations_df)){
     # ^ if specific column headers are found in stations_df, will proceed to loop
     for (i in seq_len(nrow(stations_df))){
       row<-stations_df[i,]
-      STIDname<-row$STID # column with station ID info
+      STIDname<-row$Precip_STID # column with station ID info
       DeployDT<-row$Deploy_dth # dust collector deployment date-time info
       CollDT<-row$Collect_dth # dust collector collection date-time info
       ColNum<-row$CollectionNum # dust collection #
@@ -270,12 +196,12 @@ SubsetTimeSeries<-function(stations_df,timeseries_df){
     print("STID contains station IDs, Deploy_dth contains dust collector deployment date/time, and Collect_dth contains dust collection retrieval date/time")
     print("Also, please ensure your 2nd input data frame has column with the following name: date_time_hour")
   }
-  assign(paste0("timeseries.aves.list"), timeseries.aves.list,envir = .GlobalEnv) # assign the list of subsetted time series averages to global Env
+  assign(paste0("precip.timeseries.aves.list"), timeseries.aves.list,envir = .GlobalEnv) # assign the list of subsetted time series averages to global Env
   timeseries.ave = do.call(rbind, timeseries.aves.list)
-  assign(paste0("timeseries.aves"), timeseries.ave,envir = .GlobalEnv) # assign the list of subsetted time series averages to global Env
+  assign(paste0("precip.timeseries.aves"), timeseries.ave,envir = .GlobalEnv) # assign the list of subsetted time series averages to global Env
 }
 
-SubsetTimeSeries(stids,time_series_data_out) # this works
+SubsetPrecipTimeSeries(stids,precip_time_series_data_scalar) # this works
 #SubsetTimeSeries(sites,sites) # this is a test to show what happens if you do not have the necessary column headers in your 1st input df
 
 # collapse the list of time series averages into 1 df
@@ -350,11 +276,15 @@ SubsetTimeSeries(stids,time_series_data_out) # this works
 
 
 #### Save Output ####
-head(timeseries.aves)
+head(precip.timeseries.aves)
+
+# convert NaN to 0 (likely occurred trying to divide by 0)
+precip.timeseries.aves$precip_24hr_accum[is.na(precip.timeseries.aves$precip_24hr_accum)]<-0
+head(precip.timeseries.aves)
 
 #dust_meta_clim<-merge(dust_meta,timeseries.aves,by=c("CollectionNum","STID","Deploy_dth","Collect_dth"))
 #head(dust_meta_clim)
 
-saveRDS(timeseries.aves, file = "data/Climate/SaltonSea_SynopticClimateData_Robject.rds", ascii = FALSE, version = NULL,
+saveRDS(precip.timeseries.aves, file = "data/Climate/SaltonSea_SynopticPrecipitationData_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
-save.image("data/Climate/SSD_Synoptic_ClimateData_All.Rdata")
+save.image("data/Climate/SSD_Synoptic_PrecipitationData_All.Rdata")
