@@ -40,14 +40,14 @@ suppressPackageStartupMessages({ # load packages quietly
 })
 
 #### Load Global Env to Import Count/ASV Tables ####
-#load("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
-load("data/SSeaDust_AlphaDiv_Data_Rarefied.Rdata") # includes Shannon entropy, Shannon div, and species richness of rarefied counts
+load("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
+#load("data/SSeaDust_AlphaDiv_Data_Rarefied.Rdata") # includes Shannon entropy, Shannon div, and species richness of rarefied counts
 
 #save.image("data/Env_Seqs_All/env.seq_analysis.Rdata") # save global env to Rdata file
 b.dust.all[1:6,1:6]
 bac.ASV_table[1:4,1:4]
 bac.ASV_table[(nrow(bac.ASV_table)-4):(nrow(bac.ASV_table)),(ncol(bac.ASV_table)-4):(ncol(bac.ASV_table))] # last 4 rows & cols
-head(dust_meta)
+head(meta.all.scaled)
 
 ## DO NOT RUN THIS LINE, THIS IS YOUR COLOR REFERENCE!!!!
 #(WI="#ef781c",DP="#03045e",BDC="#059c3f")
@@ -56,18 +56,18 @@ head(dust_meta)
 # bacteria/archaea
 
 # Species Accumulation Curve
-sc2<-specaccum(bac.ASV_table[,-1],"random")
+sc2<-specaccum(bac.ASV_round.table[,-1],"random")
 plot(sc2, ci.type="poly", col="darkgreen", lwd=2, ci.lty=0, ci.col="lightgreen")
 boxplot(sc2, col="yellow", add=TRUE, pch=20)
 
 # Prep for Rarefaction Curve
-rowSums(bac.ASV_table[,-1]) # total # ASVs per sample, excluding SampleID from calculation
-sort(colSums(bac.ASV_table[,-1])) # counts per ASV
-sort(rowSums(bac.ASV_table[,-1])) # ASVs per sample
+rowSums(bac.ASV_round.table[,-1]) # total # ASVs per sample, excluding SampleID from calculation
+sort(colSums(bac.ASV_round.table[,-1])) # counts per ASV
+sort(rowSums(bac.ASV_round.table[,-1])) # ASVs per sample
 
 # Create Rarefaction curve
 png('figures/AlphaDiversity/SSD_16S_rarecurve.png')
-rarecurve(as.matrix(bac.ASV_table[,-1]),col=dust_meta$SampDate_Color, step=1000, label=F,ylab="ASVs")
+rarecurve(as.matrix(bac.ASV_round.table[,-1]),col=meta.all.scaled$SampDate_Color, step=1000, label=F,ylab="ASVs")
 # to show sampel labels per curve, change label=T
 dev.off()
 
@@ -76,16 +76,16 @@ dev.off()
 # Good's coverage is defined as 1 - (F1/N) where F1 is the number of singleton OTUs and N is the sum of counts for all OTUs.
 # If a sample has a Good's coverage == . 98, this means that 2% of reads in that sample are from OTUs that appear only once in that sample.
 # NOTE: Good's Coverage is not the best estimate of coverage because DADA2 removes singletons during process - so we are basing this on singeltons that remain (??)
-bac.ASV.melt<-melt(bac.ASV_table,by="SampleID")
+bac.ASV.melt<-melt(bac.ASV_round.table,by="SampleID")
 colnames(bac.ASV.melt)[which(colnames(bac.ASV.melt) == "variable")] <- "ASV_ID"
 colnames(bac.ASV.melt)[which(colnames(bac.ASV.melt) == "value")] <- "Count"
 
 # calculate # of singletons per sample
-sings<-data.frame(Singletons=rowSums(bac.ASV_table[,-1]==1),SampleID=bac.ASV_table$SampleID) # how many ASVs have a count of only 1
+sings<-data.frame(Singletons=rowSums(bac.ASV_round.table[,-1]==1),SampleID=bac.ASV_round.table$SampleID) # how many ASVs have a count of only 1
 # no singletons?
 
 # find total counts per sample
-totseq<-data.frame(TotalSeqs=rowSums(bac.ASV_table[,-1]),SampleID=bac.ASV_table$SampleID) # total # of counts per sample
+totseq<-data.frame(TotalSeqs=rowSums(bac.ASV_round.table[,-1]),SampleID=bac.ASV_round.table$SampleID) # total # of counts per sample
 
 # Calculate Good's Coverage
 good.cov<-data.frame(GoodsCov=(100*(1-(sings$Singletons/totseq$TotalSeqs))),SampleID=sings$SampleID)
@@ -95,17 +95,17 @@ good.df<-merge(good.cov,totseq,by="SampleID")
 
 ggplot(good.df, aes(x=TotalSeqs,y=GoodsCov))+geom_point()+xlab("Total Seqs per Sample")+ylab("Good's Coverage (%)")
 
-#### Rarefaction of Raw Counts ####
+#### Repeated Rarefaction of Raw Counts & Averaging Shannon Diversity ####
 # this section explores different ways of utilizing rarefaction and rarefaction functions in vegan
 
 # in vegan ROWS need to be SITES/samples; COLUMNS are SPECIES (OTUs, ASVs)
-min.rar<-min(rowSums(bac.ASV_table[,-1])) ## seeing min sum of OTUs so we can see what min is for rarefaction
+min.rar<-min(rowSums(bac.ASV_round.table[,-1])) ## seeing min sum of OTUs so we can see what min is for rarefaction
 min.rar
 
-bac.ASV.rar1<-rarefy(bac.ASV_table[,-1],min.rar) ## be cognizant of min for rarefaction
+bac.ASV.rar1<-rarefy(bac.ASV_round.table[,-1],min.rar) ## be cognizant of min for rarefaction
 bac.ASV.rar1 # rarefy gives the expected species richness in random subsamples of size sample from the community
 
-bac.ASV.rar<-rrarefy(bac.ASV_table[,-1],min.rar)
+bac.ASV.rar<-rrarefy(bac.ASV_round.table[,-1],min.rar)
 # rrarefy generates one randomly rarefied community data frame or vector of given sample size
 # The random rarefaction is made without replacement so that the variance of rarefied communities is rather related to rarefaction proportion than to the size of the sample
 rowSums(bac.ASV.rar) # should all be the same after rarefaction
@@ -128,9 +128,9 @@ sdiv.rarefy<-function(df,min){
 }
 
 # vv contains average Shannon Diversity calculations after rarefaction and Shan div calculations 100 times
-ave.sdiv <- data.frame(AveShanDiv=rowMeans(data.frame(lapply(as.list(1:100), function(x) sdiv.rarefy(bac.ASV_table[,-1], min.rar)))))
+ave.sdiv <- data.frame(AveShanDiv=rowMeans(data.frame(lapply(as.list(1:100), function(x) sdiv.rarefy(bac.ASV_round.table[,-1], min.rar)))))
 # sdiv.rarefy function --> Rrarefy ASV warnings() table with given min, calculate Shannon diversity
-# lapply(as.list(1:100), function(x) sdiv.rarefy(bac.ASV_table[,-1], min.rar))) --> creates list by running sdiv.rarefy() function 100 times & storing results in list each time
+# lapply(as.list(1:100), function(x) sdiv.rarefy(bac.ASV_round.table[,-1], min.rar))) --> creates list by running sdiv.rarefy() function 100 times & storing results in list each time
 # data.frame(lapply(...)) --> saves lapply() output as data frame, not list
 # rowMeans(df(lapply(...))) --> get rowMeans aka sample means (aka the average) of Shannon diversity after 100 calculations of Shan div.
 
@@ -142,7 +142,7 @@ bac.S.Ent<-vegan::diversity(bac.ASV.rar, index="shannon")
 bac.S.Div<- exp(bac.S.Ent) # Shannon Diversity aka Hill number 1
 
 # how are our results verses the vegan::diversity() function's results?
-bac.S.Div
+as.data.frame(bac.S.Div)
 ave.sdiv
 # Results from bac.S.Div are similar to ave.sdiv results which is great!
 
@@ -150,62 +150,110 @@ ave.sdiv
 # calculate the average Shannon entropy of rarefied data (taking average of 100 calculations of Shannon entropy)
 ave.s.ent<-data.frame(AveShanEnt=rowMeans(data.frame(lapply(as.list(1:100), function(x) vegan::diversity(bac.ASV.rar, index="shannon")))))
 
-bac.ASV.probs<-drarefy(bac.ASV_table[,-1],min.rar)
+bac.ASV.probs<-drarefy(bac.ASV_round.table[,-1],min.rar)
 # drarefy returns probabilities that species occur in a rarefied community of size sample
 
-#### Variance Stabilizing Transformation VST of Raw (?) counts ####
-#Prepare Contig Feature Count Data for Normalization w/ DESeq2
-# make sure count data & mgm_meta are in the same order
-bac.ASV_table[1:5,1:5]
 
-#bac.ASV_matrix<-as.matrix(bac.ASV_table[,!names(bac.ASV_table) %in% c("SampleID")]) # convert count table into matrix & exclude column called SampleID
-bac.ASV_matrix2<-t(as.matrix(bac.ASV_table[,-1])) # transpose matrix so ASVs are rows, samples are columns
-# ^ will be used in DESeq2 functions
-rownames(dust_meta) %in% colnames(bac.ASV_matrix2) # check if rownames in dust_meta (SampleID) match column names in count data
-dim(dust_meta)
-dim(bac.ASV_matrix2)
+#### Rarefaction of Raw Counts & Averaging Species Richness ####
+# this section explores different ways of utilizing rarefaction and rarefaction functions in vegan
 
-# Reorder matrix to match order of dust_meta
-bac.ASV_matrix2=bac.ASV_matrix2[,rownames(dust_meta)] ## reorder ASV matrix by column name to match order of rownames in dust_meta
-colnames(bac.ASV_matrix2) # sanity check that this reordering worked
-rownames(dust_meta)
+# in vegan ROWS need to be SITES/samples; COLUMNS are SPECIES (OTUs, ASVs)
+min.rar<-min(rowSums(bac.ASV_round.table[,-1])) ## seeing min sum of OTUs so we can see what min is for rarefaction
+min.rar
 
-# create the DESeq DataSet object for DGE analysis
-# DESeq2 needs whole # data, so need raw read counts, NOT coverage for these tables...questionable
-# b_dds has the scaled coverage that was calculated by dividing reads from featureCounts by gene lengths
-b_dds<-DESeqDataSetFromMatrix(countData=round(bac.ASV_matrix2), colData = dust_meta, design = ~ 1)
+bac.ASV.rar1<-rarefy(bac.ASV_round.table[,-1],min.rar) ## be cognizant of min for rarefaction
+bac.ASV.rar1 # rarefy gives the expected species richness in random subsamples of size sample from the community
 
-# design = ~ 1 means no design
-head(counts(b_dds))
-colSums(counts(b_dds)) %>% barplot
+bac.ASV.rar<-rrarefy(bac.ASV_round.table[,-1],min.rar)
+# rrarefy generates one randomly rarefied community data frame or vector of given sample size
+# The random rarefaction is made without replacement so that the variance of rarefied communities is rather related to rarefaction proportion than to the size of the sample
+rowSums(bac.ASV.rar) # should all be the same after rarefaction
 
-# Estimate size factor - aka normalization factor, divide all read counts by each size factor per sample
-b_dds <- estimateSizeFactors(b_dds,type="ratio")
-## To calculate size factor in DESeq2:
-# calculates geometric mean of each gene in each sample and uses this as a pseudoreference
-# calculates ratio of each sample by dividing each gene count by it's pseudoreference in each sample
-# The median value of all ratios for a given sample is taken as the normalization factor (size factor)
-# The differentially expressed genes should not affect the median value
-# median of ratios method makes the assumption that not ALL genes are differentially expressed; therefore, the normalization factors should account for sequencing depth and RNA composition of the sample
-## (large outlier genes will not represent the median ratio values)
-# more here: https://hbctraining.github.io/DGE_workshop/lessons/02_DGE_count_normalization.html
+# Calculating Average Shannon Diversity w/ repeated rarefaction with rrarefy()
+spech.rich.rarefy<-function(df,min){
+  # rownames must be samples, ASVs must by columns
+  # min = min(rowSums(ASV table)) aka minimum sum of ASVs in each sample
+  rare<-rrarefy(df,min)
+  # rrarefy generates one randomly rarefied community data frame or vector of given sample size
+  # The random rarefaction is made without replacement so that the variance of rarefied communities is rather related to rarefaction proportion than to the size of the sample
 
-sizeFactors(b_dds)
+  s.rich<-specnumber(rare)
 
-plot(sizeFactors(b_dds), colSums(counts(b_dds)))
+  return(s.rich)
+}
 
-### Variance Stabilizing Transformation
-# you should be able to use matrix or DESeq2 object for this next function, but matrix was not working?
-b_vst1 <- varianceStabilizingTransformation(b_dds) # add pseudocount
-assay(b_vst1) #see output of VST
+# vv contains average Shannon Diversity calculations after rarefaction and Shan div calculations 100 times
+ave.spec.rich <- data.frame(AveSpecRich=rowMeans(data.frame(lapply(as.list(1:100), function(x) spech.rich.rarefy(bac.ASV_round.table[,-1], min.rar)))))
+# spec.rich.rarefy function --> Rrarefy ASV warnings() table with given min, calculate Shannon diversity
+# lapply(as.list(1:100), function(x) sdiv.rarefy(bac.ASV_round.table[,-1], min.rar))) --> creates list by running spec.rich.rarefy() function 100 times & storing results in list each time
+# data.frame(lapply(...)) --> saves lapply() output as data frame, not list
+# rowMeans(df(lapply(...))) --> get rowMeans aka sample means (aka the average) of species richness after 100 calculations of species richness
 
-b.vst<-assay(b_vst1)
+ave.spec.rich
 
+# Calculate species richness (number of species per sample) from rarefied data to compare
+specnumber(bac.ASV.rar)
+specnumber(bac.ASV_round.table[,-1])
+
+# results are similar!
+
+bac.ASV.probs<-drarefy(bac.ASV_round.table[,-1],min.rar)
+# drarefy returns probabilities that species occur in a rarefied community of size sample
+
+
+# #### Variance Stabilizing Transformation VST of Raw (?) counts ####
+# #Prepare Contig Feature Count Data for Normalization w/ DESeq2
+# # make sure count data & mgm_meta are in the same order
+# bac.ASV_round.table[1:5,1:5]
+#
+# #bac.ASV_matrix<-as.matrix(bac.ASV_round.table[,!names(bac.ASV_round.table) %in% c("SampleID")]) # convert count table into matrix & exclude column called SampleID
+# bac.ASV_matrix2<-t(as.matrix(bac.ASV_round.table[,-1])) # transpose matrix so ASVs are rows, samples are columns
+# # ^ will be used in DESeq2 functions
+# rownames(meta.all.scaled) %in% colnames(bac.ASV_matrix2) # check if rownames in meta.all.scaled (SampleID) match column names in count data
+# dim(meta.all.scaled)
+# dim(bac.ASV_matrix2)
+#
+# # Reorder matrix to match order of meta.all.scaled
+# bac.ASV_matrix2=bac.ASV_matrix2[,rownames(meta.all.scaled)] ## reorder ASV matrix by column name to match order of rownames in meta.all.scaled
+# colnames(bac.ASV_matrix2) # sanity check that this reordering worked
+# rownames(meta.all.scaled)
+#
+# # create the DESeq DataSet object for DGE analysis
+# # DESeq2 needs whole # data, so need raw read counts, NOT coverage for these tables...questionable
+# # b_dds has the scaled coverage that was calculated by dividing reads from featureCounts by gene lengths
+# b_dds<-DESeqDataSetFromMatrix(countData=round(bac.ASV_matrix2), colData = meta.all.scaled, design = ~ 1)
+#
+# # design = ~ 1 means no design
+# head(counts(b_dds))
+# colSums(counts(b_dds)) %>% barplot
+#
+# # Estimate size factor - aka normalization factor, divide all read counts by each size factor per sample
+# b_dds <- estimateSizeFactors(b_dds,type="ratio")
+# ## To calculate size factor in DESeq2:
+# # calculates geometric mean of each gene in each sample and uses this as a pseudoreference
+# # calculates ratio of each sample by dividing each gene count by it's pseudoreference in each sample
+# # The median value of all ratios for a given sample is taken as the normalization factor (size factor)
+# # The differentially expressed genes should not affect the median value
+# # median of ratios method makes the assumption that not ALL genes are differentially expressed; therefore, the normalization factors should account for sequencing depth and RNA composition of the sample
+# ## (large outlier genes will not represent the median ratio values)
+# # more here: https://hbctraining.github.io/DGE_workshop/lessons/02_DGE_count_normalization.html
+#
+# sizeFactors(b_dds)
+#
+# plot(sizeFactors(b_dds), colSums(counts(b_dds)))
+#
+# ### Variance Stabilizing Transformation
+# # you should be able to use matrix or DESeq2 object for this next function, but matrix was not working?
+# b_vst1 <- varianceStabilizingTransformation(b_dds) # add pseudocount
+# assay(b_vst1) #see output of VST
+#
+# b.vst<-assay(b_vst1)
+#
 #### Compare Transformed ASVs vs Raw Counts ####
 
-bac.ASV_table$SampleID = factor(bac.ASV_table$SampleID, levels=unique(bac.ASV_table$SampleID[order(rowSums(bac.ASV_table[,-1]))]), ordered=TRUE)
+bac.ASV_round.table$SampleID = factor(bac.ASV_round.table$SampleID, levels=unique(bac.ASV_round.table$SampleID[order(rowSums(bac.ASV_round.table[,-1]))]), ordered=TRUE)
 
-raw.tot.counts<-ggplot(data=bac.ASV_table, aes(x=bac.ASV_table$SampleID, y=rowSums(bac.ASV_table[,-1]))) +
+raw.tot.counts<-ggplot(data=bac.ASV_round.table, aes(x=bac.ASV_round.table$SampleID, y=rowSums(bac.ASV_round.table[,-1]))) +
   geom_bar(stat="identity",colour="black",fill="dodgerblue")+theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   labs(title="Total ASVs per Sample",subtitle="Based on Raw ASV Counts")+ylab("Total ASVs")+xlab("SampleID")
 
@@ -217,16 +265,16 @@ ggplot(data=as.data.frame(bac.ASV.rar), aes(x=rownames(bac.ASV.rar), y=rowSums(b
   geom_bar(stat="identity",colour="black",fill="dodgerblue")+theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   labs(title="Total Rarefied ASVs per Sample",subtitle="Based on Rarefied ASV Counts")+ylab("Total Rarefied ASVs")+xlab("SampleID")
 
-# Calculate VST ASVs per Sample
-total_vst_asvs<-data.frame(ASV_Total=colSums(b.vst),dust_meta)
-total_vst_asvs$SampleID = factor(total_vst_asvs$SampleID, levels=unique(total_vst_asvs$SampleID[order(total_vst_asvs$ASV_Total)]), ordered=TRUE)
-
-ggplot(data=total_vst_asvs, aes(x=SampleID, y=ASV_Total,fill=Sample_Type)) +
-  geom_bar(stat="identity",colour="black")+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+# # Calculate VST ASVs per Sample
+# total_vst_asvs<-data.frame(ASV_Total=colSums(b.vst),meta.all.scaled)
+# total_vst_asvs$SampleID = factor(total_vst_asvs$SampleID, levels=unique(total_vst_asvs$SampleID[order(total_vst_asvs$ASV_Total)]), ordered=TRUE)
+#
+# ggplot(data=total_vst_asvs, aes(x=SampleID, y=ASV_Total,fill=Sample_Type)) +
+#   geom_bar(stat="identity",colour="black")+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 ## average ASV per sample month & depth
-aggregate(bac.ASV_all$Count, list(bac.ASV_all$SampleMonth), FUN=mean)
-aggregate(bac.ASV_all$Count, list(bac.ASV_all$Depth_m), FUN=mean)
+# aggregate(bac.ASV_all$Count, list(bac.ASV_all$SampleMonth), FUN=mean)
+# aggregate(bac.ASV_all$Count, list(bac.ASV_all$Depth_m), FUN=mean)
 
 #### Alpha Diversity & Species Richness - Rarefied Data ####
 
@@ -242,17 +290,13 @@ head(div_16s.rar)
 div_16s.rar$SampleID<-rownames(div_16s.rar)
 head(div_16s.rar)
 
-# Calculate species richness (number of species per sample)
-specnumber(bac.ASV.rar)
-
-# Create a DF with Species Richness
-S_16s.rar<-data.frame(Bac_Species_Richness=specnumber(bac.ASV.rar), SampleID=rownames(bac.ASV.rar)) # finds # of species per sample using RAW count data; if MARGIN = 2 it finds frequencies of species
+ave.spec.rich$SampleID<-rownames(ave.spec.rich)
 
 # merge richness and diversity dataframes together
-d.r_16s.rar<-merge(div_16s.rar, S_16s.rar, by.x="SampleID", by.y="SampleID")
+d.r_16s.rar<-merge(div_16s.rar, ave.spec.rich, by.x="SampleID", by.y="SampleID")
 
-# merge w/ dust_meta
-bac.div.metadat.rar <- merge(d.r_16s.rar,dust_meta, by.x="SampleID", by.y="SampleID")
+# merge w/ meta.all.scaled
+bac.div.metadat.rar <- merge(d.r_16s.rar,meta.all.scaled, by.x="SampleID", by.y="SampleID")
 head(bac.div.metadat.rar)
 class(bac.div.metadat.rar) # want data frame
 
@@ -260,7 +304,7 @@ unique(bac.div.metadat.rar$SampDate) # see how many elements there are in the Gr
 unique(bac.div.metadat.rar$Site) # see how many elements there are in the Group variable
 
 # drop the outliers
-#bac.div.metadat.rar<-bac.div.metadat.rar[bac.div.metadat.rar$AveShanDiv<300 & bac.div.metadat.rar$Bac_Species_Richness>100,]
+#bac.div.metadat.rar<-bac.div.metadat.rar[bac.div.metadat.rar$AveShanDiv<300 & bac.div.metadat.rar$AveSpecRich>100,]
 
 # create numeric variable for depth to be used for models later
 
@@ -282,20 +326,20 @@ min(bac.div.metadat.rar$AveShanDiv[bac.div.metadat.rar$Site=="PD"]) # min div BD
 bac.div.metadat.rar[bac.div.metadat.rar$Site=="PD",]
 
 # Find highest/lowest values of Species richness per sample date
-max(bac.div.metadat.rar$Bac_Species_Richness[bac.div.metadat.rar$Site=="WI"]) # max sr WI
-min(bac.div.metadat.rar$Bac_Species_Richness[bac.div.metadat.rar$Site=="WI"]) # min sr WI
+max(bac.div.metadat.rar$AveSpecRich[bac.div.metadat.rar$Site=="WI"]) # max sr WI
+min(bac.div.metadat.rar$AveSpecRich[bac.div.metadat.rar$Site=="WI"]) # min sr WI
 bac.div.metadat.rar[bac.div.metadat.rar$Site=="WI",]
 
-max(bac.div.metadat.rar$Bac_Species_Richness[bac.div.metadat.rar$Site=="DP"]) # max sr DP
-min(bac.div.metadat.rar$Bac_Species_Richness[bac.div.metadat.rar$Site=="DP"]) # min sr DP
+max(bac.div.metadat.rar$AveSpecRich[bac.div.metadat.rar$Site=="DP"]) # max sr DP
+min(bac.div.metadat.rar$AveSpecRich[bac.div.metadat.rar$Site=="DP"]) # min sr DP
 bac.div.metadat.rar[bac.div.metadat.rar$Site=="DP",]
 
-max(bac.div.metadat.rar$Bac_Species_Richness[bac.div.metadat.rar$Site=="BDC"]) # max sr BDC
-min(bac.div.metadat.rar$Bac_Species_Richness[bac.div.metadat.rar$Site=="BDC"]) # min sr BDC
+max(bac.div.metadat.rar$AveSpecRich[bac.div.metadat.rar$Site=="BDC"]) # max sr BDC
+min(bac.div.metadat.rar$AveSpecRich[bac.div.metadat.rar$Site=="BDC"]) # min sr BDC
 bac.div.metadat.rar[bac.div.metadat.rar$Site=="BDC",]
 
-max(bac.div.metadat.rar$Bac_Species_Richness[bac.div.metadat.rar$Site=="PD"]) # max sr BDC
-min(bac.div.metadat.rar$Bac_Species_Richness[bac.div.metadat.rar$Site=="PD"]) # min sr BDC
+max(bac.div.metadat.rar$AveSpecRich[bac.div.metadat.rar$Site=="PD"]) # max sr BDC
+min(bac.div.metadat.rar$AveSpecRich[bac.div.metadat.rar$Site=="PD"]) # min sr BDC
 bac.div.metadat.rar[bac.div.metadat.rar$Site=="PD",]
 
 # save diversity data
@@ -303,7 +347,7 @@ save.image("data/SSeaDust_AlphaDiv_Data_Rarefied.Rdata")
 
 #### Using Shapiro-Wilk test for Normality - Rarefied Data ####
 shapiro.test(bac.div.metadat.rar$AveShanDiv) # what is the p-value?
-# p-value = 0.0002517
+# W = 0.80807, p-value = 0.0001486
 # p > 0.05 states distribution of data are not significantly different from normal distribution
 # p < 0.05 means that data is significantly different from a normal distribution
 hist(bac.div.metadat.rar$AveShanDiv, col="blue") # with outliars
@@ -316,18 +360,15 @@ hist(bac.div.metadat.rar$AveShanDiv, col="blue") # with outliars
 qqnorm(bac.div.metadat.rar$AveShanDiv, pch = 1, frame = FALSE)
 qqline(bac.div.metadat.rar$AveShanDiv, col = "red", lwd = 2)
 
-shapiro.test(bac.div.metadat.rar$Bac_Species_Richness) # what is the p-value?
-# p-value = 0.0002831
+shapiro.test(bac.div.metadat.rar$AveSpecRich) # what is the p-value?
+# W = 0.81983, p-value = 0.0002437
 # p > 0.05 states distribution of data are not significantly different from normal distribution
 # p < 0.05 means that data is significantly different from a normal distribution
-hist(bac.div.metadat.rar$Bac_Species_Richness, col="blue")
+hist(bac.div.metadat.rar$AveSpecRich, col="blue")
 
 # visualize Q-Q plot for species richness
-qqnorm(bac.div.metadat.rar$Bac_Species_Richness, pch = 1, frame = FALSE) # with outliars
-qqline(bac.div.metadat.rar$Bac_Species_Richness, col = "red", lwd = 2)
-
-qqnorm(bac.div.metadat.rar$Bac_Species_Richness, pch = 1, frame = FALSE) # without outliars
-qqline(bac.div.metadat.rar$Bac_Species_Richness, col = "red", lwd = 2)
+qqnorm(bac.div.metadat.rar$AveSpecRich, pch = 1, frame = FALSE) # with outliars
+qqline(bac.div.metadat.rar$AveSpecRich, col = "red", lwd = 2)
 
 # #### Compare Means of Shannon Diversity - Rarefied Data ####
 # head(bac.div.metadat.rar)
@@ -423,15 +464,15 @@ qqline(bac.div.metadat.rar$Bac_Species_Richness, col = "red", lwd = 2)
 #
 # # First run individual wilcox-tests by time point
 # # WI vs DP
-# w.test.WI.DP<-wilcox.test(WI.divmeta$Bac_Species_Richness,DP.divmeta$Bac_Species_Richness)
+# w.test.WI.DP<-wilcox.test(WI.divmeta$AveSpecRich,DP.divmeta$AveSpecRich)
 # w.test.WI.DP$p.value
 #
 # # WI vs BDC
-# w.test.WI.BDC<-wilcox.test(WI.divmeta$Bac_Species_Richness,BDC.divmeta$Bac_Species_Richness)
+# w.test.WI.BDC<-wilcox.test(WI.divmeta$AveSpecRich,BDC.divmeta$AveSpecRich)
 # w.test.WI.BDC$p.value
 #
 # # DP vs BDC
-# w.test.DP.BDC<-wilcox.test(DP.divmeta$Bac_Species_Richness,BDC.divmeta$Bac_Species_Richness)
+# w.test.DP.BDC<-wilcox.test(DP.divmeta$AveSpecRich,BDC.divmeta$AveSpecRich)
 # w.test.DP.BDC$p.value
 #
 # # Combine the p-values
@@ -461,8 +502,17 @@ bac.a.div.rarB<-ggplot(bac.div.metadat.rar, aes(x=Site, y=AveShanDiv)) +geom_jit
 
 ggsave(bac.a.div.rarB,filename = "figures/AlphaDiversity/RarefiedCounts/SSD_16S_rarefied_alpha_diversity_sampledate_site_boxplot.png", width=15, height=10, dpi=600)
 
+bac.a.div.rarC<-ggplot(bac.div.metadat.rar, aes(x=SampDate, y=AveShanDiv)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
+  scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +theme_bw()+theme_classic()+
+  labs(title = "Dust Bacterial Shannon Diversity by Collection Date & Site", subtitle="Using Rarefied Counts", x="Site", y="Shannon Diversity", color="Collection Date")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,size=10,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+  scale_shape_manual(values = c(7,10,15,16),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
+
+ggsave(bac.a.div.rarC,filename = "figures/AlphaDiversity/RarefiedCounts/SSD_16S_rarefied_alpha_diversity_sampledate_boxplot.png", width=15, height=10, dpi=600)
+
+
 ## Species Richness by Site & Sample Date
-bac.a.sr.rar<-ggplot(bac.div.metadat.rar, aes(x=Site, y=Bac_Species_Richness)) +geom_jitter(aes(color=Site), size=3, width=0.15, height=0) +
+bac.a.sr.rar<-ggplot(bac.div.metadat.rar, aes(x=Site, y=AveSpecRich)) +geom_jitter(aes(color=Site), size=3, width=0.15, height=0) +
   scale_color_manual(name ="Site",values=unique(bac.div.metadat.rar$Site_Color[order(bac.div.metadat.rar$Site)]),labels=c("PD","BDC","DP","WI")) +
   geom_boxplot(fill=NA, outlier.color=NA)+scale_x_discrete(labels=c("PD","BDC","DP","WI"))+theme_bw()+theme_classic()+
   labs(title = "Dust Bacterial Species Richness by Site", subtitle="Using Rarefied Counts", x="Site", y="Species Richness", color="Depth (m)")+theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))
@@ -470,14 +520,22 @@ bac.a.sr.rar<-ggplot(bac.div.metadat.rar, aes(x=Site, y=Bac_Species_Richness)) +
 
 ggsave(bac.a.sr.rar,filename = "figures/SpeciesRichness/RarefiedCounts/SSD_16S_rarefied_species_richness_site_boxplot.png", width=13, height=10, dpi=600)
 
-bac.a.sr.rarB<-ggplot(bac.div.metadat.rar, aes(x=Site, y=Bac_Species_Richness)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
+bac.a.sr.rarB<-ggplot(bac.div.metadat.rar, aes(x=Site, y=AveSpecRich)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
   scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +
   geom_boxplot(fill=NA, outlier.color=NA)+theme_bw()+theme_classic()+
   labs(title = "Dust Bacterial Species Richness by Collection Date & Site", subtitle="Using Rarefied Counts", x="Site", y="Species Richness", color="Collection Date")+
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
   scale_shape_manual(values = c(7,10,15,16),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)])) + scale_x_discrete(labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
 
-ggsave(bac.a.sr.rarB,filename = "figures/AlphaDiversity/RarefiedCounts/SSD_16S_rarefied_species_richness_sampledate_site_boxplot.png", width=15, height=10, dpi=600)
+ggsave(bac.a.sr.rarB,filename = "figures/SpeciesRichness/RarefiedCounts/SSD_16S_rarefied_species_richness_sampledate_site_boxplot.png", width=15, height=10, dpi=600)
+
+bac.a.sr.rarC<-ggplot(bac.div.metadat.rar, aes(x=SampDate, y=AveSpecRich)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
+  scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +theme_bw()+theme_classic()+
+  labs(title = "Dust Bacterial Species Richness by Collection Date & Site", subtitle="Using Rarefied Counts", x="Site", y="Species Richness", color="Collection Date")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,size=10,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+  scale_shape_manual(values = c(7,10,15,16),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
+
+ggsave(bac.a.sr.rarC,filename = "figures/SpeciesRichness/RarefiedCounts/SSD_16S_rarefied_species_richness_sampledate_boxplot.png", width=15, height=10, dpi=600)
 
 #### Compare Variance w/ Shannon Diversity ####
 # shannon diversity is NOT normally distributed; used rarefied counts to calculate SR
@@ -501,16 +559,24 @@ rstatix::dunn_test(bac.div.metadat.rar, AveShanDiv ~ Site, p.adjust.method = "bo
 ## Null hypothesis: all populations variances are equal; Alt Hypothesis: at least 1 sample has different variance (aka variances are NOT equal across samples)
 ## more here: https://www.geeksforgeeks.org/fligner-killeen-test-in-r-programming/
 fligner.test(AveShanDiv ~ Site, data = bac.div.metadat.rar)
-# Fligner-Killeen:med chi-squared = 0.88346, df = 3, p-value = 0.8294
+# Fligner-Killeen:med chi-squared = 0.48165, df = 3, p-value = 0.9229
 # Which shows that the data do NOT deviate significantly from homogeneity.
 
-compare_means(AveShanDiv ~ Site, data=bac.div.metadat.rar, method="anova",p.adjust.method = "bonferroni")
+compare_means(AveShanDiv ~ Site, data=bac.div.metadat.rar, method="wilcox.test",p.adjust.method = "bonferroni")
+
+compare_means(AveShanDiv ~ Site, data=bac.div.metadat.rar, method="kruskal.test",p.adjust.method = "bonferroni")
 
 # Kruskal-Wallis test is an ANOVA for non-normal data
 fit2<-kruskal.test(AveShanDiv ~ interaction(Site,CollectionYear), data=bac.div.metadat.rar)
 
 fit2
-# Kruskal-Wallis chi-squared = 3.7365, df = 7, p-value = 0.8096
+# Kruskal-Wallis chi-squared = 3.4803, df = 7, p-value = 0.8373
+
+# Kruskal-Wallis test is an ANOVA for non-normal data
+fit2<-kruskal.test(AveShanDiv ~ interaction(Site,CollectionYear), data=bac.div.metadat.rar)
+
+fit2
+# Kruskal-Wallis chi-squared = 3.4803, df = 7, p-value = 0.8373
 
 #### Compare Variance w/ Species Richness ####
 # species richness is NOT normally distributed; used rarefied counts to calculate SR
@@ -520,856 +586,188 @@ fit2
 ## Fligner test: is variance homogenous aka equal across samples?
 
 # Kruskal-Wallis test is an ANOVA for non-normal data
-fit3<-kruskal.test(Bac_Species_Richness ~ Site, data=bac.div.metadat.rar)
+fit3<-kruskal.test(AveSpecRich ~ Site, data=bac.div.metadat.rar)
 
 fit3
-# Kruskal-Wallis chi-squared = 1.4796, df = 3, p-value = 0.687
+# Kruskal-Wallis chi-squared = 1.4757, df = 3, p-value = 0.6879
 
 # Instead of using Tukey test, we can use Dunn's test to see which groups significantly vary if Kruskal-Wallis test is significant
 # ANOVA + Tukey for normally distributed data, Kruskal-Wallis + Dunn's test for non-normal data
-rstatix::dunn_test(bac.div.metadat.rar, Bac_Species_Richness ~ Site, p.adjust.method = "bonferroni", detailed = TRUE)
+rstatix::dunn_test(bac.div.metadat.rar, AveSpecRich ~ Site, p.adjust.method = "bonferroni", detailed = TRUE)
 
 ## The Fligner-Killeen test is a non-parametric test for homogeneity of group variances based on ranks. It is useful when the data are non-normally distributed or when problems related to outliers in the dataset cannot be resolved.
 ### Fligner's test is a Levene's test for data that are not normally distributed
 ### It is also one of the many tests for homogeneity of variances which is most robust against departures from normality.
 ## Null hypothesis: all populations variances are equal; Alt Hypothesis: at least 1 sample has different variance (aka variances are NOT equal across samples)
 ## more here: https://www.geeksforgeeks.org/fligner-killeen-test-in-r-programming/
-fligner.test(Bac_Species_Richness ~ Site, data = bac.div.metadat.rar)
-# Fligner-Killeen:med chi-squared = 0.6397, df = 3, p-value = 0.8873
+fligner.test(AveSpecRich ~ Site, data = bac.div.metadat.rar)
+# Fligner-Killeen:med chi-squared = 0.67288, df = 3, p-value = 0.8796
 # Which shows that the data do NOT deviate significantly from homogeneity.
 
-compare_means(Bac_Species_Richness ~ Site, data=bac.div.metadat.rar, method="anova",p.adjust.method = "bonferroni")
+compare_means(AveSpecRich ~ Site, data=bac.div.metadat.rar, method="wilcox.test",p.adjust.method = "bonferroni")
+
+compare_means(AveSpecRich ~ Site, data=bac.div.metadat.rar, method="kruskal.test",p.adjust.method = "bonferroni")
 
 # Kruskal-Wallis test is an ANOVA for non-normal data
-fit4<-kruskal.test(Bac_Species_Richness ~ interaction(Site,CollectionYear), data=bac.div.metadat.rar)
+fit4<-kruskal.test(AveSpecRich ~ interaction(Site,CollectionYear), data=bac.div.metadat.rar)
 
 fit4
 
-#### Linear Regression - Shannon Diversity ####
-## here the focus is comparing env variables of interest to see if they can predict diversity and richness
 
-div.stfs.all<-merge(SurfTypFreq,bac.div.metadat.rar,by=c("Site","SampleID"))
+#### Linear Models with Surface Type Frequencies & Diversity,Richness ####
+head(bac.div.metadat.rar)
+head(meta.all.scaled)
+head(d.r_16s.rar)
+
+# let's fit distributions to Shan Div and Species Richness to see which family distribution would be best
+# code & notes from here: https://pages.vassar.edu/jutouchon/files/2018/08/Vassar_R.GLMs_2018.pdf
+# first, ShanDiv
+fit.div1<-fitdistr(bac.div.metadat.rar$AveShanDiv,"normal")
+fit.div2<-fitdistr(bac.div.metadat.rar$AveShanDiv,"lognormal")
+fit.div3<-fitdistr(round(bac.div.metadat.rar$AveShanDiv),"Poisson")
+fit.div4<-fitdistr(round(bac.div.metadat.rar$AveShanDiv),"negative binomial")
+AIC(fit.div1,fit.div2,fit.div3,fit.div4)
+# fit.div4 has the lowest AIC value, so negative binomial is probably the way to go
+
+# first, ShanDiv
+fit.sr1<-fitdistr(bac.div.metadat.rar$AveSpecRich,"normal")
+fit.sr2<-fitdistr(bac.div.metadat.rar$AveSpecRich,"lognormal")
+fit.sr3<-fitdistr(round(bac.div.metadat.rar$AveSpecRich),"Poisson")
+fit.sr4<-fitdistr(round(bac.div.metadat.rar$AveSpecRich),"negative binomial")
+AIC(fit.sr1,fit.sr2,fit.sr3,fit.sr4)
+# fit.sr4 has the lowest AIC value, so negative binomial is probably the way to go
 
 # just look at everything at once in step-wise fashion
-step1<-step(glm(formula = AveShanDiv ~ ., data=div.stfs.all[,c(4:13,18)]))
+# first shannon div
+step1<-step(glm.nb(formula = round(AveShanDiv) ~ ., data=bac.div.metadat.rar[,c(3,9:10,13:15,38:47)]))
+#                 Estimate Std. Error t value Pr(>|t|)
 summary(step1)
-# Coefficients:
-#   Estimate Std. Error t value Pr(>|t|)
-# (Intercept)      86.842      3.002  28.926  < 2e-16 ***
-#   ORP_mV           -6.478      3.664  -1.768 0.092285 .
-# Temp_DegC       -21.212      4.471  -4.744 0.000124 ***
-#   Sulfate_milliM  -10.994      3.886  -2.829 0.010374 *
+plot(step1)
 
-# Run GLM w/ all env variables of interest
-div.glm.all<-glm(formula = AveShanDiv ~ ., data=div.stfs.all[,c(4:13,18)])
-summary(div.glm.all)
+summary(glm.nb(formula = AveShanDiv ~ Shrub , data=bac.div.metadat.rar))
 
-# NOTE: GLMs use maximum likelihood and not ordinary least squares, so R^2 is not provided... (more here https://stats.stackexchange.com/questions/232471/why-does-the-glm-function-does-not-return-an-r2-value#:~:text=Since%20the%20coefficient%20of%20determination,reason%20to%20display%20this%20measure.)
-# BUT we can use McFadden's R-squared, which uses the following formula..
-## 1 - (log likelihood of current model / log likelihood null model)
-## null model is a model with only the intercept, whereas the current model is the one you are fitting
-## more here: https://www.statology.org/glm-r-squared/
+# then species richness
+step2<-step(glm.nb(formula = round(AveSpecRich) ~ ., data=bac.div.metadat.rar[,c(4,9:10,13:15,38:47)]))
+#                 Estimate Std. Error t value Pr(>|t|)
+summary(step2)
+plot(step2)
 
-# McFadden's R-squared
-with(summary(div.glm.all), 1 - div.glm.all$deviance/div.glm.all$null.deviance)
-# 0.2115237 --> model explains a little variance in data
+summary(glm.nb(formula = AveSpecRich ~ ave.wind_direction+ave.air_temp , data=bac.div.metadat.rar))
 
-div.glm.p<-coef(summary(div.glm.all))[,4] # p-values
-Div.GLM.Pval<-data.frame(Div.GLM.AdjPval=p.adjust(div.glm.p, method="bonferroni",n=length(div.glm.p)),Div.GLM.Pval=div.glm.p)
-Div.GLM.Pval
-#                               Div.GLM.AdjPval Div.GLM.Pval
-# (Intercept)                    8.353610e-15 1.193373e-15
-# DO_Percent_Local               1.000000e+00 6.614790e-01
-# ORP_mV                         1.000000e+00 3.249102e-01
-# Temp_DegC                      4.793721e-02 6.848173e-03 *
-# Dissolved_OrganicMatter_RFU    1.000000e+00 6.835361e-01
-# Sulfate_milliM                 2.762433e-01 3.946333e-02 *
-# Sulfide_microM                 1.000000e+00 6.239275e-01
+# create dfs of only STF + climate data and only the pcoa axes of interest
+Clim_only<-meta.all.scaled[,c(4,7:8,11:12,37:46)]
 
-# [Example Code for Different Models]
+head(Clim_only)
 
-s.div.glm.fit1<-glm(formula = AveShanDiv ~ DO_Percent_Local, data=bac.div.metadat.rar)%>%
-  adjust_pvalue(method="bonferroni")
+# view df of just diversity data
+head(d.r_16s.rar)
+rownames(d.r_16s.rar)<-d.r_16s.rar$SampleID
 
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(s.div.glm.fit1)
+dim(Clim_only) # confirming that both data frames have the same # of rows
+dim(d.r_16s.rar)
 
-# sanity check that lm() vs glm(familiy=Gaussian) is the same thing - and it is!
-summary(lm(formula = AveShanDiv ~ DO_Percent_Local, data=bac.div.metadat.rar)%>%
-          adjust_pvalue(method="bonferroni"))
+rownames(Clim_only) # check rownames to see if they are in the same order in both data frames
+rownames(d.r_16s.rar)
 
-# code for mixed effects model
-mixed1 = lmer(AveShanDiv ~ DO_Percent_Local+ (1 | Depth_m), data = bac.div.metadat.rar)
-summary(mixed1)
+# reorder data frames so they are in the same order by row (SampleID)
+Clim_only=Clim_only[rownames(d.r_16s.rar),] ## reorder metadata to match order of CLR data
 
-# Shan Div ~ DO%
-plot(AveShanDiv ~ DO_Percent_Local, data=bac.div.metadat.rar,col=SampDate_Color)
+rownames(Clim_only) # check rownames to see if they are in the same order in both data frames after reordering
+rownames(d.r_16s.rar)
 
-# Shan Div ~ ORP
-
-plot(AveShanDiv ~ ORP_mV, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Shan Div ~ Temp (C)
-
-plot(AveShanDiv ~ Temp_DegC, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Shan Div ~ DOM
-
-plot(AveShanDiv ~ Dissolved_OrganicMatter_RFU, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Shan Div ~ Sulfate
-
-plot(AveShanDiv ~ Sulfate_milliM, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Shan Div ~ Sulfide
-
-plot(AveShanDiv ~ Sulfide_microM, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Shan Div ~ Depth
-plot(AveShanDiv ~ Depth.num, data=bac.div.metadat.rar,col=SampDate_Color)
-
-#### Linear Regression - Species Richness ####
-# do env variables predict species richness?
-# NOTES: species richness (using rarefied counts) is NOT normally distributed [but shannon div is...]
-# need to decide if we should use the following models (designed for non-normal discrete count data): Poisson, quasi-Poisson, or Negative Binomial
-# below we run these three models, calculate their residuals, and compare the dispersion aka variance of their residuals after each model
-# we can also run a likelihood ratio test that will compare the goodness to fit of two models
-# reminder: A goodness-of-fit is a statistical test that tries to determine whether a set of observed values match those expected under the applicable model [aka do our observations reflect what we would expect to see?]
-## Goodness of Fit of a linear regression model attempts to get at how well a model fits a given set of data, or how well it will predict a future set of observations.
-head(bac.div.metadat.rar)
-
-# Generate poisson, quasiposson, and negative binomial (NB) regressions to see which env variables can predict species richness
-sr.pois.all<-glm(formula = Bac_Species_Richness ~ ., family=poisson,data=bac.div.metadat.rar[,c(4,11,13:14,18:20)])
-sr.qpois.all<-glm(formula = Bac_Species_Richness ~ ., family=quasipoisson,data=bac.div.metadat.rar[,c(4,11,13:14,18:20)])
-sr.NB.all<-glm.nb(formula = Bac_Species_Richness ~ ., data=bac.div.metadat.rar[,c(4,11,13:14,18:20)])
-
-# Likeliehood ratio test between Poisson model and NB model
-# Null H: both models fit data equally well; alt H: one model fits data better than other model
-lrtest(sr.pois.all, sr.NB.all) # p < 2.2e-16 -> indicates that NB model has much better fit than Poisson model
-lrtest(sr.qpois.all, sr.NB.all) # no p value, not quite sure why?
-lrtest(sr.qpois.all, sr.pois.all) # no p value
-
-# We can also plot the residuals for each model and see their dispersion/spread
-#Residual plot for Poisson regression
-p_res <- resid(sr.pois.all) # Poisson residuals
-qp_res <- resid(sr.qpois.all) #Quasipoisson Residuals
-nb_res <- resid(sr.NB.all) # Negative Binomial Residuals
-
-par(mfrow = c(1, 3))
-
-#Residual plot for poisson regression
-plot(fitted(sr.pois.all), p_res, col='blue', pch=16,
-     xlab='Predicted Offers', ylab='Standardized Residuals', main='Poisson')
-abline(0,0)
-
-#Residual plot for quasipoisson regression
-plot(fitted(sr.qpois.all), qp_res, col='blue', pch=16,
-     xlab='Predicted Offers', ylab='Standardized Residuals', main='Quasi-Poisson')
-abline(0,0)
-
-#Residual plot for negative binomial regression
-plot(fitted(sr.NB.all), nb_res, col='blue', pch=16,
-     xlab='Predicted Offers', ylab='Standardized Residuals', main='Negative Binomial')
-abline(0,0)
-
-# NB shows least amount of spread in residuals, suggests this is the better fitting model!
-
-summary(sr.NB.all)
-
-# NOTE: GLMs use maximum likelihood and not ordinary least squares, so R^2 is not provided... (more here https://stats.stackexchange.com/questions/232471/why-does-the-glm-function-does-not-return-an-r2-value#:~:text=Since%20the%20coefficient%20of%20determination,reason%20to%20display%20this%20measure.)
-# BUT we can use McFadden's R-squared, which uses the following formula..
-## 1 - (log likelihood of current model / log likelihood null model)
-## null model is a model with only the intercept, whereas the current model is the one you are fitting
-## more here: https://www.statology.org/glm-r-squared/
-
-# McFadden's R-squared
-with(summary(sr.NB.all), 1 - sr.NB.all$deviance/sr.NB.all$null.deviance)
-
-sr.NB.p<-coef(summary(sr.NB.all))[,4] # p-values
-SR.NB.Pval<-data.frame(SR.NB.AdjPval=p.adjust(sr.NB.p, method="bonferroni",n=length(sr.NB.p)),SR.NB.Pval=sr.NB.p)
-SR.NB.Pval
-#                            SR.NB.AdjPval SR.NB.Pval
-# (Intercept)                     0.0000000 0.00000000
-# DO_Percent_Local                1.0000000 0.54606633
-# ORP_mV                          0.2310918 0.03301311 *
-# Temp_DegC                       1.0000000 0.35482885
-# Dissolved_OrganicMatter_RFU     1.0000000 0.32657918
-# Sulfate_milliM                  0.3101118 0.04430168 *
-# Sulfide_microM                  0.4688277 0.06697538
-
-# Species Richness ~ DO%
-
-plot(Bac_Species_Richness ~ DO_Percent_Local, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Species Richness ~ ORP
-
-plot(Bac_Species_Richness ~ ORP_mV, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Species Richness ~ Temp
-
-plot(Bac_Species_Richness ~ Temp_DegC, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Species Richness ~ DOM
-
-plot(Bac_Species_Richness ~ Dissolved_OrganicMatter_RFU, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Species Richness ~ Sulfate
-
-plot(Bac_Species_Richness ~ Sulfate_milliM, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Species Richness ~ Sulfide
-
-plot(Bac_Species_Richness ~ Sulfide_microM, data=bac.div.metadat.rar,col=SampDate_Color)
-
-# Species Richness ~ Depth
-
-plot(Bac_Species_Richness ~ Depth.num, data=bac.div.metadat.rar,col=SampDate_Color)
+glmtest<-glm.nb(d.r_16s.rar$AveShanDiv~Clim_only$ave.air_temp)
 
 #### Correlations ####
 
 # quick visualization of comparing all the variables to each other
 ## cannot include all variables of interest because figure margins become too big
-pairs(div.stfs.all[, c(4:13,18)]) # average shannon div first
+pairs(bac.div.metadat.rar[, c(3:4,8,11:12,15:16,40:49)]) # average shannon div first
 # maybe Herbaceoous x Shannon Div?
-pairs(div.stfs.all[, c(4:13,19)]) # species richness next
+pairs(bac.div.metadat.rar[, c(3:4,8,11:12,15:16,40:49)]) # species richness next
 
 # Visualize with a corrplot
-cor_div.sr.stf <- cor(div.stfs.all[, c(4:13,18:19)], method='pearson')
+cor_div.sr.stf <- cor(bac.div.metadat.rar[, c(3:4,8,11:12,15:16,40:49)], method='pearson')
 cor_div.sr.stf
 
-corrplot.mixed(cor_div.sr.stf, tl.pos='lt', tl.cex=0.7, sig.level = 0.05, number.cex=0.8,
-               diag='l',lower.col = 'black', cl.ratio = 0.2, tl.srt = 45)
+corrplot.mixed(cor_div.sr.stf, tl.pos='lt', tl.cex=0.4, sig.level = 0.05, insig="label_sig", number.cex=0.8,
+               diag='l',cl.ratio = 0.2, tl.srt = 45)
 
 
-cor.res <- rcorr(as.matrix(div.stfs.all[, c(4:13,18:19)])) # rcorr() accepts matrices only
-
-# display p-values (rounded to 3 decimals)
-round(cor.res$P, 3)
-
-#### Prep Data for Linear Regressions within Sites ####
-## here the focus is comparing dust complexity to alpha diversity, species richness, & elevation
+# now let's run the correlations
+head(meta.all.scaled)
 head(bac.div.metadat.rar)
 
-# create the dataframes
-aug21.div<-subset(bac.div.metadat.rar, bac.div.metadat.rar$SampDate=="WI")
-dec21.div<-subset(bac.div.metadat.rar, bac.div.metadat.rar$SampDate=="DP")
-apr22.div<-subset(bac.div.metadat.rar, bac.div.metadat.rar$SampDate=="BDC")
-
-#### August - Shannon Diversity ####
-# WI
-aug21.div.glm.fit1<-glm(formula = AveShanDiv ~ DO_Percent_Local, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.div.glm.fit1)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)       0.0112706  0.0004664  24.166   <2e-16 ***
-#DO_Percent_Local -0.0009547  0.0005092  -1.875   0.0687 .
-
-aug21.div.glm.fit2<-glm(formula = AveShanDiv ~ ORP_mV, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.div.glm.fit2)
-
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)   0.0112343  0.0004731  23.745   <2e-16 ***
-#ORP_mV      -0.0001512  0.0004968  -0.304    0.763
-
-aug21.div.glm.fit3<-glm(formula = AveShanDiv ~ Temp_DegC, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.div.glm.fit3)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept) 0.0113225  0.0004451  25.439   <2e-16 ***
-#Temp_DegC   0.0011947  0.0004861   2.458   0.0188 *
-
-aug21.div.glm.fit4<-glm(formula = AveShanDiv ~ Dissolved_OrganicMatter_RFU, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.div.glm.fit4)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)                 0.0112493  0.0004708  23.896   <2e-16 ***
-#Dissolved_OrganicMatter_RFU 0.0004269  0.0004659   0.916    0.365
-
-aug21.div.glm.fit5<-glm(formula = AveShanDiv ~ Sulfate_milliM, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.div.glm.fit5)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)     0.0112325  0.0004772  23.536   <2e-16 ***
-#Sulfate_milliM -0.0002664  0.0004893  -0.545    0.589
-
-aug21.div.glm.fit6<-glm(formula = AveShanDiv ~ Sulfide_microM, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.div.glm.fit6)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)    0.0112379  0.0004723   23.80   <2e-16 ***
-#Sulfide_microM 0.0002944  0.0005160    0.57    0.572
-
-fit1<-aov(AveShanDiv ~ as.factor(Depth_m), data=aug21.div)
-# ANOVA is basically a regression but w/ categorical variables more info here https://www.statology.org/anova-vs-regression/
-#pairwise.adonis(aug21.div$AveShanDiv, aug21.div$Depth_m, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
-
-summary(fit1)
-#Df           Sum Sq Mean Sq    F value   Pr(>F)
-#Depth_m      7   4097   585.3   1.114   0.38
-#Residuals   31  16294   525.6
-Tuk1<-TukeyHSD(fit1)
-Tuk1$Depth_m
-
-#plot(AveShanDiv ~ Depth_m, data=aug21.div)
-#abline(aov(DustComplexity ~ Elevation, data=aug21.div))
-
-# fit.0<-aov(DustComplexity ~ as.factor(Elevation), data=aug21.div)
-# summary(fit.0)
-# TukeyHSD(fit.0)
-# Levene's test with one independent variable
-## Levene's tests whether variances of 2 samples are equal
-## we want variances to be the same -- want NON SIGNIFICANCE!
-## t test assumes that variances are the same, so Levene's test needs to be non significant
-## Fligner's test is a Levene's test for data that are not normally distributed
-## more here: https://www.geeksforgeeks.org/fligner-killeen-test-in-r-programming/
-fligner.test(AveShanDiv ~ Depth_m, data = aug21.div)
-# Fligner-Killeen:med chi-squared = 4.091, df = 7, p-value = 0.7692
-# Which shows that the data do not deviate significantly from homogeneity.
-compare_means(AveShanDiv ~ Depth_m, data=aug21.div, method="anova",p.adjust.method = "bonferroni") # won't take as.factor(Elevation) as input
-
-
-#### August - Species Richness ####
-# WI
-aug21.sr.glm.fit1<-glm(formula = Bac_Species_Richness ~ DO_Percent_Local, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.sr.glm.fit1)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)       0.0112706  0.0004664  24.166   <2e-16 ***
-#DO_Percent_Local -0.0009547  0.0005092  -1.875   0.0687 .
-
-aug21.sr.glm.fit2<-glm(formula = Bac_Species_Richness ~ ORP_mV, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.sr.glm.fit2)
-
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)   0.0112343  0.0004731  23.745   <2e-16 ***
-#ORP_mV      -0.0001512  0.0004968  -0.304    0.763
-
-aug21.sr.glm.fit3<-glm(formula = Bac_Species_Richness ~ Temp_DegC, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.sr.glm.fit3)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept) 0.0113225  0.0004451  25.439   <2e-16 ***
-#Temp_DegC   0.0011947  0.0004861   2.458   0.0188 *
-
-aug21.sr.glm.fit4<-glm(formula = Bac_Species_Richness ~ Dissolved_OrganicMatter_RFU, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.sr.glm.fit4)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)                 0.0112493  0.0004708  23.896   <2e-16 ***
-#Dissolved_OrganicMatter_RFU 0.0004269  0.0004659   0.916    0.365
-
-aug21.sr.glm.fit5<-glm(formula = Bac_Species_Richness ~ Sulfate_milliM, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.sr.glm.fit5)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)     0.0112325  0.0004772  23.536   <2e-16 ***
-#Sulfate_milliM -0.0002664  0.0004893  -0.545    0.589
-
-aug21.sr.glm.fit6<-glm(formula = Bac_Species_Richness ~ Sulfide_microM, data=aug21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(aug21.sr.glm.fit6)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)    0.0112379  0.0004723   23.80   <2e-16 ***
-#Sulfide_microM 0.0002944  0.0005160    0.57    0.572
-
-fit1<-aov(Bac_Species_Richness ~ as.factor(Depth_m), data=aug21.div)
-# ANOVA is basically a regression but w/ categorical variables more info here https://www.statology.org/anova-vs-regression/
-#pairwise.adonis(aug21.div$Bac_Species_Richness, aug21.div$Depth_m, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
-
-summary(fit1)
-#Df           Sum Sq Mean Sq    F value   Pr(>F)
-#Depth_m      7   4097   585.3   1.114   0.38
-#Residuals   31  16294   525.6
-Tuk1<-TukeyHSD(fit1)
-Tuk1$Depth_m
-
-#plot(Bac_Species_Richness ~ Depth_m, data=aug21.div)
-#abline(aov(DustComplexity ~ Elevation, data=aug21.div))
-
-# fit.0<-aov(DustComplexity ~ as.factor(Elevation), data=aug21.div)
-# summary(fit.0)
-# TukeyHSD(fit.0)
-# Levene's test with one independent variable
-## Levene's tests whether variances of 2 samples are equal
-## we want variances to be the same -- want NON SIGNIFICANCE!
-## t test assumes that variances are the same, so Levene's test needs to be non significant
-## Fligner's test is a Levene's test for data that are not normally distributed
-## more here: https://www.geeksforgeeks.org/fligner-killeen-test-in-r-programming/
-fligner.test(Bac_Species_Richness ~ Depth_m, data = aug21.div)
-# Fligner-Killeen:med chi-squared = 4.091, df = 7, p-value = 0.7692
-# Which shows that the data do not deviate significantly from homogeneity.
-compare_means(Bac_Species_Richness ~ Depth_m, data=aug21.div, method="anova",p.adjust.method = "bonferroni") # won't take as.factor(Elevation) as input
-
-
-#### December - Shannon Diversity ####
-# DP
-dec21.div.glm.fit1<-glm(formula = AveShanDiv ~ DO_Percent_Local, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.div.glm.fit1)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)       0.0112706  0.0004664  24.166   <2e-16 ***
-#DO_Percent_Local -0.0009547  0.0005092  -1.875   0.0687 .
-
-dec21.div.glm.fit2<-glm(formula = AveShanDiv ~ ORP_mV, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.div.glm.fit2)
-
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)   0.0112343  0.0004731  23.745   <2e-16 ***
-#ORP_mV      -0.0001512  0.0004968  -0.304    0.763
-
-dec21.div.glm.fit3<-glm(formula = AveShanDiv ~ Temp_DegC, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.div.glm.fit3)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept) 0.0113225  0.0004451  25.439   <2e-16 ***
-#Temp_DegC   0.0011947  0.0004861   2.458   0.0188 *
-
-dec21.div.glm.fit4<-glm(formula = AveShanDiv ~ Dissolved_OrganicMatter_RFU, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.div.glm.fit4)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)                 0.0112493  0.0004708  23.896   <2e-16 ***
-#Dissolved_OrganicMatter_RFU 0.0004269  0.0004659   0.916    0.365
-
-dec21.div.glm.fit5<-glm(formula = AveShanDiv ~ Sulfate_milliM, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.div.glm.fit5)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)     0.0112325  0.0004772  23.536   <2e-16 ***
-#Sulfate_milliM -0.0002664  0.0004893  -0.545    0.589
-
-dec21.div.glm.fit6<-glm(formula = AveShanDiv ~ Sulfide_microM, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.div.glm.fit6)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)    0.0112379  0.0004723   23.80   <2e-16 ***
-#Sulfide_microM 0.0002944  0.0005160    0.57    0.572
-
-fit1<-aov(AveShanDiv ~ as.factor(Depth_m), data=dec21.div)
-# ANOVA is basically a regression but w/ categorical variables more info here https://www.statology.org/anova-vs-regression/
-#pairwise.adonis(dec21.div$AveShanDiv, dec21.div$Depth_m, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
-
-summary(fit1)
-#Df           Sum Sq Mean Sq    F value   Pr(>F)
-#Depth_m      7   4097   585.3   1.114   0.38
-#Residuals   31  16294   525.6
-Tuk1<-TukeyHSD(fit1)
-Tuk1$Depth_m
-
-#plot(AveShanDiv ~ Depth_m, data=dec21.div)
-#abline(aov(DustComplexity ~ Elevation, data=dec21.div))
-
-# fit.0<-aov(DustComplexity ~ as.factor(Elevation), data=dec21.div)
-# summary(fit.0)
-# TukeyHSD(fit.0)
-# Levene's test with one independent variable
-## Levene's tests whether variances of 2 samples are equal
-## we want variances to be the same -- want NON SIGNIFICANCE!
-## t test assumes that variances are the same, so Levene's test needs to be non significant
-## Fligner's test is a Levene's test for data that are not normally distributed
-## more here: https://www.geeksforgeeks.org/fligner-killeen-test-in-r-programming/
-fligner.test(AveShanDiv ~ Depth_m, data = dec21.div)
-# Fligner-Killeen:med chi-squared = 4.091, df = 7, p-value = 0.7692
-# Which shows that the data do not deviate significantly from homogeneity.
-compare_means(AveShanDiv ~ Depth_m, data=dec21.div, method="anova",p.adjust.method = "bonferroni") # won't take as.factor(Elevation) as input
-
-#### December - Species Richness ####
-# DP
-dec21.sr.glm.fit1<-glm(formula = Bac_Species_Richness ~ DO_Percent_Local, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.sr.glm.fit1)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)       0.0112706  0.0004664  24.166   <2e-16 ***
-#DO_Percent_Local -0.0009547  0.0005092  -1.875   0.0687 .
-
-dec21.sr.glm.fit2<-glm(formula = Bac_Species_Richness ~ ORP_mV, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.sr.glm.fit2)
-
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)   0.0112343  0.0004731  23.745   <2e-16 ***
-#ORP_mV      -0.0001512  0.0004968  -0.304    0.763
-
-dec21.sr.glm.fit3<-glm(formula = Bac_Species_Richness ~ Temp_DegC, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.sr.glm.fit3)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept) 0.0113225  0.0004451  25.439   <2e-16 ***
-#Temp_DegC   0.0011947  0.0004861   2.458   0.0188 *
-
-dec21.sr.glm.fit4<-glm(formula = Bac_Species_Richness ~ Dissolved_OrganicMatter_RFU, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.sr.glm.fit4)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)                 0.0112493  0.0004708  23.896   <2e-16 ***
-#Dissolved_OrganicMatter_RFU 0.0004269  0.0004659   0.916    0.365
-
-dec21.sr.glm.fit5<-glm(formula = Bac_Species_Richness ~ Sulfate_milliM, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.sr.glm.fit5)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)     0.0112325  0.0004772  23.536   <2e-16 ***
-#Sulfate_milliM -0.0002664  0.0004893  -0.545    0.589
-
-dec21.sr.glm.fit6<-glm(formula = Bac_Species_Richness ~ Sulfide_microM, data=dec21.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(dec21.sr.glm.fit6)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)    0.0112379  0.0004723   23.80   <2e-16 ***
-#Sulfide_microM 0.0002944  0.0005160    0.57    0.572
-
-fit1<-aov(Bac_Species_Richness ~ as.factor(Depth_m), data=dec21.div)
-# ANOVA is basically a regression but w/ categorical variables more info here https://www.statology.org/anova-vs-regression/
-#pairwise.adonis(dec21.div$Bac_Species_Richness, dec21.div$Depth_m, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
-
-summary(fit1)
-#Df           Sum Sq Mean Sq    F value   Pr(>F)
-#Depth_m      7   4097   585.3   1.114   0.38
-#Residuals   31  16294   525.6
-Tuk1<-TukeyHSD(fit1)
-Tuk1$Depth_m
-
-#plot(Bac_Species_Richness ~ Depth_m, data=dec21.div)
-#abline(aov(DustComplexity ~ Elevation, data=dec21.div))
-
-# fit.0<-aov(DustComplexity ~ as.factor(Elevation), data=dec21.div)
-# summary(fit.0)
-# TukeyHSD(fit.0)
-# Levene's test with one independent variable
-## Levene's tests whether variances of 2 samples are equal
-## we want variances to be the same -- want NON SIGNIFICANCE!
-## t test assumes that variances are the same, so Levene's test needs to be non significant
-## Fligner's test is a Levene's test for data that are not normally distributed
-## more here: https://www.geeksforgeeks.org/fligner-killeen-test-in-r-programming/
-fligner.test(Bac_Species_Richness ~ Depth_m, data = dec21.div)
-# Fligner-Killeen:med chi-squared = 4.091, df = 7, p-value = 0.7692
-# Which shows that the data do not deviate significantly from homogeneity.
-compare_means(Bac_Species_Richness ~ Depth_m, data=dec21.div, method="anova",p.adjust.method = "bonferroni") # won't take as.factor(Elevation) as input
-
-
-
-
-#### April - Shannon Diversity ####
-# BDC
-apr22.div.glm.fit1<-glm(formula = AveShanDiv ~ DO_Percent_Local, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.div.glm.fit1)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)       0.0112706  0.0004664  24.166   <2e-16 ***
-#DO_Percent_Local -0.0009547  0.0005092  -1.875   0.0687 .
-
-apr22.div.glm.fit2<-glm(formula = AveShanDiv ~ ORP_mV, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.div.glm.fit2)
-
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)   0.0112343  0.0004731  23.745   <2e-16 ***
-#ORP_mV      -0.0001512  0.0004968  -0.304    0.763
-
-apr22.div.glm.fit3<-glm(formula = AveShanDiv ~ Temp_DegC, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.div.glm.fit3)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept) 0.0113225  0.0004451  25.439   <2e-16 ***
-#Temp_DegC   0.0011947  0.0004861   2.458   0.0188 *
-
-apr22.div.glm.fit4<-glm(formula = AveShanDiv ~ Dissolved_OrganicMatter_RFU, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.div.glm.fit4)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)                 0.0112493  0.0004708  23.896   <2e-16 ***
-#Dissolved_OrganicMatter_RFU 0.0004269  0.0004659   0.916    0.365
-
-apr22.div.glm.fit5<-glm(formula = AveShanDiv ~ Sulfate_milliM, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.div.glm.fit5)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)     0.0112325  0.0004772  23.536   <2e-16 ***
-#Sulfate_milliM -0.0002664  0.0004893  -0.545    0.589
-
-apr22.div.glm.fit6<-glm(formula = AveShanDiv ~ Sulfide_microM, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.div.glm.fit6)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)    0.0112379  0.0004723   23.80   <2e-16 ***
-#Sulfide_microM 0.0002944  0.0005160    0.57    0.572
-
-fit1<-aov(AveShanDiv ~ as.factor(Depth_m), data=apr22.div)
-# ANOVA is basically a regression but w/ categorical variables more info here https://www.statology.org/anova-vs-regression/
-#pairwise.adonis(apr22.div$AveShanDiv, apr22.div$Depth_m, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
-
-summary(fit1)
-#Df           Sum Sq Mean Sq    F value   Pr(>F)
-#Depth_m      7   4097   585.3   1.114   0.38
-#Residuals   31  16294   525.6
-Tuk1<-TukeyHSD(fit1)
-Tuk1$Depth_m
-
-#plot(AveShanDiv ~ Depth_m, data=apr22.div)
-#abline(aov(DustComplexity ~ Elevation, data=apr22.div))
-
-# fit.0<-aov(DustComplexity ~ as.factor(Elevation), data=apr22.div)
-# summary(fit.0)
-# TukeyHSD(fit.0)
-# Levene's test with one independent variable
-## Levene's tests whether variances of 2 samples are equal
-## we want variances to be the same -- want NON SIGNIFICANCE!
-## t test assumes that variances are the same, so Levene's test needs to be non significant
-## Fligner's test is a Levene's test for data that are not normally distributed
-## more here: https://www.geeksforgeeks.org/fligner-killeen-test-in-r-programming/
-fligner.test(AveShanDiv ~ Depth_m, data = apr22.div)
-# Fligner-Killeen:med chi-squared = 4.091, df = 7, p-value = 0.7692
-# Which shows that the data do not deviate significantly from homogeneity.
-compare_means(AveShanDiv ~ Depth_m, data=apr22.div, method="anova",p.adjust.method = "bonferroni") # won't take as.factor(Elevation) as input
-
-
-
-#### April - Species Richness ####
-# BDC
-apr22.sr.glm.fit1<-glm(formula = Bac_Species_Richness ~ DO_Percent_Local, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.sr.glm.fit1)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)       0.0112706  0.0004664  24.166   <2e-16 ***
-#DO_Percent_Local -0.0009547  0.0005092  -1.875   0.0687 .
-
-apr22.sr.glm.fit2<-glm(formula = Bac_Species_Richness ~ ORP_mV, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.sr.glm.fit2)
-
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)   0.0112343  0.0004731  23.745   <2e-16 ***
-#ORP_mV      -0.0001512  0.0004968  -0.304    0.763
-
-apr22.sr.glm.fit3<-glm(formula = Bac_Species_Richness ~ Temp_DegC, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.sr.glm.fit3)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept) 0.0113225  0.0004451  25.439   <2e-16 ***
-#Temp_DegC   0.0011947  0.0004861   2.458   0.0188 *
-
-apr22.sr.glm.fit4<-glm(formula = Bac_Species_Richness ~ Dissolved_OrganicMatter_RFU, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.sr.glm.fit4)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)                 0.0112493  0.0004708  23.896   <2e-16 ***
-#Dissolved_OrganicMatter_RFU 0.0004269  0.0004659   0.916    0.365
-
-apr22.sr.glm.fit5<-glm(formula = Bac_Species_Richness ~ Sulfate_milliM, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.sr.glm.fit5)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)     0.0112325  0.0004772  23.536   <2e-16 ***
-#Sulfate_milliM -0.0002664  0.0004893  -0.545    0.589
-
-apr22.sr.glm.fit6<-glm(formula = Bac_Species_Richness ~ Sulfide_microM, data=apr22.div)%>%
-  adjust_pvalue(method="bonferroni")
-## ^ went with linear regression because Shannon diversity and dust complexity are continuous data, despite not being normally distributed
-# model form is response ~ terms (y ~ x) where response is the (numeric) response vector and terms is a series of terms which specifies a linear predictor for response.
-summary(apr22.sr.glm.fit6)
-#Coefficients:
-#  Estimate Std. Error t value Pr(>|t|)
-#(Intercept)    0.0112379  0.0004723   23.80   <2e-16 ***
-#Sulfide_microM 0.0002944  0.0005160    0.57    0.572
-
-fit1<-aov(Bac_Species_Richness ~ as.factor(Depth_m), data=apr22.div)
-# ANOVA is basically a regression but w/ categorical variables more info here https://www.statology.org/anova-vs-regression/
-#pairwise.adonis(apr22.div$Bac_Species_Richness, apr22.div$Depth_m, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
-
-summary(fit1)
-#Df           Sum Sq Mean Sq    F value   Pr(>F)
-#Depth_m      7   4097   585.3   1.114   0.38
-#Residuals   31  16294   525.6
-Tuk1<-TukeyHSD(fit1)
-Tuk1$Depth_m
-
-#plot(Bac_Species_Richness ~ Depth_m, data=apr22.div)
-#abline(aov(DustComplexity ~ Elevation, data=apr22.div))
-
-# fit.0<-aov(DustComplexity ~ as.factor(Elevation), data=apr22.div)
-# summary(fit.0)
-# TukeyHSD(fit.0)
-# Levene's test with one independent variable
-## Levene's tests whether variances of 2 samples are equal
-## we want variances to be the same -- want NON SIGNIFICANCE!
-## t test assumes that variances are the same, so Levene's test needs to be non significant
-## Fligner's test is a Levene's test for data that are not normally distributed
-## more here: https://www.geeksforgeeks.org/fligner-killeen-test-in-r-programming/
-fligner.test(Bac_Species_Richness ~ Depth_m, data = apr22.div)
-# Fligner-Killeen:med chi-squared = 4.091, df = 7, p-value = 0.7692
-# Which shows that the data do not deviate significantly from homogeneity.
-compare_means(Bac_Species_Richness ~ Depth_m, data=apr22.div, method="anova",p.adjust.method = "bonferroni") # won't take as.factor(Elevation) as input
-
-#### Visualize Richness, Diversity vs Env Variables ####
-
-## Shannon Diversity & Environmental Variables
-# note: R (correlation coefficient) vs R^2 (coefficient of determination): https://towardsdatascience.com/r%C2%B2-or-r%C2%B2-when-to-use-what-4968eee68ed3
-
-ggplot(bac.div.metadat.rar, aes(x = DO_Percent_Local, y = AveShanDiv)) +
-  geom_point(aes(color=as.numeric(Depth_m),shape=SampDate), size=3) + theme_classic() +
-  stat_smooth(method = "glm", col = "black", se=FALSE, size=1)+ labs(title="Dissolved Oxygen x 16S Shannon Diversity", color="Depth (m)")+ylab("Shannon Diversity")+xlab("Dissolved Oxygen (%)")+
-  scale_colour_gradient(low="red",high="blue",guide = guide_colourbar(reverse = TRUE)) +
-  scale_shape_discrete(labels=c("June 2021","WI","DP","BDC"),name="Sample Date") +
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11)) +
-  stat_cor(label.y = 150, label.x=3) +
-  stat_regline_equation(aes(label=paste(..eq.label.., ..adj.rr.label.., sep = "~~~~")),label.y = 160,label.x=3)
-
-ggplot(bac.div.metadat.rar, aes(x = DO_Percent_Local, y = AveShanDiv)) +
-  geom_point(aes(color=as.numeric(Depth_m),shape=SampDate), size=3) + theme_classic() +
-  labs(title="Dissolved Oxygen x 16S Shannon Diversity", color="Depth (m)")+ylab("Shannon Diversity")+xlab("Dissolved Oxygen (%)")+
-  scale_colour_gradient(low="red",high="blue",guide = guide_colourbar(reverse = TRUE)) +
-  scale_shape_discrete(labels=c("June 2021","WI","DP","BDC"),name="Sample Date") +
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))
-
-ggplot(bac.div.metadat.rar, aes(x = ORP_mV, y = AveShanDiv)) +
-  geom_point(aes(color=as.numeric(Depth_m),shape=SampDate), size=3) + theme_classic() +
-  stat_smooth(method = "glm", col = "black", se=FALSE, size=1)+ labs(title="Oxidation-Reduction Potential x 16S Shannon Diversity", color="Depth (m)")+ylab("Shannon Diversity")+xlab("Redox Potential (mV)")+
-  scale_colour_gradient(low="red",high="blue",guide = guide_colourbar(reverse = TRUE)) +
-  scale_shape_discrete(labels=c("June 2021","WI","DP","BDC"),name="Sample Date") +
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11)) +
-  stat_cor(label.y = 3, label.x=1) +
-  stat_regline_equation(aes(label=paste(..eq.label.., ..adj.rr.label.., sep = "~~~~")),label.y = 3.2,label.x=1)
-
-ggplot(bac.div.metadat.rar, aes(x = Temp_DegC, y = AveShanDiv)) +
-  geom_point(aes(color=as.numeric(Depth_m),shape=SampDate), size=3) + theme_classic() + labs(title="Temperature x 16S Shannon Diversity", color="Depth (m)")+ylab("16S Shannon Diversity")+xlab("Temperature (C)")+
-  scale_colour_gradient(low="red",high="blue",guide = guide_colourbar(reverse = TRUE)) +
-  scale_shape_discrete(labels=c("June 2021","WI","DP","BDC"),name="Sample Date") +
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))
-
-## Species Richness & Environmental Variables
-# note: R (correlation coefficient) vs R^2 (coefficient of determination): https://towardsdatascience.com/r%C2%B2-or-r%C2%B2-when-to-use-what-4968eee68ed3
-
-ggplot(bac.div.metadat.rar, aes(x = DO_Percent_Local, y = Bac_Species_Richness)) +
-  geom_point(aes(color=as.numeric(Depth_m),shape=SampDate), size=3) + theme_classic() +
-  stat_smooth(method = "glm", col = "black", se=FALSE, size=1)+ labs(title="Dissolved Oxygen x 16S Species Richness", color="Depth (m)")+ylab("Species Richness")+xlab("Dissolved Oxygen (%)")+
-  scale_colour_gradient(low="red",high="blue",guide = guide_colourbar(reverse = TRUE)) +
-  scale_shape_discrete(labels=c("June 2021","WI","DP","BDC"),name="Sample Date") +
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11)) +
-  stat_cor(label.y = 3, label.x=1) +
-  stat_regline_equation(aes(label=paste(..eq.label.., ..adj.rr.label.., sep = "~~~~")),label.y = 3.1,label.x=1)
-
-ggplot(bac.div.metadat.rar, aes(x = ORP_mV, y = Bac_Species_Richness)) +
-  geom_point(aes(color=as.numeric(Depth_m),shape=SampDate), size=3) + theme_classic() +
-  stat_smooth(method = "glm", col = "black", se=FALSE, size=1)+ labs(title="Oxidation-Reduction Potential x 16S Species Richness", color="Depth (m)")+ylab("Species Richness")+xlab("Redox Potential (mV)")+
-  scale_colour_gradient(low="red",high="blue",guide = guide_colourbar(reverse = TRUE)) +
-  scale_shape_discrete(labels=c("June 2021","WI","DP","BDC"),name="Sample Date") +
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11)) +
-  stat_cor(label.y = 3, label.x=1) +
-  stat_regline_equation(aes(label=paste(..eq.label.., ..adj.rr.label.., sep = "~~~~")),label.y = 3.2,label.x=1)
-
-ggplot(bac.div.metadat.rar, aes(x = Temp_DegC, y = Bac_Species_Richness)) +
-  geom_point(aes(color=as.numeric(Depth_m),shape=SampDate), size=3) + theme_classic() + labs(title="Temperature x 16S Species Richness", color="Depth (m)")+ylab("16S Species Richness")+xlab("Temperature (C)")+
-  scale_colour_gradient(low="red",high="blue",guide = guide_colourbar(reverse = TRUE)) +
-  scale_shape_discrete(labels=c("June 2021","WI","DP","BDC"),name="Sample Date") +
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))
+# create dfs of only surface type freq data, only climate data, & only the alpha div & species richness respectively
+STF_Clim_Only<-meta.all.scaled[,c(4,7:8,11:12,37:46)]
+head(STF_Clim_Only)
+
+div.rich<-bac.div.metadat.rar[,c(1,3:4)]
+head(div.rich)
+rownames(div.rich)<-div.rich$SampleID
+head(div.rich)
+
+dim(STF_Clim_Only) # confirming that both data frames have the same # of rows
+dim(div.rich)
+
+rownames(STF_Clim_Only) # check rownames to see if they are in the same order in both data frames
+rownames(div.rich)
+
+# reorder data frames so they are in the same order by row (SampleID)
+STF_Clim_Only=STF_Clim_Only[rownames(div.rich),] ## reorder metadata to match order of CLR data
+
+rownames(STF_Clim_Only) # check rownames to see if they are in the same order in both data frames after reordering
+rownames(div.rich)
+
+multi.univar.corr.fxn<-function(dep.var.df,indep.var.df){
+  # create empty lists to store stuff & model number (cornum) to keep track of models each iteration of loop in fxn
+  corr_<- vector('list', ncol(dep.var.df) * ncol(indep.var.df)) # create empty list where the corr output is stored
+  results_<- vector('list', ncol(dep.var.df) * ncol(indep.var.df)) # create an empty list where the corr summaries are stored
+  sig.results<-vector('list', ncol(dep.var.df) * ncol(indep.var.df))
+  cornum <- 1 # counting our model numbers for indexes purposes in the loop
+
+  # run the nested loop that generates corrs from each data frame
+  ## dep.var.df[i] is dependent variable (y), indep.var.df[j] is independent variable (x) in corr
+  for (i in 1:ncol(dep.var.df)){ # for each column in dep.var.df
+    for (j in 1:ncol(indep.var.df)){ # for each column in indep.var.df
+      # cor.test(x, y)
+      corr_[[cornum]] <- cor.test(indep.var.df[,j],dep.var.df[,i], method="pearson", alternative="two.sided")
+      #corr_[[cornum]]$p.value<-p.adjust(corr_[[cornum]]$p.value,method="bonferroni",n=corr_[[cornum]]$parameter)
+      results_[[cornum]] <-corr_[[cornum]] # save results of corr into list called results
+      names(results_)[cornum]<-paste(names(dep.var.df)[i],"~",names(indep.var.df)[j]) # rename list element to contain the name of the columns used in the model
+
+      # save only significant corrs to another list called sig.results
+      ## if p-value < 0.05, save to sig.results list
+      ifelse((results_[[cornum]]$p.value < 0.05), sig.results[[cornum]]<-results_[[cornum]], "Not Sig")
+      names(sig.results)[cornum]<-paste(names(dep.var.df)[i],"~",names(indep.var.df)[j])
+      cornum <- cornum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
+
+    }
+  }
+
+  # drop all NULL elements from sig.results list so it only includes significant corrs
+  sig.results[sapply(sig.results, is.null)] <- NULL
+
+  # assign lists to global env so they are saved there are function ends
+  assign("env.div.rich.results.corrs", results_,envir = .GlobalEnv)
+  assign("env.div.rich.sig.results.corrs", sig.results,envir = .GlobalEnv)
+
+}
+
+multi.univar.corr.fxn(div.rich[,-1],STF_Clim_Only) # test the function!
+
+# Note:
+# ave wind direction seems to slightly correlate with ave shan div & species richness, though it's not really significant
+ggplot(bac.div.metadat.rar, aes(x=ave.wind_direction, y=AveShanDiv)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
+  scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +theme_bw()+theme_classic()+
+  labs(title = "Dust Bacterial Shannon Diversity by Collection Date & Site", subtitle="Using Rarefied Counts & Scaled Environmental Data", x="Ave Wind Direction", y="Shannon Diversity", color="Collection Date")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+  scale_shape_manual(values = c(7,10,15,16),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
+
+ggplot(bac.div.metadat.rar, aes(x=ave.wind_direction, y=AveSpecRich)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
+  scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +theme_bw()+theme_classic()+
+  labs(title = "Dust Bacterial Shannon Diversity by Collection Date & Site", subtitle="Using Rarefied Counts & Scaled Environmental Data", x="Ave Wind Direction", y="Species Richness", color="Collection Date")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+  scale_shape_manual(values = c(7,10,15,16),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
 
 
 #### Save Everything ####
