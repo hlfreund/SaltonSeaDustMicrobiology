@@ -35,7 +35,7 @@ suppressPackageStartupMessages({ # load packages quietly
 #### Import and Prepare Data for Analyses ####
 
 ## Import ALL env plate bacterial ASV count data
-bac.ASV_counts<-data.frame(readRDS("data/EnvMiSeq_W23_16S.V3V4_ASVs_Counts_dada2_Robject.rds", refhook = NULL))
+bac.ASV_counts<-data.frame(readRDS("data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Counts_dada2_Robject.rds", refhook = NULL))
 dim(bac.ASV_counts)
 bac.ASV_counts[,1:4]
 
@@ -49,6 +49,12 @@ colnames(bac.ASV_counts)
 #bac.ASV_counts<-bac.ASV_counts[, !duplicated(colnames(bac.ASV_counts))] # remove col duplicates
 dim(bac.ASV_counts)
 
+# save total pre-contamination counts
+TotalSampleCounts_withContams<-data.frame(SampleID=colnames(bac.ASV_counts[,!(colnames(bac.ASV_counts) %in% "ASV_ID")]),
+                                          TotalCounts=colSums(bac.ASV_counts[,!(colnames(bac.ASV_counts) %in% "ASV_ID")]))
+write.table(TotalSampleCounts_withContams, "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_TotalCounts_withContams.tsv",
+            sep="\t", quote=F, col.names=T,row.names=F)
+
 # Remove unwanted samples aka old Salton Seawater samples sequenced by Zymo
 #remove_samples<-c("SS.OV.10m.seawater.0621", "SS.OV.2m.seawater.0621", "SS.OV.5m.seawater.0621")
 #bac.ASV_counts<-bac.ASV_counts[,!(colnames(bac.ASV_counts) %in% remove_samples)]
@@ -56,7 +62,7 @@ dim(bac.ASV_counts)
 #dim(bac.ASV_counts)
 
 ## Import ASV taxonomic data
-bac.ASV_tax<-data.frame(readRDS("data/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Robject.rds", refhook = NULL))
+bac.ASV_tax<-data.frame(readRDS("data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Robject.rds", refhook = NULL))
 head(bac.ASV_tax)
 
 # Turn NAs into Unknowns
@@ -269,6 +275,14 @@ head(bac.ASV_meta)
 bac.ASV_table<-subset(bac.ASV_meta, select=-c(SampleType,TubeID,OriginalSampleID,SorC1,Sample_or_Control,Sample_Color))
 rownames(bac.ASV_table)<-bac.ASV_table$SampleID
 head(bac.ASV_table)
+
+rowSums(bac.ASV_table[,-1])
+
+# save total post-contamination counts
+TotalSampleCounts_NoContams<-data.frame(SampleID=rownames(bac.ASV_table),
+                                          TotalCounts=rowSums(bac.ASV_table[,-1]))
+write.table(TotalSampleCounts_NoContams, "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_TotalCounts_NOContams.tsv",
+            sep="\t", quote=F, col.names=T,row.names=F)
 
 # triple check dimensions of metadata and ASV table
 dim(metadata)

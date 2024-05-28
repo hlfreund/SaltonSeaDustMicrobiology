@@ -107,7 +107,7 @@ head(dust_meta)
 
 # create more specific seasons palette
 unique(dust_meta$Season_Specific)
-colorset4 = as.data.frame(t(data.frame("Early.Summer"="#4cc9f0","Late.Summer"="#5e60ce","Late.Fall"="#e85d04","Fall.Winter"="#63003a")))
+colorset4 = as.data.frame(t(data.frame("Early.Summer"="dodgerblue","Mid.Summer"="seagreen","Late.Summer"="gold1","Fall"="red3")))
 
 colorset4$Season_Specific<-rownames(colorset4)
 colnames(colorset4)[which(names(colorset4) == "V1")] <- "SeasonSpec_Color"
@@ -233,6 +233,124 @@ SurfTypFreq$STF_Date<-factor(SurfTypFreq$STF_Date, levels=c("July.2020","August.
 # so back trajectory info was used to determine which surface the wind traveled over
 # this raw model output data
 
+#### Drop Duplicates from ASV Table ####
+# sanity check that this indexing gets what we want
+dim(bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),])
+
+# update ASV table, dropping second technical rep
+## technical reps were done to ensure that these extractions worked!
+bac.ASV_table<-bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),] # drop technical reps of samples
+dim(bac.ASV_table)
+bac.ASV_table[1:6,1:6]
+
+#### Scale ASV Counts by Dust Collector Deployment Duration ####
+## scaling all ASV counts by the number of days that the dust collector was out for
+
+rownames(bac.ASV_table) %in% rownames(dust_meta)
+# first let's test that this will work
+bac.ASV_table[,29:30]
+bac.ASV_table[,29:30]/dust_meta$DeploymentDuration
+
+# now let's scale everything
+bac.ASV_table[,-1]<-bac.ASV_table[,-1]/dust_meta$DeploymentDuration
+bac.ASV_table[1:10,1:30]
+
+#### Multiple Scaled ASV Counts by 100 & Round Before Analyses ####
+# we have already scaled the ASV counts by deployment duration (aka # of days each collector was out) per sample
+# rarefying & many other vegan functions require integers, but currently our ASV counts are in fractions (i.e., less than 1)
+# also, a CLR transformation on just fractions makes most of the CLR-transformed counts negative and extremely small - which makes it seem like samples are more similar than they actually are
+# for this purpose, we are going to multiple the scaled ASV counts by 100, then round them for downstream analyses.
+
+bac.ASV_round.table<-bac.ASV_table
+bac.ASV_round.table[,-1]<-round(bac.ASV_table[,-1]*100)
+
+# let's compare the results
+bac.ASV_round.table[1:10,1:30]
+bac.ASV_table[1:10,1:30]
+
+#### Drop Rep Letter from Sample Names ####
+
+# v gsub() - (.*\\..*) means that we are keeping all .*.*., no matter how many there are in string
+## (.*\\..*) & (.*\\..*\\..*) & (.*\\..*\\..*\\..*) ALL do the same thing
+## whatever is outside of the parentheses will be removed; here it's last occurence of .*
+dust_meta$SampleID<-gsub("(.*\\..*)\\..*","\\1", dust_meta$SampleID)
+dust_meta$SampleID # sanity check
+rownames(dust_meta)<-dust_meta$SampleID
+
+bac.ASV_table$SampleID<-gsub("(.*\\..*)\\..*","\\1", bac.ASV_table$SampleID)
+bac.ASV_table$SampleID # sanity check
+rownames(bac.ASV_table)<-bac.ASV_table$SampleID
+
+bac.ASV_round.table$SampleID<-gsub("(.*\\..*)\\..*","\\1", bac.ASV_round.table$SampleID)
+bac.ASV_round.table$SampleID # sanity check
+rownames(bac.ASV_round.table)<-bac.ASV_round.table$SampleID
+#
+# b.dust.all$SampleID<-gsub("(.*\\..*)\\..*","\\1", b.dust.all$SampleID)
+# b.dust.all$SampleID # sanity check
+# head(b.dust.all)
+
+# check if sampleIDs match between metadata & ASV table
+rownames(dust_meta) %in% rownames(bac.ASV_table)
+rownames(bac.ASV_table) %in% rownames(bac.ASV_round.table)
+
+# reorder metadata based off of ASV table
+dust_meta=dust_meta[rownames(bac.ASV_table),] ## will drop rows that are not shared by both dataframes!
+
+#### Merge Surface Type Freqs with Metadata ####
+
+dust.meta.surf<-merge(dust_meta,SurfTypFreq,by=c("Site","SampleID"))
+head(dust.meta.surf)
+dim(dust.meta.surf)
+
+rownames(dust.meta.surf)<-dust.meta.surf$SampleID
+
+#### Check ASV Count Distribution Across Samples ####
+rowSums(bac.ASV_round.table[,-1])
+
+#### Import Synoptic Climate & Precipitation Data & Merge with Metadata ####
+
+# first with climate data
+clim.data<-data.frame(readRDS("data/Climate/SaltonSea_SynopticClimateData_Robject.rds", refhook = NULL))
+head(clim.data)
+
+# which column names match in the dfs
+colnames(clim.data)[which(colnames(clim.data) %in% colnames(dust.meta.surf))]
+
+dust.meta.all<-merge(clim.data,dust.meta.surf,by=c("CollectionNum","STID","Deploy_dth","Collect_dth"))
+rownames(dust.meta.all)<-dust.meta.all$SampleID
+rownames(dust.meta.all) # sanity check
+
+# reorder metadata based off of ASV table
+dust.meta.all=dust.meta.all[rownames(bac.ASV_table),] ## will drop rows that are not shared by both dataframes!
+rownames(dust.meta.all) # sanity check
+
+# next with precipitation data
+precip.data<-data.frame(readRDS("data/Climate/SaltonSea_SynopticPrecipitationData_Robject.rds", refhook = NULL))
+head(precip.data)
+
+# which column names match in the dfs
+colnames(precip.data)[which(colnames(precip.data) %in% colnames(dust.meta.all))]
+
+dust.meta.all<-merge(precip.data,dust.meta.all,by=c("Deploy_dth","Collect_dth","Precip_STID"))
+rownames(dust.meta.all)<-dust.meta.all$SampleID
+rownames(dust.meta.all) # sanity check
+
+# reorder metadata based off of ASV table
+dust.meta.all=dust.meta.all[rownames(bac.ASV_table),] ## will drop rows that are not shared by both dataframes!
+rownames(dust.meta.all) # sanity check
+
+#### Scale Environmental Metadata ####
+#head(metadata)
+# first scale metadata in big df
+meta.all.scaled<-dust.meta.all
+head(meta.all.scaled)
+meta.all.scaled[,c(4,7:12,37:46)]<-scale(meta.all.scaled[,c(4,7:12,37:46)],center=TRUE,scale=TRUE) # only scale chem env data
+head(meta.all.scaled)
+
+# move scaled metadata to its own df
+env.dat.scaled<-meta.all.scaled[,c(4,7:12,37:46)]
+head(env.dat.scaled)
+
 #### Create Super DF with Count, Taxa, & Metadata ####
 # merge CLEAN aka contaminants/controls removed count & taxa tables
 bac.ASV_table[1:5,1:5]
@@ -248,85 +366,24 @@ head(bac.ASV_all)
 dim(bac.ASV_all)
 #bac.ASV_all<-bac.ASV_all[, !duplicated(colnames(bac.ASV_all))] # remove col duplicates
 
+# do what you did above but with the scaled, rounded ASV table
+bac.ASV_round.t.table<-as.data.frame(t(bac.ASV_round.table[,-1])) # transpose ASV table
+bac.ASV_round.t.table[1:5,1:5]
+bac.ASV_round.t.table$ASV_ID<-rownames(bac.ASV_round.t.table)
+bac.ASV_round.t.table[1:5,5-ncol(bac.ASV_round.t.table):ncol(bac.ASV_round.t.table)]
+
+bac.ASV_round.all<-merge(bac.ASV_round.t.table,bac.ASV_tax, by="ASV_ID") # merge ASV table & taxa table by ASV_IDs
+head(bac.ASV_round.all)
+dim(bac.ASV_round.all)
+
 # melt combined ASV + taxa table to then merge with metadata by SampleID
-bac.dat.dust<-melt(bac.ASV_all)
+bac.dat.dust<-melt(bac.ASV_round.all)
 head(bac.dat.dust)
 colnames(bac.dat.dust)[which(names(bac.dat.dust) == "variable")] <- "SampleID"
 colnames(bac.dat.dust)[which(names(bac.dat.dust) == "value")] <- "Count"
 
-b.dust.all<-merge(bac.dat.dust,dust_meta,by="SampleID")
+b.dust.all<-merge(bac.dat.dust,meta.all.scaled,by="SampleID")
 head(b.dust.all)
-
-### Drop Duplicates from ASV Table ####
-# sanity check that this indexing gets what we want
-dim(bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),])
-
-# update ASV table
-bac.ASV_table<-bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),] # drop technical reps of samples
-dim(bac.ASV_table)
-bac.ASV_table[1:6,1:6]
-
-#### Drop Rep Letter from Sample Names ####
-
-# v gsub() - (.*\\..*) means that we are keeping all .*.*., no matter how many there are in string
-## (.*\\..*) & (.*\\..*\\..*) & (.*\\..*\\..*\\..*) ALL do the same thing
-## whatever is outside of the parentheses will be removed; here it's last occurence of .*
-dust_meta$SampleID<-gsub("(.*\\..*)\\..*","\\1", dust_meta$SampleID)
-dust_meta$SampleID # sanity check
-rownames(dust_meta)<-dust_meta$SampleID
-
-bac.ASV_table$SampleID<-gsub("(.*\\..*)\\..*","\\1", bac.ASV_table$SampleID)
-bac.ASV_table$SampleID # sanity check
-rownames(bac.ASV_table)<-bac.ASV_table$SampleID
-
-b.dust.all$SampleID<-gsub("(.*\\..*)\\..*","\\1", b.dust.all$SampleID)
-b.dust.all$SampleID # sanity check
-head(b.dust.all)
-
-# check if sampleIDs match between metadata & ASV table
-rownames(dust_meta) %in% rownames(bac.ASV_table)
-
-# reorder metadata based off of ASV table
-dust_meta=dust_meta[rownames(bac.ASV_table),] ## will drop rows that are not shared by both dataframes!
-
-#### Merge Surface Type Freqs with Metadata ####
-
-dust.meta.surf<-merge(dust_meta,SurfTypFreq,by=c("Site","SampleID"))
-head(dust.meta.surf)
-dim(dust.meta.surf)
-
-rownames(dust.meta.surf)<-dust.meta.surf$SampleID
-
-#### Check ASV Count Distribution Across Samples ####
-rowSums(bac.ASV_table[,-1])
-
-#### Import Synoptic Climate Data & Merge with Metadata ####
-
-clim.data<-data.frame(readRDS("data/Climate/SaltonSea_SynopticClimateData_Robject.rds", refhook = NULL))
-head(clim.data)
-
-# which column names match in the dfs
-colnames(clim.data)[which(colnames(clim.data) %in% colnames(dust.meta.surf))]
-
-dust.meta.all<-merge(clim.data,dust.meta.surf,by=c("CollectionNum","STID","Deploy_dth","Collect_dth"))
-rownames(dust.meta.all)<-dust.meta.all$SampleID
-rownames(dust.meta.all) # sanity check
-
-# reorder metadata based off of ASV table
-dust.meta.all=dust.meta.all[rownames(bac.ASV_table),] ## will drop rows that are not shared by both dataframes!
-rownames(dust.meta.all) # sanity check
-
-#### Scale Environmental Metadata ####
-#head(metadata)
-# first scale metadata in big df
-meta.all.scaled<-dust.meta.all
-head(meta.all.scaled)
-meta.all.scaled[,c(5:10,35:44)]<-scale(meta.all.scaled[,c(5:10,35:44)],center=TRUE,scale=TRUE) # only scale chem env data
-head(meta.all.scaled)
-
-# move scaled metadata to its own df
-env.dat.scaled<-meta.all.scaled[,c(5:10,35:44)]
-head(env.dat.scaled)
 
 #### Save Global Env for Import into Other Scripts ####
 
