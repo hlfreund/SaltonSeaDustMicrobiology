@@ -28,7 +28,7 @@ suppressPackageStartupMessages({ # load packages quietly
   library(ALDEx2)
   library(rstatix)
   library(devtools)
-  library(decontam)
+  library(DPontam)
   library(ggvegan)
   library(microbiome)
 })
@@ -45,7 +45,7 @@ head(meta.all.scaled)
 
 #### Create Centered Log-Ratio Table from ASV table ####
 bac.ASV_table[1:4,1:4]
-b.clr<-decostand(bac.ASV_table[,-1],method = "clr", pseudocount = 1) #CLR transformation
+b.clr<-DPostand(bac.ASV_table[,-1],method = "clr", pseudocount = 1) #CLR transformation
 b.clr[1:4,1:4]
 # df must have rownames are SampleIDs, columns are ASV IDs for vegan functions below
 
@@ -180,7 +180,7 @@ rownames(WI) %in% rownames(b.clr_WI) # hopefully all of the rownames match, aka 
 # ALL data
 # add pseudocount so row sums are > 0
 b.clr.pseudo<-b.clr+1
-b.dca = decorana(b.clr.pseudo)
+b.dca = DPorana(b.clr.pseudo)
 
 #plot(b.dca) # may take too long to load, do not run unless you have to
 b.dca #DCA1 axis length = 0.47172; use RDA
@@ -192,19 +192,19 @@ b.dca #DCA1 axis length = 0.47172; use RDA
 # BY MONTH
 
 b.clr_WI.pseudo<-b.clr_WI+1
-b.WI.dca = decorana(b.clr_WI.pseudo)
+b.WI.dca = DPorana(b.clr_WI.pseudo)
 b.WI.dca #DCA1 axis length = 0.54543; use RDA
 
 b.clr_DP.pseudo<-b.clr_DP+1
-b.DP.dca = decorana(b.clr_DP.pseudo)
+b.DP.dca = DPorana(b.clr_DP.pseudo)
 b.DP.dca #DCA1 axis length = 0.64485; use RDA
 
 b.clr_BDC.pseudo<-b.clr_BDC+1
-b.BDC.dca = decorana(b.clr_BDC.pseudo)
+b.BDC.dca = DPorana(b.clr_BDC.pseudo)
 b.BDC.dca #DCA1 axis length = 0.46958; use RDA
 
 b.clr_PD.pseudo<-b.clr_PD+1
-b.PD.dca = decorana(b.clr_PD.pseudo)
+b.PD.dca = DPorana(b.clr_PD.pseudo)
 b.PD.dca #DCA1 axis length = 0.52948; use RDA
 
 #### RDA w/ All Data ####
