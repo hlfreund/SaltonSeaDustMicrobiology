@@ -33,6 +33,8 @@ suppressPackageStartupMessages({ # load packages quietly
   library(microbiome)
 })
 
+# NOTE: Unifrac distances take into account phylogenetic similarity/relationships and relative abundances (or presence/absences) in account
+
 #### Load Global Env to Import Count/ASV Tables ####
 load("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
 #load("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")

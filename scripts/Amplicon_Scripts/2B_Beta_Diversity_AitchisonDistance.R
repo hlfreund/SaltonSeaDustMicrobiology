@@ -38,6 +38,7 @@ suppressPackageStartupMessages({ # load packages quietly
   library(plotly)
   library(htmlwidgets)
   library("factoextra")
+  library(reticulate)
 })
 
 #### Load Global Env to Import Count/ASV Tables ####
@@ -150,6 +151,7 @@ dust_meta=dust_meta[rownames(b.clr),] ## reorder metadata to match order of CLR 
 # calculate our Euclidean distance matrix using CLR data
 b.euc_dist <- dist(b.clr, method = "euclidean")
 # b.euc_dist2 <- vegdist(b.clr, method = "euclidean") # did this to compare the two matrices to see ifthey're identical
+fviz_dist(b.euc_dist, gradient = list(low = "blue", mid = "white", high = "red"))
 
 # creating our hierarcical clustering dendrogram
 b.euc_clust <- hclust(b.euc_dist, method="ward.D2")
@@ -165,15 +167,9 @@ plot(b.euc_dend, ylab="CLR Euclidean Distance", cex = 0.1,horiz=TRUE) + title(ma
 #legend("topleft",legend = colorset8$SampDate,cex=.8,col = colorset8$SampDate_Color,pch = 15, bty = "n")
 dev.off()
 
-# b.euc_dend1 <- as.dendrogram(b.euc_clust, hang=0.06)
-# b.dend_cols1 <- as.character(dust_meta$SampMonth_Color[order.dendrogram(b.euc_dend1)])
-# labels_colors(b.euc_dend1) <- b.dend_cols1
-#
-# colorset2 # color dendrogram by month of collection
-# png(filename="figures/BetaDiversity/Aitchison/SSD_16S_CLR_EucDist_Dendrogram2.png",width = 7, height = 7, units = "in",res = 800)
-# plot(b.euc_dend1, ylab="CLR Euclidean Distance", cex = 0.6) + title(main = "Bacteria/Archaea Clustering Dendrogram", cex.main = 1, font.main= 1, cex.sub = 0.8, font.sub = 2)
-# legend("topright",legend = colorset2$SampleMonth,cex=.8,col = colorset2$SampMonth_Color,pch = 15, bty = "n")
-# dev.off()
+# let's try another hierarchical cluster dendrogram with eclust()
+b.clr.hc<-eclust(b.clr, "hclust",nboot = 500) # use eclust() for "enhanced" hierarchical clustering; more here: https://www.datanovia.com/en/blog/cluster-analysis-in-r-simplified-and-enhanced/
+fviz_dend(b.clr.hc, rect = TRUE) # plot the dendrogam
 
 # PCOA w/ Euclidean distance matrix (of CLR data)
 b.pcoa <- pcoa(b.euc_dist) # pcoa of euclidean distance matrix = PCA of euclidean distance matrix
@@ -198,11 +194,39 @@ head(b.pcoa$values) # pull out Relative (Relative_eig) variation % to add to axe
 # PC1 = 24.47%, PC2 = 8.31%
 
 # K-means Clustering - will show us the groups that also appear in our PCoA
-b.clr.km <- eclust(b.clr, "kmeans", hc_metric="euclid",nboot = 1000)
+## more on K-means clustering: http://www.sthda.com/english/wiki/factoextra-r-package-easy-multivariate-data-analyses-and-elegant-visualization
+## more on K-means clustering: https://uc-r.github.io/kmeans_clustering#:~:text=The%20gap%20statistic%20compares%20the,simulations%20of%20the%20sampling%20process.
 
-# Visualize kmeans clustering
+## first we are going to play around with different values for k (aka # of clusters) and plot them to see what seems best
+k2 <- kmeans(b.clr, centers = 2, nstart = 25)
+k3 <- kmeans(b.clr, centers = 3, nstart = 25)
+k4 <- kmeans(b.clr, centers = 4, nstart = 25)
+k5 <- kmeans(b.clr, centers = 5, nstart = 25)
+
+# plots to compare different values for k (aka # clusters)
+p1 <- fviz_cluster(k2, geom = "point",  data = b.clr) + ggtitle("k = 2")
+p2 <- fviz_cluster(k3, geom = "point",  data = b.clr) + ggtitle("k = 3")
+p3 <- fviz_cluster(k4, geom = "point",  data = b.clr) + ggtitle("k = 4")
+p4 <- fviz_cluster(k5, geom = "point",  data = b.clr) + ggtitle("k = 5")
+
+# next we can calculate the K-means clustering and get back the ideal # of clusters
+b.clr.km <- eclust(b.clr, "kmeans", hc_metric="euclid",nboot = 1000)
+b.clr.km
+
+# Visualize kmeans clustering with output form eclust()
 # use repel = TRUE to avoid overplotting
 fviz_cluster(b.clr.km, b.clr, show.clust.cent=TRUE,ellipse.type = "euclid")
+
+# Gap statistic plot to determine the ideal # of clusters k
+# The gap statistic compares the total intracluster variation for different values of k with their expected values under null reference distribution of the data (i.e. a distribution with no obvious clustering)
+fviz_gap_stat(b.clr.km$gap_stat) # shows 3 clusters
+fviz_nbclust(b.clr, kmeans, method = "gap_stat") # also shows 3 clusters
+fviz_nbclust(b.clr, kmeans, method = "silhouette") # shows 2 clusters
+
+#fviz_silhouette(b.clr.km)
+
+# Optimal number of clusters using gap statistics
+b.clr.km$nbclust
 
 save.image("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
@@ -220,7 +244,7 @@ pcoa1<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=SampDa
   scale_shape_manual(values = c(7,10, 15,16)) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(pcoa1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_Site_Year_PCOA1.png", width=14, height=10, dpi=600)
+ggsave(pcoa1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_Site_Year_PCOA1.png", width=14, height=10, dpi=600,create.dir = TRUE)
 
 # pcoa1a<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Site),shape=CollectionYear), size=5)+theme_bw()+
 #   labs(title="PCoA: Bacteria/Archaea in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data",color="Sample Date")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -228,7 +252,7 @@ ggsave(pcoa1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_Si
 #   scale_color_manual(name ="Collection Date",values=unique(b.pcoa.meta$Site_Color[order(b.pcoa.meta$Site)]),labels=c(unique(b.pcoa.meta$Site[order(b.pcoa.meta$Site)]))) +
 #   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 #
-# ggsave(pcoa1a,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_Site_Year_PCOA1.png", width=12, height=10, dpi=600)
+# ggsave(pcoa1a,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_Site_Year_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 #
 # # specific season
 # pcoa3<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Season_Specific),shape=CollectionYear), size=5)+theme_bw()+
@@ -238,7 +262,7 @@ ggsave(pcoa1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_Si
 #                      labels=c("Early.Summer"="Early Summer","Late.Summer"="Late Summer","Early.Fall"="Early Fall","Late.Fall"="Late Fall","Fall.Winter"="Fall-Winter")) +
 #   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 #
-# ggsave(pcoa3,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_season_specific_PCOA1.png", width=12, height=10, dpi=600)
+# ggsave(pcoa3,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_season_specific_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 #
 # # by collection year & site
 # pcoa4a<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(CollectionYear),shape=Site), size=5)+theme_bw()+
@@ -247,7 +271,7 @@ ggsave(pcoa1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_Si
 #   scale_color_manual(name ="Collection Year",values=unique(b.pcoa.meta$Year_Color[order(b.pcoa.meta$CollectionYear)])) +
 #   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 #
-# ggsave(pcoa4a,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_CollectionYear_Site_PCOA1.png", width=12, height=10, dpi=600)
+# ggsave(pcoa4a,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_CollectionYear_Site_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 #
 # # by collection period & site
 # pcoa5<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Seas_Coll_Year),shape=Site), size=5)+theme_bw()+
@@ -256,7 +280,7 @@ ggsave(pcoa1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_Si
 #   scale_color_manual(name ="Collection Period",values=unique(b.pcoa.meta$SCY_Color[order(b.pcoa.meta$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
 #   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 #
-# ggsave(pcoa5,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_Site_PCOA1.png", width=12, height=10, dpi=600)
+# ggsave(pcoa5,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_Site_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 # 3D PCoA
 
@@ -266,6 +290,18 @@ pltly.all.a<-plot_ly(b.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~SampDa
                       yaxis = list(title = 'PC2 8.31%'),
                       zaxis = list(title = 'PC3 7.31%')))
 
+# before you can run save_image(), run the following lines; follow instructions: https://search.r-project.org/CRAN/refmans/plotly/html/save_image.html
+# install.packages('reticulate')
+# reticulate::install_miniconda()
+# reticulate::conda_install('r-reticulate', 'python-kaleido')
+# reticulate::conda_install('r-reticulate', 'plotly', channel = 'plotly')
+# reticulate::use_miniconda('r-reticulate')
+
+save_image(pltly.all.a, "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_CollYr_Site_3D_Aitchison_PCOA1.png",width=1200,height=1000)
+save_image(pltly.all.a, "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_CollYr_Site_3D_Aitchison_PCOA2.png",width=1400,height=1100)
+
+
+# save 3D plot as an HTml
 saveWidget(widget = pltly.all.a, #the plotly object,
            file = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_CollYr_Site_3D_Aitchison_PCOA1.html", #the path & file name
            selfcontained = TRUE #creates a single html file
@@ -280,7 +316,7 @@ wi.pc1<-ggplot(b.pcoa.meta[b.pcoa.meta$Site=="WI",], aes(x=Axis.1, y=Axis.2)) +g
   scale_color_manual(name ="Collection Period",values=unique(b.pcoa.meta$SCY_Color[order(b.pcoa.meta$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(wi.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_Wister_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(wi.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_Wister_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 dp.pc1<-ggplot(b.pcoa.meta[b.pcoa.meta$Site=="DP",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Seas_Coll_Year)), size=5)+theme_bw()+
   labs(title="PCoA: Dos Palmas Microbial Composition",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -288,7 +324,7 @@ dp.pc1<-ggplot(b.pcoa.meta[b.pcoa.meta$Site=="DP",], aes(x=Axis.1, y=Axis.2)) +g
   scale_color_manual(name ="Collection Period",values=unique(b.pcoa.meta$SCY_Color[order(b.pcoa.meta$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(dp.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_DosPalmas_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(dp.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_DosPalmas_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 s.r.pc1<-ggplot(b.pcoa.meta[b.pcoa.meta$Site=="SB" | b.pcoa.meta$Site=="RHB",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Seas_Coll_Year),shape=Site), size=5)+theme_bw()+
   labs(title="PCoA: Sonny Bono & Red Hill Bay Microbial Composition",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -296,7 +332,7 @@ s.r.pc1<-ggplot(b.pcoa.meta[b.pcoa.meta$Site=="SB" | b.pcoa.meta$Site=="RHB",], 
   scale_color_manual(name ="Collection Period",values=unique(b.pcoa.meta$SCY_Color[order(b.pcoa.meta$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(s.r.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_SB_and_RHB_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(s.r.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_SB_and_RHB_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 pd.pc1<-ggplot(b.pcoa.meta[b.pcoa.meta$Site=="PD",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Seas_Coll_Year)), size=5)+theme_bw()+
   labs(title="PCoA: Palm Desert Microbial Composition",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -304,7 +340,7 @@ pd.pc1<-ggplot(b.pcoa.meta[b.pcoa.meta$Site=="PD",], aes(x=Axis.1, y=Axis.2)) +g
   scale_color_manual(name ="Collection Period",values=unique(b.pcoa.meta$SCY_Color[order(b.pcoa.meta$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(pd.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_PD_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(pd.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_PD_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 bdc.pc1<-ggplot(b.pcoa.meta[b.pcoa.meta$Site=="BDC",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Seas_Coll_Year)), size=5)+theme_bw()+
   labs(title="PCoA: Boyd Deep Canyon Microbial Composition",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -312,7 +348,7 @@ bdc.pc1<-ggplot(b.pcoa.meta[b.pcoa.meta$Site=="BDC",], aes(x=Axis.1, y=Axis.2)) 
   scale_color_manual(name ="Collection Period",values=unique(b.pcoa.meta$SCY_Color[order(b.pcoa.meta$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(bdc.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_BDC_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(bdc.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_BDC_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 # visualizing pcoa by month per year
 unique(b.pcoa.meta$SampDate)
@@ -323,7 +359,7 @@ j2020.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="July.2020",], aes(x=Axis.1, 
   scale_color_manual(name ="Site",values=unique(b.pcoa.meta$Site_Color[order(b.pcoa.meta$Site)])) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(j2020.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_July2020_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(j2020.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_July2020_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 a2020.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="August.2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Site)), size=5)+theme_bw()+
   labs(title="PCoA: August 2020 Microbial Composition by Site",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -331,7 +367,7 @@ a2020.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="August.2020",], aes(x=Axis.1
   scale_color_manual(name ="Site",values=unique(b.pcoa.meta$Site_Color[order(b.pcoa.meta$Site)])) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(a2020.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_Aug2020_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(a2020.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_Aug2020_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 o2020.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="October.2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Site)), size=5)+theme_bw()+
   labs(title="PCoA: October 2020 Microbial Composition by Site",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -339,7 +375,7 @@ o2020.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="October.2020",], aes(x=Axis.
   scale_color_manual(name ="Site",values=unique(b.pcoa.meta$Site_Color[order(b.pcoa.meta$Site)])) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(o2020.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_Oct2020_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(o2020.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_Oct2020_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 n2020.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="November.2020",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Site)), size=5)+theme_bw()+
   labs(title="PCoA: November 2020 Microbial Composition by Site",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -347,7 +383,7 @@ n2020.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="November.2020",], aes(x=Axis
   scale_color_manual(name ="Site",values=unique(b.pcoa.meta$Site_Color[order(b.pcoa.meta$Site)])) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(n2020.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_Nov2020_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(n2020.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_Nov2020_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 ja2021.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="July.2021" | b.pcoa.meta$SampDate=="August.2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Site)), size=5)+theme_bw()+
   labs(title="PCoA: July & August 2021 Microbial Composition by Site",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -355,7 +391,7 @@ ja2021.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="July.2021" | b.pcoa.meta$Sa
   scale_color_manual(name ="Site",values=unique(b.pcoa.meta$Site_Color[order(b.pcoa.meta$Site)])) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(ja2021.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_July_Aug_2021_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(ja2021.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_July_Aug_2021_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 s2021.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="September.2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Site)), size=5)+theme_bw()+
   labs(title="PCoA: September 2021 Microbial Composition by Site",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -363,7 +399,7 @@ s2021.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="September.2021",], aes(x=Axi
   scale_color_manual(name ="Site",values=unique(b.pcoa.meta$Site_Color[order(b.pcoa.meta$Site)])) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(s2021.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_Sept2021_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(s2021.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_Sept2021_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 d2021.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="December.2021",], aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Site)), size=5)+theme_bw()+
   labs(title="PCoA: December 2021 Microbial Composition by Site",subtitle="Using Centered-Log Ratio Data",color="Collection Period")+theme_classic()+ theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
@@ -371,7 +407,7 @@ d2021.p1<-ggplot(b.pcoa.meta[b.pcoa.meta$SampDate=="December.2021",], aes(x=Axis
   scale_color_manual(name ="Site",values=unique(b.pcoa.meta$Site_Color[order(b.pcoa.meta$Site)])) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(d2021.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_Dec2021_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(d2021.p1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_AllSites_Dec2021_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 ## visualizing by year
 b.pcoa1.20<-b.pcoa.meta[b.pcoa.meta$CollectionYear=="2020",]
@@ -384,7 +420,7 @@ twntytwnty.pc1<-ggplot(b.pcoa1.20, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(colo
   scale_color_manual(name ="Collection Period",values=unique(b.pcoa1.20$SCY_Color[order(b.pcoa1.20$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(twntytwnty.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_2020_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(twntytwnty.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_2020_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 # 2021
 twntytwnty1.pc1<-ggplot(b.pcoa1.21, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=factor(Seas_Coll_Year),shape=Site), size=5)+theme_bw()+
@@ -393,7 +429,7 @@ twntytwnty1.pc1<-ggplot(b.pcoa1.21, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(col
   scale_color_manual(name ="Collection Period",values=unique(b.pcoa1.21$SCY_Color[order(b.pcoa1.21$Seas_Coll_Year)]),labels=c("S.1.2020"="Summer #1 2020","S.2.2020"="Summer #2 2020","S.3.2020"="Summer #3 2020","F.1.2020"="Fall #1 2020","S.1.2021"="Summer #1 2021","S.2.2021"="Summer #2 2021","F.1.2021"="Fall #1 2021")) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
-ggsave(twntytwnty1.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_2021_PCOA1.png", width=12, height=10, dpi=600)
+ggsave(twntytwnty1.pc1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SeasCollYr_2021_PCOA1.png", width=12, height=10, dpi=600,create.dir = TRUE)
 
 #### Visualize Location & Date with PC Axes ####
 # this idea was suggested by Dr. Will Porter as a way to see if we can identify compositional similiarites or dissimilarites by site and sample collection date
@@ -422,7 +458,7 @@ pcoa.axis1.hm<-ggplot(b.pcoa.dts, aes(Site, SampDate, Axis.1, fill=Axis.1)) +
         axis.ticks=element_line(size=0.4),panel.grid = element_blank(),plot.subtitle=element_text(size=14)) +
   xlab("") + ylab("") + scale_y_discrete(expand=c(0, 0))+scale_x_discrete(expand=c(0, 0)) + geom_text(aes(label = round(Axis.1, 2)),size=9)
 
-ggsave(pcoa.axis1.hm,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_PCoA_PC1_Site_by_SampDate.png", width=18, height=13, dpi=600)
+ggsave(pcoa.axis1.hm,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_PCoA_PC1_Site_by_SampDate.png", width=18, height=13, dpi=600,create.dir = TRUE)
 
 # For heatmap color gradient, PC2
 max(b.pcoa.dts$Axis.2, na.rm=TRUE)
@@ -438,7 +474,7 @@ pcoa.axis2.hm<-ggplot(b.pcoa.dts, aes(Site, SampDate, Axis.2, fill=Axis.2)) +
         axis.ticks=element_line(size=0.4),panel.grid = element_blank(),plot.subtitle=element_text(size=14)) +
   xlab("") + ylab("") + scale_y_discrete(expand=c(0, 0))+scale_x_discrete(expand=c(0, 0))
 
-ggsave(pcoa.axis2.hm,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_PCoA_PC2_Site_by_SampDate.png", width=18, height=13, dpi=600)
+ggsave(pcoa.axis2.hm,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_PCoA_PC2_Site_by_SampDate.png", width=18, height=13, dpi=600,create.dir = TRUE)
 
 ## Loop to Generate Heat Map for Each PC Axis
 
@@ -471,7 +507,7 @@ for (i in pc.axes) {
   pc.heatmap=hm.fxn(b.pcoa.dts, b.pcoa.dts$Site, b.pcoa.dts$SampDate, b.pcoa.dts[,i])
   hm_titled = pc.heatmap + ggtitle(as.character(i)) + guides(fill=guide_legend(title="PC Values"))
   pc.plot.list[[i]]=hm_titled
-  ggsave(hm_titled,filename = paste("figures/BetaDiversity/PCoA_Axes_Heatmaps/SSD_16S_PCoA_Site_SampDate_heatmap_",i,".png",sep=""), width=18, height=13, dpi=600) # i will be the unique identifier. and change the extension from .png to whatever you like (eps, pdf etc).
+  ggsave(hm_titled,filename = paste("figures/BetaDiversity/PCoA_Axes_Heatmaps/SSD_16S_PCoA_Site_SampDate_heatmap_",i,".png",sep=""), width=18, height=13, dpi=600,create.dir = TRUE) # i will be the unique identifier. and change the extension from .png to whatever you like (eps, pdf etc).
 
 }
 
@@ -514,7 +550,7 @@ ggplot(s.t.pcoa, aes(Site, SampDate, PCoA_Axis, fill=PC_Axis_Value)) +
         axis.ticks=element_line(size=0.4),panel.grid = element_blank(),plot.subtitle=element_text(size=14)) +
   xlab("") + ylab("") + scale_y_discrete(expand=c(0, 0))+scale_x_discrete(expand=c(0, 0))
 
-#ggsave(sulf.hm1a,filename = "figures/MGM_Figs/FxnDiv/Sulfur/Sulfur_KOFxns_MGMs_SampID_by_Function_heatmap.png", width=18, height=13, dpi=600)
+#ggsave(sulf.hm1a,filename = "figures/MGM_Figs/FxnDiv/Sulfur/Sulfur_KOFxns_MGMs_SampID_by_Function_heatmap.png", width=18, height=13, dpi=600,create.dir = TRUE)
 
 #### Homogeneity of Variance & PERMANOVA tests - Composition by Groups ####
 ## betadisper to look at homogeneity of group dispersions (aka variance) when considering multiple variables

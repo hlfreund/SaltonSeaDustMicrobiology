@@ -40,6 +40,10 @@ suppressPackageStartupMessages({ # load packages quietly
   library(rbiom)
 })
 
+## NOTE FOR THIS SCRIPT:
+# In order to generate Unifrac distances, you need to have created a Multiple Sequence Alignment & built a Phylogenetic Tree
+## if you do not have this yet, go back and run 5a_Prep_Data_for_MSA_PhylogeneticTree.R, then 5b_MultipleSequenceAlignment_and_PhylogeneticTree.sh
+
 #### Load Global Env to Import Count/ASV Tables ####
 load("data/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
 #load("data/SSD_16S_CLR_WeightedUnifracDist_Ready.Rdata")
@@ -74,6 +78,7 @@ phylo.tree$tip.label[length(phylo.tree$tip.label)-1] # shows us the second to la
 
 phylo.tree$tip.label[1] # first tip in tree
 
+# use the ASV outgroup to root your phylogenetic tree -- need this for calculating Unifrac distance
 phylo.tree.rooted<-root(phylo.tree,outgroup="ASV 2423", resolve.root = TRUE)
 is.rooted(phylo.tree.rooted) # should be TRUE
 
@@ -502,9 +507,9 @@ df_specific.subset<-function(var_vec,var_subsets){
     #print(df)
     assign(df, var_subsets[[i]], envir = .GlobalEnv)
     print(paste("Dataframe", var_vec[i] ,"done"))
-    
+
   }
-  
+
 }
 
 # run the function
@@ -531,7 +536,7 @@ for (i in seq_along(site_subsets)){
   print(site_subsets[[i]]) # shows what is in each element within list
   #print(names(site_subsets[i]))
   new.t.clr.df<-match_transposed_dat(b.clr.mat.t,site_subsets[[i]]) # first match CLR data to metadata by site
-  
+
   wunifrac.dist<-beta.div(new.t.clr.df, 'unifrac', weighted = TRUE, tree = phylo.tree.rooted) # then generate Weighted Unifrac Distance by site!
   assign(paste0("b.clr.t_",names(site_subsets[i])), new.t.clr.df,envir = .GlobalEnv)
   assign(paste0("wunifrac.dist_",names(site_subsets[i])), wunifrac.dist,envir = .GlobalEnv)
@@ -821,8 +826,8 @@ hm.fxn<-function(df, x_var, y_var, f_var) {
          y = "",
          fill = "R",
          title = as.character(f_var))
-  
-  
+
+
   return(a)
 }
 
@@ -833,7 +838,7 @@ for (i in pc.axes.uwu) {
   hm_titled = pc.heatmap + ggtitle(as.character(i)) + guides(fill=guide_legend(title="PC Values"))
   pc.uw.plot.list[[i]]=hm_titled
   ggsave(hm_titled,filename = paste("figures/BetaDiversity/UnweightedUnifrac/PCoA_Axes_Heatmaps/SSD_16S_PCoA_Site_SampDate_heatmap_",i,".png",sep=""), width=18, height=13, dpi=600) # i will be the unique identifier. and change the extension from .png to whatever you like (eps, pdf etc).
-  
+
 }
 
 
@@ -903,9 +908,9 @@ df_specific.subset<-function(var_vec,var_subsets){
     #print(df)
     assign(df, var_subsets[[i]], envir = .GlobalEnv)
     print(paste("Dataframe", var_vec[i] ,"done"))
-    
+
   }
-  
+
 }
 
 # run the function
@@ -932,7 +937,7 @@ for (i in seq_along(site_subsets)){
   print(site_subsets[[i]]) # shows what is in each element within list
   #print(names(site_subsets[i]))
   new.t.raw.df<-match_transposed_dat(bac.ASV_mat.t,site_subsets[[i]]) # first match CLR data to metadata by site
-  
+
   unifrac.dist<-beta.div(new.t.raw.df, 'unifrac', weighted = FALSE, tree = phylo.tree.rooted) # then generate uniweighted Unifrac Distance by site!
   assign(paste0("b.raw.t_",names(site_subsets[i])), new.t.raw.df,envir = .GlobalEnv)
   assign(paste0("unifrac.dist_",names(site_subsets[i])), unifrac.dist,envir = .GlobalEnv)
@@ -992,7 +997,7 @@ permutest(b.disper1, pairwise=TRUE) # compare dispersions to each other via perm
 # PD           0.807000 0.964000 0.151
 # BDC 0.817890          0.837000 0.043
 # DP  0.958211 0.835448          0.091
-# WI  0.125936 0.040790 0.088662      
+# WI  0.125936 0.040790 0.088662
 
 anova(b.disper1) # p = 0.2037 --> accept the Null H, spatial medians (a measure of dispersion) are NOT significantly difference across sites
 # ANOVA adjusted p-value
@@ -1013,7 +1018,7 @@ TukeyHSD(b.disper1) # tells us which Sample Dates/category's dispersion MEANS ar
 # Dispersion effect means the actual spread of the data points is influencing the significant differences, not the actual data itself
 
 pnova1<-adonis2(b.wunifrac.dist ~ Site,data=meta.all.scaled,by="terms",permutations=1000)
-pnova1 # p-value = 0.2677 
+pnova1 # p-value = 0.2677
 p.adjust(pnova1$`Pr(>F)`,method="bonferroni",n=length(pnova1$`Pr(>F)`)) # adjusted pval
 # 0.8031968
 
@@ -1027,12 +1032,12 @@ p.adjust(pnova1$`Pr(>F)`,method="bonferroni",n=length(pnova1$`Pr(>F)`)) # adjust
 pair.mod1<-pairwise.adonis(b.wunifrac.dist,meta.all.scaled$Site, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
 pair.mod1
 #       pairs Df SumsOfSqs   F.Model         R2 p.value p.adjusted sig
-# 1 BDC vs DP  1  19966.65 1.3797069 0.10311937   0.206      1.000    
-# 2 BDC vs PD  1  16647.78 1.1640216 0.08842447   0.312      1.000    
-# 3 BDC vs WI  1  35906.47 1.6348471 0.11990212   0.116      0.696    
-# 4  DP vs PD  1  12053.79 0.8391818 0.06536100   0.441      1.000    
-# 5  DP vs WI  1  28050.83 1.2735918 0.09594929   0.224      1.000    
-# 6  PD vs WI  1  13351.16 0.6108896 0.04844144   0.736      1.000 
+# 1 BDC vs DP  1  19966.65 1.3797069 0.10311937   0.206      1.000
+# 2 BDC vs PD  1  16647.78 1.1640216 0.08842447   0.312      1.000
+# 3 BDC vs WI  1  35906.47 1.6348471 0.11990212   0.116      0.696
+# 4  DP vs PD  1  12053.79 0.8391818 0.06536100   0.441      1.000
+# 5  DP vs WI  1  28050.83 1.2735918 0.09594929   0.224      1.000
+# 6  PD vs WI  1  13351.16 0.6108896 0.04844144   0.736      1.000
 
 # Visualize dispersions
 png('figures/BetaDiversity/WeightedUnifrac/SSD_pcoa_betadispersion_site.png',width = 700, height = 600, res=100)
@@ -1136,8 +1141,8 @@ pnova4<-adonis2(b.wunifrac.dist ~ SampleMonth,data=meta.all.scaled,by="terms",pe
 pnova4
 #                       Df SumOfSqs      R2      F  Pr(>F)
 # SampleMonth  5   106141 0.21142 1.1796 0.2577
-# Residual    22   395903 0.78858              
-# Total       27   502045 1.00000                 
+# Residual    22   395903 0.78858
+# Total       27   502045 1.00000
 
 p.adjust(pnova4$`Pr(>F)`,method="bonferroni",n=length(pnova4$`Pr(>F)`)) # adjusted pval
 # 0.7732268  NA        NA
@@ -1152,21 +1157,21 @@ p.adjust(pnova4$`Pr(>F)`,method="bonferroni",n=length(pnova4$`Pr(>F)`)) # adjust
 pair.mod4<-pairwise.adonis(b.wunifrac.dist,meta.all.scaled$SampleMonth, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
 pair.mod4
 #                   pairs Df SumsOfSqs  F.Model        R2     p.value     p.adjusted sig
-# 1    October vs November  1 54227.924 2.8582855 0.32266802   0.070      1.000    
-# 2    October vs December  1 19753.181 1.2397941 0.17124714   0.358      1.000    
-# 3        October vs July  1 16308.984 0.8094964 0.08252171   0.443      1.000    
-# 4      October vs August  1 10298.519 0.5438269 0.07208899   0.848      1.000    
-# 5   October vs September  1 18091.578 1.1568596 0.16164347   0.334      1.000    
-# 6   November vs December  1 22135.771 1.3441578 0.18302409   0.124      1.000    
-# 7       November vs July  1 47922.099 2.3371986 0.20615310   0.044      0.660    
-# 8     November vs August  1 42521.720 2.1922783 0.23849129   0.055      0.825    
-# 9  November vs September  1 23390.459 1.4461740 0.19421706   0.191      1.000    
-# 10      December vs July  1 16894.623 0.9143247 0.09222259   0.452      1.000    
-# 11    December vs August  1 12515.731 0.7453922 0.09623686   0.555      1.000    
-# 12 December vs September  1  8322.350 0.6336265 0.09551736   0.540      1.000    
-# 13        July vs August  1  9761.077 0.4802180 0.04582137   0.831      1.000    
-# 14     July vs September  1  9823.604 0.5373482 0.05634147   0.757      1.000    
-# 15   August vs September  1 10998.877 0.6650385 0.08676257   0.690      1.000 
+# 1    October vs November  1 54227.924 2.8582855 0.32266802   0.070      1.000
+# 2    October vs December  1 19753.181 1.2397941 0.17124714   0.358      1.000
+# 3        October vs July  1 16308.984 0.8094964 0.08252171   0.443      1.000
+# 4      October vs August  1 10298.519 0.5438269 0.07208899   0.848      1.000
+# 5   October vs September  1 18091.578 1.1568596 0.16164347   0.334      1.000
+# 6   November vs December  1 22135.771 1.3441578 0.18302409   0.124      1.000
+# 7       November vs July  1 47922.099 2.3371986 0.20615310   0.044      0.660
+# 8     November vs August  1 42521.720 2.1922783 0.23849129   0.055      0.825
+# 9  November vs September  1 23390.459 1.4461740 0.19421706   0.191      1.000
+# 10      December vs July  1 16894.623 0.9143247 0.09222259   0.452      1.000
+# 11    December vs August  1 12515.731 0.7453922 0.09623686   0.555      1.000
+# 12 December vs September  1  8322.350 0.6336265 0.09551736   0.540      1.000
+# 13        July vs August  1  9761.077 0.4802180 0.04582137   0.831      1.000
+# 14     July vs September  1  9823.604 0.5373482 0.05634147   0.757      1.000
+# 15   August vs September  1 10998.877 0.6650385 0.08676257   0.690      1.000
 
 #### Rank Distance Comparison with ANOSIM ####
 # NOTES:
@@ -1198,7 +1203,7 @@ plot(anosim2)
 
 #### Species Contributions to Dissimilarity with SIMPER ####
 # NOTES: (some from here https://uw.pressbooks.pub/appliedmultivariatestatistics/chapter/simper/)
-# When there are multiple sample units, there are also multiple dissimilarities (i.e., pairwise combinations) to consider 
+# When there are multiple sample units, there are also multiple dissimilarities (i.e., pairwise combinations) to consider
 # each species can contribute to the dissimilarity between each pair of sample units.
 ## If our purpose is to quantify the contribution of each species to the differences between two groups, we have to consider all of these dissimilarities.
 # The average dissimilarity for each pairwise combination can be calculated directly via the vegan::meandist() function
@@ -1252,11 +1257,11 @@ subset.simper<-function(simper_object){
     #print(df)
     assign(paste0(comp_names[i],"_SIMPER.results"), df, envir = .GlobalEnv)
     assign(paste0(comp_names[i],"_SIMPER_taxaIDs"), df2.order, envir = .GlobalEnv)
-    
+
     print(paste("Dataframe", comp_names[i] ,"done"))
-    
+
   }
-  
+
 }
 
 subset.simper(simper1)
@@ -1332,7 +1337,7 @@ multi.univar.corr.fxn<-function(dep.var.df,indep.var.df){
   results_<- vector('list', ncol(dep.var.df) * ncol(indep.var.df)) # create an empty list where the corr summaries are stored
   sig.results<-vector('list', ncol(dep.var.df) * ncol(indep.var.df))
   cornum <- 1 # counting our model numbers for indexes purposes in the loop
-  
+
   # run the nested loop that generates corrs from each data frame
   ## dep.var.df[i] is dependent variable (y), indep.var.df[j] is independent variable (x) in corr
   for (i in 1:ncol(dep.var.df)){ # for each column in dep.var.df
@@ -1342,23 +1347,23 @@ multi.univar.corr.fxn<-function(dep.var.df,indep.var.df){
       #corr_[[cornum]]$p.value<-p.adjust(corr_[[cornum]]$p.value,method="bonferroni",n=corr_[[cornum]]$parameter)
       results_[[cornum]] <-corr_[[cornum]] # save results of corr into list called results
       names(results_)[cornum]<-paste(names(dep.var.df)[i],"~",names(indep.var.df)[j]) # rename list element to contain the name of the columns used in the model
-      
+
       # save only significant corrs to another list called sig.results
       ## if p-value < 0.05, save to sig.results list
       ifelse((results_[[cornum]]$p.value < 0.05), sig.results[[cornum]]<-results_[[cornum]], "Not Sig")
       names(sig.results)[cornum]<-paste(names(dep.var.df)[i],"~",names(indep.var.df)[j])
       cornum <- cornum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
-      
+
     }
   }
-  
+
   # drop all NULL elements from sig.results list so it only includes significant corrs
   sig.results[sapply(sig.results, is.null)] <- NULL
-  
+
   # assign lists to global env so they are saved there are function ends
   assign("env.wunifrac.results.corrs", results_,envir = .GlobalEnv)
   assign("env.wunifrac.sig.results.corrs", sig.results,envir = .GlobalEnv)
-  
+
 }
 
 multi.univar.corr.fxn(pcoa.axes,STF_Clim_Only) # test the function!
@@ -1370,7 +1375,7 @@ corrplot(pcoa.axes,STF_Clim_Only)
 # results_<- vector('list', ncol(pcoa.axes) * ncol(STF_Clim_Only)) # create an empty list where the GLM summaries are stored
 # sig.results<-vector('list', ncol(pcoa.axes) * ncol(STF_Clim_Only))
 # mdlnum <- 1 # counting our model numbers for indexes purposes in the loop
-# 
+#
 # # use a loop to run a bunch of GLMs
 # ## pcoa.axes[i] is dependent variable (y), STF_Clim_Only[j] is independent variable (x) in GLM
 # for (i in 1:ncol(pcoa.axes)){ # for each column in pcoa.axes
@@ -1379,7 +1384,7 @@ corrplot(pcoa.axes,STF_Clim_Only)
 #     results_[[mdlnum]] <-summary(glm_[[mdlnum]]) # save results of glm into list called results
 #     names(results_)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STF_Clim_Only)[j]) # rename list element to contain the name of the columns used in the model
 #     mdlnum <- mdlnum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
-# 
+#
 #   }
 # }
 
@@ -1389,11 +1394,11 @@ corrplot(pcoa.axes,STF_Clim_Only)
 #     glm_[[mdlnum]] <-glm(pcoa.axes[,i]~STF_Clim_Only[,j], family=gaussian) # run the GLM with the gaussian distribution, where df1[i] is your dependent variable and df2[j] is your independent variable
 #     results_[[mdlnum]] <-summary(glm_[[mdlnum]]) # save results of glm into list called results
 #     names(results_)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STF_Clim_Only)[j]) # rename list element to contain the name of the columns used in the model
-# 
+#
 #     ifelse(coef(results_[[mdlnum]])[,4] < 0.05, sig.results[[mdlnum]]<-results_[[mdlnum]], "Not Sig")
 #     names(sig.results)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STF_Clim_Only)[j])
 #     mdlnum <- mdlnum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
-# 
+#
 #   }
 # }
 # sig.results[sapply(sig.results, is.null)] <- NULL
@@ -1405,7 +1410,7 @@ corrplot(pcoa.axes,STF_Clim_Only)
 #   sig.results<-vector('list', ncol(dep.var.df) * ncol(indep.var.df))
 #   near.sig.results<-vector('list', ncol(dep.var.df) * ncol(indep.var.df))
 #   mdlnum <- 1 # counting our model numbers for indexes purposes in the loop
-# 
+#
 #   # run the nested loop that generates GLMs from each data frame
 #   ## dep.var.df[i] is dependent variable (y), indep.var.df[j] is independent variable (x) in GLM
 #   for (i in 1:ncol(dep.var.df)){ # for each column in dep.var.df
@@ -1413,32 +1418,32 @@ corrplot(pcoa.axes,STF_Clim_Only)
 #       glm_[[mdlnum]] <-glm(dep.var.df[,i]~indep.var.df[,j], family=distro) # run the GLM with the gaussian distribution, where df1[i] is your dependent variable and df2[j] is your independent variable
 #       results_[[mdlnum]] <-summary(glm_[[mdlnum]]) # save results of glm into list called results
 #       names(results_)[mdlnum]<-paste(names(dep.var.df)[i],"~",names(indep.var.df)[j]) # rename list element to contain the name of the columns used in the model
-# 
+#
 #       # save only significant GLMs to another list called sig.results
 #       ## if p-value < 0.05, save to sig.results list
 #       ifelse(coef(results_[[mdlnum]])[,4] < 0.05, sig.results[[mdlnum]]<-results_[[mdlnum]], "Not Sig")
 #       names(sig.results)[mdlnum]<-paste(names(dep.var.df)[i],"~",names(indep.var.df)[j])
-#       
+#
 #       # save only near significant GLMs to another list called near.sig.results
 #       ## if p-value < 0.05, save to sig.results list
 #       ifelse((coef(results_[[mdlnum]])[,4] > 0.05 & coef(results_[[mdlnum]])[,4] < 0.08), near.sig.results[[mdlnum]]<-results_[[mdlnum]], "Not Sig")
 #       names(near.sig.results)[mdlnum]<-paste(names(dep.var.df)[i],"~",names(indep.var.df)[j])
-#       
+#
 #       mdlnum <- mdlnum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
-# 
+#
 #     }
 #   }
-# 
+#
 #   # drop all NULL elements from sig.results list so it only includes significant GLMs
 #   sig.results[sapply(sig.results, is.null)] <- NULL
 #   near.sig.results[sapply(near.sig.results, is.null)] <- NULL
-# 
+#
 #   # assign lists to global env so they are saved there are function ends
 #   assign("results.glms", results_,envir = .GlobalEnv)
 #   assign("sig.results.glms", sig.results,envir = .GlobalEnv)
 #   assign("near.sig.results.glms", near.sig.results,envir = .GlobalEnv)
-#   
-# 
+#
+#
 # }
 
 multi.univar.glm.fxn(pcoa.axes,STF_Clim_Only,gaussian) # test the function!

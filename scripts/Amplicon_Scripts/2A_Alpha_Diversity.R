@@ -257,7 +257,7 @@ raw.tot.counts<-ggplot(data=bac.ASV_round.table, aes(x=bac.ASV_round.table$Sampl
   geom_bar(stat="identity",colour="black",fill="dodgerblue")+theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   labs(title="Total ASVs per Sample",subtitle="Based on Raw ASV Counts")+ylab("Total ASVs")+xlab("SampleID")
 
-ggsave(raw.tot.counts,filename = "figures/AlphaDiversity/SSD_16S_Total_ASVs_per_Sample_barplot.png", width=13, height=10, dpi=600)
+ggsave(raw.tot.counts,filename = "figures/AlphaDiversity/SSD_16S_Total_ASVs_per_Sample_barplot.png", width=13, height=10, dpi=600,create.dir = TRUE)
 
 # Calculate rarefied ASVs per Sample
 
@@ -491,7 +491,7 @@ bac.a.div.rar<-ggplot(bac.div.metadat.rar, aes(x=Site, y=AveShanDiv)) +geom_jitt
   labs(title = "Dust Bacterial Shannon Diversity by Site", subtitle="Using Rarefied Counts", x="Site", y="Shannon Diversity", color="Depth (m)")+theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))
   #geom_pwc(method = "t_test", label = "p.adj.format",p.adjust.method = "bonferroni")
 
-ggsave(bac.a.div.rar,filename = "figures/AlphaDiversity/RarefiedCounts/SSD_16S_rarefied_alpha_diversity_site_boxplot.png", width=15, height=10, dpi=600)
+ggsave(bac.a.div.rar,filename = "figures/AlphaDiversity/RarefiedCounts/SSD_16S_rarefied_alpha_diversity_site_boxplot.png", width=15, height=10, dpi=600,create.dir = TRUE)
 
 bac.a.div.rarB<-ggplot(bac.div.metadat.rar, aes(x=Site, y=AveShanDiv)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
   scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +
@@ -500,7 +500,7 @@ bac.a.div.rarB<-ggplot(bac.div.metadat.rar, aes(x=Site, y=AveShanDiv)) +geom_jit
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
   scale_shape_manual(values = c(7,10,15,16),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)])) + scale_x_discrete(labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
 
-ggsave(bac.a.div.rarB,filename = "figures/AlphaDiversity/RarefiedCounts/SSD_16S_rarefied_alpha_diversity_sampledate_site_boxplot.png", width=15, height=10, dpi=600)
+ggsave(bac.a.div.rarB,filename = "figures/AlphaDiversity/RarefiedCounts/SSD_16S_rarefied_alpha_diversity_sampledate_site_boxplot.png", width=15, height=10, dpi=600,create.dir = TRUE)
 
 bac.a.div.rarC<-ggplot(bac.div.metadat.rar, aes(x=SampDate, y=AveShanDiv)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
   scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +theme_bw()+theme_classic()+
@@ -508,7 +508,7 @@ bac.a.div.rarC<-ggplot(bac.div.metadat.rar, aes(x=SampDate, y=AveShanDiv)) +geom
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,size=10,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
   scale_shape_manual(values = c(7,10,15,16),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
 
-ggsave(bac.a.div.rarC,filename = "figures/AlphaDiversity/RarefiedCounts/SSD_16S_rarefied_alpha_diversity_sampledate_boxplot.png", width=15, height=10, dpi=600)
+ggsave(bac.a.div.rarC,filename = "figures/AlphaDiversity/RarefiedCounts/SSD_16S_rarefied_alpha_diversity_sampledate_boxplot.png", width=15, height=10, dpi=600,create.dir = TRUE)
 
 
 ## Species Richness by Site & Sample Date
@@ -518,7 +518,7 @@ bac.a.sr.rar<-ggplot(bac.div.metadat.rar, aes(x=Site, y=AveSpecRich)) +geom_jitt
   labs(title = "Dust Bacterial Species Richness by Site", subtitle="Using Rarefied Counts", x="Site", y="Species Richness", color="Depth (m)")+theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))
 #geom_pwc(method = "t_test", label = "p.adj.format",p.adjust.method = "bonferroni")
 
-ggsave(bac.a.sr.rar,filename = "figures/SpeciesRichness/RarefiedCounts/SSD_16S_rarefied_species_richness_site_boxplot.png", width=13, height=10, dpi=600)
+ggsave(bac.a.sr.rar,filename = "figures/SpeciesRichness/RarefiedCounts/SSD_16S_rarefied_species_richness_site_boxplot.png", width=13, height=10, dpi=600,create.dir = TRUE)
 
 bac.a.sr.rarB<-ggplot(bac.div.metadat.rar, aes(x=Site, y=AveSpecRich)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
   scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +
@@ -527,7 +527,7 @@ bac.a.sr.rarB<-ggplot(bac.div.metadat.rar, aes(x=Site, y=AveSpecRich)) +geom_jit
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
   scale_shape_manual(values = c(7,10,15,16),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)])) + scale_x_discrete(labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
 
-ggsave(bac.a.sr.rarB,filename = "figures/SpeciesRichness/RarefiedCounts/SSD_16S_rarefied_species_richness_sampledate_site_boxplot.png", width=15, height=10, dpi=600)
+ggsave(bac.a.sr.rarB,filename = "figures/SpeciesRichness/RarefiedCounts/SSD_16S_rarefied_species_richness_sampledate_site_boxplot.png", width=15, height=10, dpi=600,create.dir = TRUE)
 
 bac.a.sr.rarC<-ggplot(bac.div.metadat.rar, aes(x=SampDate, y=AveSpecRich)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
   scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +theme_bw()+theme_classic()+
@@ -535,7 +535,7 @@ bac.a.sr.rarC<-ggplot(bac.div.metadat.rar, aes(x=SampDate, y=AveSpecRich)) +geom
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,size=10,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
   scale_shape_manual(values = c(7,10,15,16),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
 
-ggsave(bac.a.sr.rarC,filename = "figures/SpeciesRichness/RarefiedCounts/SSD_16S_rarefied_species_richness_sampledate_boxplot.png", width=15, height=10, dpi=600)
+ggsave(bac.a.sr.rarC,filename = "figures/SpeciesRichness/RarefiedCounts/SSD_16S_rarefied_species_richness_sampledate_boxplot.png", width=15, height=10, dpi=600,create.dir = TRUE)
 
 #### Compare Variance w/ Shannon Diversity ####
 # shannon diversity is NOT normally distributed; used rarefied counts to calculate SR

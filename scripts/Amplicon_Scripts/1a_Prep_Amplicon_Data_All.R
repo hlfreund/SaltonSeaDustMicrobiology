@@ -393,6 +393,35 @@ saveRDS(lung_b.ASV, file = "data/Amplicon/SaltonSea_Lungs_16S.V3V4_ASVTable_Robj
 saveRDS(bac.tax.clean, file = "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Clean_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
+#### Pull out ASV Sequences of Interest for MSA & Phylogenetic Tree ####
+## pulling sequences from DADA2 results only for ASVs that we have in our cleaned up bac.ASV_table
+## use this new set of ASVs of interest to construct phylogenetic tree, import the tree with ape package, and calculate Unifrac distance with rbiom
+# giving our seq headers more manageable names (ASV_1, ASV_2...)
+load(file = "DADA2_Results/mydada_16S.V3V4.Rdata") # load your DADA2 output for this project
+
+asv_seqs <- colnames(seqtab.nochim) # pull out ASV sequences
+asv_headers <- vector(dim(seqtab.nochim)[2], mode="character") # pull out ASV headers
+
+# add ASV in front of each # of each sequence
+for (i in 1:dim(seqtab.nochim)[2]) {
+  asv_headers[i] <- paste("ASV", i, sep="_")
+}
+
+# create table of ASVs and their respective sequences so that we can filter out ASVs from samples we aren't looking at
+asv_all <- as.data.frame(cbind(asv_headers, asv_seqs))
+length(unique(asv_all$asv_headers))
+
+# only pull out ASVs and their sequences for ASVs in our taxa table for only samples of interest
+new.asv_all<-asv_all[asv_all$asv_headers %in% colnames(bac.ASV_table[,-1]),]
+
+# insert ">" before ASV IDs before we make the new FASTA file
+new.asv_all$asv_headers<-gsub("ASV_",">ASV_",new.asv_all$asv_headers)
+new.asv_all$asv_headers[1:5]
+
+# create and save the new fasta file - will use this to generate Multiple Sequence Alignment & build phylogenetic tree
+new.asv_fasta<-c(rbind(new.asv_all$asv_headers,new.asv_all$asv_seqs))
+write(new.asv_fasta, "SSD_16SV3V4_ASVs_Updated.fa")
+
 #### Save Global Env for Import into Other Scripts ####
 
 save.image("data/Amplicon/EnvMiSeq_W23_16S.V3V4_DataReady.Rdata") # save global env to Rdata file

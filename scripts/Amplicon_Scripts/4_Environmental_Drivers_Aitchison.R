@@ -33,6 +33,9 @@ suppressPackageStartupMessages({ # load packages quietly
   library(microbiome)
 })
 
+# NOTE: Aitchison Distance = Euclidean distance of CLR-transformed data
+## CLR = center log ratio transformation
+
 #### Load Global Env to Import Count/ASV Tables ####
 load("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
 #load("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
@@ -83,7 +86,7 @@ STF.melt$SampleID = factor(STF.melt$SampleID, levels=unique(STF.melt$SampleID[or
 #   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
 #   guides(fill=guide_legend(ncol=1))+
 #   scale_fill_manual(name ="Surface Type",values=unique(STF.melt$ST_Color[order(STF.melt$SurfaceType)]),labels=c("Barren Land","Crop Land","Developed","Forest","Herbaceous","Mexico","Open Water","Others","Salton Sea","Shrub"))
-# ggsave(just.stfs1,filename = "figures/SurfaceTypeFrequencies/SSD_SurfaceTypeFrequencys_barplot.png", width=10, height=10, dpi=600)
+# ggsave(just.stfs1,filename = "figures/SurfaceTypeFrequencies/SSD_SurfaceTypeFrequencys_barplot.png", width=10, height=10, dpi=600,create.dir = TRUE)
 #
 # just.stfs2<-ggplot(STF.melt, aes(x=SampleID, y=Frequency, fill=SurfaceType))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
 #   labs(title = "Surface Type Frequencies in Salton Sea Dust", x="SampleID", y="Frequency", subtitle="",fill="Surface Type")+
@@ -91,7 +94,7 @@ STF.melt$SampleID = factor(STF.melt$SampleID, levels=unique(STF.melt$SampleID[or
 #   guides(fill=guide_legend(ncol=1))+
 #   scale_fill_manual(name ="Surface Type",values=unique(STF.melt$ST_Color[order(STF.melt$SurfaceType)]),labels=c("Barren Land","Crop Land","Developed","Forest","Herbaceous","Mexico","Open Water","Others","Salton Sea","Shrub")) +
 #   facet_wrap(vars(Site), scales = "free")
-# ggsave(just.stfs2,filename = "figures/SurfaceTypeFrequencies/SSD_SurfaceTypeFrequencys_bySite_barplot.png", width=10, height=10, dpi=600)
+# ggsave(just.stfs2,filename = "figures/SurfaceTypeFrequencies/SSD_SurfaceTypeFrequencys_bySite_barplot.png", width=10, height=10, dpi=600,create.dir = TRUE)
 
 #### Separate All Data by Time points ####
 # create metadata df that will contain scaled chemical data
@@ -995,7 +998,7 @@ rda.plot2<-ggplot(rda.axes.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data") +
   xlab("RDA1 [9.97%]") + ylab("RDA2 [7.82%]")
 
-ggsave(rda.plot2,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_AllData.png", width=10, height=10, dpi=600)
+ggsave(rda.plot2,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_AllData.png", width=10, height=10, dpi=600,create.dir = TRUE)
 
 
 rda.plot3<-ggplot(rda.axes.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=SampDate,shape=Site),size=5) +
@@ -1011,7 +1014,7 @@ rda.plot3<-ggplot(rda.axes.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data") +
   xlab("RDA1 [9.97%]") + ylab("RDA2 [7.82%]")
 
-ggsave(rda.plot3,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_AllData_bigger.png", width=15, height=15, dpi=600)
+ggsave(rda.plot3,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_AllData_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
 
 #### Plot RDA - WI ####
@@ -1085,7 +1088,7 @@ rda.plot6<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(col
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, WI",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
   xlab("RDA1 [40.89%]") + ylab("RDA2 [8.77%]")
 
-ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_WI.png", width=16, height=12, dpi=600)
+ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_WI.png", width=16, height=12, dpi=600,create.dir = TRUE)
 
 rda.plot6b<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=SampDate),size=5) +
   geom_segment(data = arrows.WI,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = RDA2*8),lineend = "round", # See available arrow types in example above
@@ -1099,7 +1102,7 @@ rda.plot6b<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(co
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, WI",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
   xlab("RDA1 [40.89%]") + ylab("RDA2 [8.77%]")
 
-ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_WI_bigger.png", width=15, height=15, dpi=600)
+ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_WI_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
 #### Plot RDA - DP ####
 #plot(rda.DP) # depending on how many species you have, this step may take a while
@@ -1171,7 +1174,7 @@ rda.plot6<-ggplot(rda.axes.DP.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(col
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, DP",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
   xlab("RDA1 [33.25%]") + ylab("RDA2 [13.53%]")
 
-ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_DP.png", width=16, height=12, dpi=600)
+ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_DP.png", width=16, height=12, dpi=600,create.dir = TRUE)
 
 rda.plot6b<-ggplot(rda.axes.DP.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=SampDate),size=5) +
   geom_segment(data = arrows.DP,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = RDA2*8),lineend = "round", # See available arrow types in example above
@@ -1185,7 +1188,7 @@ rda.plot6b<-ggplot(rda.axes.DP.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(co
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, DP",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
   xlab("RDA1 [33.25%]") + ylab("RDA2 [13.53%]")
 
-ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_DP_bigger.png", width=15, height=15, dpi=600)
+ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_DP_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
 #### Plot RDA - BDC ####
 #plot(rda.BDC) # depending on how many species you have, this step may take a while
@@ -1257,7 +1260,7 @@ rda.plot6<-ggplot(rda.axes.BDC.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(co
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, BDC",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
   xlab("RDA1 [31.19%]") + ylab("RDA2 [11.31%]")
 
-ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_BDC.png", width=16, height=12, dpi=600)
+ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_BDC.png", width=16, height=12, dpi=600,create.dir = TRUE)
 
 rda.plot6b<-ggplot(rda.axes.BDC.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=SampDate),size=5) +
   geom_segment(data = arrows.BDC,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = RDA2*8),lineend = "round", # See available arrow types in example above
@@ -1271,7 +1274,7 @@ rda.plot6b<-ggplot(rda.axes.BDC.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(c
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, BDC",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
   xlab("RDA1 [31.19%]") + ylab("RDA2 [11.31%]")
 
-ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_BDC_bigger.png", width=15, height=15, dpi=600)
+ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_BDC_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
 #### Plot RDA - PD ####
 #plot(rda.PD) # depending on how many species you have, this step may take a while
@@ -1343,7 +1346,7 @@ rda.plot6<-ggplot(rda.axes.PD.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(col
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, PD",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
   xlab("RDA1 [20.89%]") + ylab("RDA2 [19.42%]")
 
-ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_PD.png", width=16, height=12, dpi=600)
+ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_PD.png", width=16, height=12, dpi=600,create.dir = TRUE)
 
 rda.plot6b<-ggplot(rda.axes.PD.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=SampDate),size=5) +
   geom_segment(data = arrows.PD,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = RDA2*8),lineend = "round", # See available arrow types in example above
@@ -1357,7 +1360,7 @@ rda.plot6b<-ggplot(rda.axes.PD.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(co
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, PD",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
   xlab("RDA1 [20.89%]") + ylab("RDA2 [19.42%]")
 
-ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_PD_bigger.png", width=15, height=15, dpi=600)
+ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_PD_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
 #### Save Progress ####
 
