@@ -1294,12 +1294,14 @@ head(prevalence(b.gs.mat, detection = 1/100, sort = TRUE),10)
 # absolute population frequencies based on sample counts
 head(prevalence(b.gs.mat, detection = 1/100, sort = TRUE, count = TRUE),10)
 
-core.taxa.names<-core_members(b.gs.mat,detection=0.001,prevalence=50/100)
+core.taxa.names<-core_members(b.gs.mat,detection=0.005,prevalence=40/100)
 core.taxa.names # taxa that appear in half the samples
 
 # With compositional (relative) abundances
-det <- c(0.1, 0.5, 2, 5, 20)/100
+det <- c(0.1, 0.5, 1, 2, 5, 10, 20)/100
+det
 prevalences <- seq(.25, 1, .05)
+prevalences
 #ggplot(d) + geom_point(aes(x, y)) + scale_x_continuous(trans="log10", limits=c(NA,1))
 
 
@@ -1312,24 +1314,20 @@ plot_core(b.gs.mat,
 ## a nicer core mircrobiome heatmap...
 
 # create sequence of prevalences for heatmap, going from 0.05 to 1 in increments of 0.05
-prevalences <- seq(.0, 1, .1)
+prevalences <- seq(.25, 1, .05)
 prevalences
-head(prevalence(b.gs.mat, detection = 1/100, sort = TRUE),10) # shows us the most prevalent taxa across samples with a relative abundance of at least 1%
-head(prevalence(b.gs.mat, detection = 5/100, sort = TRUE),10) # shows us the most prevalent taxa across samples with a relative abundance of at least 5%
 
-# create detection levels that will create a sequence of 10 digits of log based #s (0.001 to 0.3) with three digits
-detections <- round(10^seq(log10(0.00125), log10(.3), length = 10), 3)
-detections
-
+# create detection levels
+det <- c(0.1, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)/100
+det
 #min-prevalence gets the 100th highest prevalence
 core.p <- plot_core(b.gs.mat,
                plot.type = "heatmap",
                colours = brewer.pal(5, "Reds"),
                prevalences = prevalences,
-               detections = detections,
+               detections = det,
                min.prevalence = prevalence(b.gs.mat, sort = TRUE)[100]) +
   labs(x = "Detection Threshold\n(Relative Abundance (%))") +
-
   #Adjusts axis text size and legend bar height
   theme_bw() +
   theme(axis.text.y= element_text(size=14, face="italic"),
@@ -1340,13 +1338,13 @@ core.p <- plot_core(b.gs.mat,
 
 print(core.p)
 
-ggsave(core.p,filename = "figures/RelativeAbundance/CoreMicrobiome/SSD_16S_CoreMicrobiomeGenera_heatmap.png", width=18, height=15, dpi=600,create.dir = TRUE)
+ggsave(core.p,filename = "figures/RelativeAbundance/CoreMicrobiome/SSD_16S_CoreMicrobiomeGenera_heatmap.png", width=20, height=15, dpi=600,create.dir = TRUE)
 
 # add prevalence labels to heatmap
 core.p2<-core.p + geom_text(aes(label = round(core.p$data$Prevalence,2)), size = 6) +
   labs(title="Core Microbiome Heatmap",subtitle="Includes Overall Prevalence of Taxa") +
   theme(plot.title = element_text(size=15),plot.subtitle = element_text(size=13))
-ggsave(core.p2,filename = "figures/RelativeAbundance/CoreMicrobiome/SSD_16S_CoreMicrobiomeGenera_heatmap2.png", width=18, height=15, dpi=600,create.dir = TRUE)
+ggsave(core.p2,filename = "figures/RelativeAbundance/CoreMicrobiome/SSD_16S_CoreMicrobiomeGenera_heatmap2.png", width=22, height=15, dpi=600,create.dir = TRUE)
 
 
 #### Find Unique Genera Per Site ####
