@@ -842,10 +842,10 @@ p.adjust(aov.rda.all$`Pr(>F)`,method="bonferroni",n=length(aov.rda.all)) # adjus
 # WI
 #rda.WI.2$call # best model
 
-rda.WI<-rda(b.clr_WI ~ ave.relative_humidity + ave.wind_direction,data=WI)
+rda.WI<-rda(b.clr_WI ~ ave.relative_humidity,data=WI)
 summary(rda.WI)
 RsquareAdj(rda.WI) # how much variation is explained by our model? 0.2449176
-anova(rda.WI, permutations = how(nperm=999)) # p-value = 0.108
+anova(rda.WI, permutations = how(nperm=999)) # p-value = 0.036
 anova(rda.WI, by = "terms", permutations = how(nperm=999))
 #                           Df Variance      F Pr(>F)
 #
@@ -1052,55 +1052,55 @@ dev.off()
 rda.sum.WI<-summary(rda.WI)
 rda.sum.WI$sites[,1:2]
 rda.sum.WI$cont #cumulative proportion of variance per axis
-# RDA1=40.89%, RDA2=8.77%
+# RDA1=40.89%, PC1=8.77%
 
 # create data frame w/ RDA axes for sites
-rda.axes.WI<-data.frame(RDA1=rda.sum.WI$sites[,1], RDA2=rda.sum.WI$sites[,2], SampleID=rownames(rda.sum.WI$sites), Site=WI$Site)
+rda.axes.WI<-data.frame(RDA1=rda.sum.WI$sites[,1], PC1=rda.sum.WI$sites[,2], SampleID=rownames(rda.sum.WI$sites), Site=WI$Site)
 
 # then merge with metadata to get all category colors!
 rda.axes.WI.all<-merge(rda.axes.WI,WI,by=c("SampleID","Site"))
 
 # create data frame w/ RDA axes for variables
-arrows.WI<-data.frame(RDA1=rda.sum.WI$biplot[,1], RDA2=rda.sum.WI$biplot[,2], Label=rownames(rda.sum.WI$biplot))
+arrows.WI<-data.frame(RDA1=rda.sum.WI$biplot[,1], PC1=rda.sum.WI$biplot[,2], Label=rownames(rda.sum.WI$biplot))
 arrows.WI
 arrows.WI$Label[(arrows.WI$Label) == "ave.relative_humidity"] <- "Ave Rel Humidity"
-arrows.WI$Label[(arrows.WI$Label) == "ave.wind_direction"] <- "Ave. Wind Dir"
+#arrows.WI$Label[(arrows.WI$Label) == "ave.wind_direction"] <- "Ave. Wind Dir"
 
-rda.plot5<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = RDA2)) + geom_point(size=2) +
-  geom_segment(data = arrows.WI,mapping = aes(x = 0, y = 0, xend = RDA1, yend = RDA2),lineend = "round", # See available arrow types in example above
+rda.plot5<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = PC1)) + geom_point(size=2) +
+  geom_segment(data = arrows.WI,mapping = aes(x = 0, y = 0, xend = RDA1, yend = PC1),lineend = "round", # See available arrow types in example above
                linejoin = "round",
                size = 0.5,
                arrow = arrow(length = unit(0.15, "inches")),
                colour = "black") +
-  geom_label(data = arrows.WI,aes(label = Label, x = RDA1, y = RDA2, fontface="bold"))+
+  geom_label(data = arrows.WI,aes(label = Label, x = RDA1, y = PC1, fontface="bold"))+
   coord_fixed() + theme_classic() +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1))
 
-rda.plot6<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=SampDate),size=4) +
-  geom_segment(data = arrows.WI,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = RDA2*8),lineend = "round", # See available arrow types in example above
+rda.plot6<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = PC1)) + geom_point(aes(color=SampDate),size=4) +
+  geom_segment(data = arrows.WI,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = PC1*8),lineend = "round", # See available arrow types in example above
                linejoin = "round",
                size = 0.8,
                arrow = arrow(length = unit(0.15, "inches")),
                colour = "black") +
-  geom_label(data = arrows.WI,aes(label = Label, x = RDA1*9.85, y = RDA2*9.5, fontface="bold"), size=4)+
+  geom_label(data = arrows.WI,aes(label = Label, x = RDA1*9.85, y = PC1*9.5, fontface="bold"), size=4)+
   coord_fixed(ratio = 1,xlim = c(-10,10), ylim = c(-8,8)) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.WI.all$SampDate_Color[order(rda.axes.WI.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "September 2021", "December 2021")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, WI",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
-  xlab("RDA1 [40.89%]") + ylab("RDA2 [8.77%]")
+  xlab("RDA1 [40.89%]") + ylab("PC1 [8.77%]")
 
 ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_WI.png", width=16, height=12, dpi=600,create.dir = TRUE)
 
-rda.plot6b<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=SampDate),size=5) +
-  geom_segment(data = arrows.WI,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = RDA2*8),lineend = "round", # See available arrow types in example above
+rda.plot6b<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = PC1)) + geom_point(aes(color=SampDate),size=5) +
+  geom_segment(data = arrows.WI,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = PC1*8),lineend = "round", # See available arrow types in example above
                linejoin = "round",
                size = 1,
                arrow = arrow(length = unit(0.15, "inches")),
                colour = "black") +
-  geom_label(data = arrows.WI,aes(label = Label, x = RDA1*9, y = RDA2*9.5, fontface="bold"), size=5)+
+  geom_label(data = arrows.WI,aes(label = Label, x = RDA1*9, y = PC1*9.5, fontface="bold"), size=5)+
   coord_fixed(ratio = 1,xlim = c(-10,10), ylim = c(-8,8)) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.WI.all$SampDate_Color[order(rda.axes.WI.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "September 2021", "December 2021")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, WI",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
-  xlab("RDA1 [40.89%]") + ylab("RDA2 [8.77%]")
+  xlab("RDA1 [40.89%]") + ylab("PC1 [8.77%]")
 
 ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_WI_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
