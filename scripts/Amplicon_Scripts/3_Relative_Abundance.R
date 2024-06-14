@@ -846,13 +846,24 @@ ggsave(b.gen_RA5,filename = "figures/RelativeAbundance/Genus_species/SSD_16S_Gen
 # plot just Massilia
 massilia.relab<-b.gen.spec_RA_meta[grepl("Massilia",b.gen.spec_RA_meta$Genus_species),]
 massilia.only<-ggplot(massilia.relab[!grepl("unknown",massilia.relab$Genus_species),], aes(x=SampleID, y=Count, fill=Genus_species))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
-  labs(title = "Relative Abundance of Massilia Species", x="SampleID", y="Relative Abundance", fill="Genus",subtitle="Only species in Massilia - excluding unknown species")+
+  labs(title = "Relative Abundance of Massilia Species", x="SampleID", y="Relative Abundance", fill="Taxa",subtitle="Only species in Massilia - excluding unknown species")+
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5,
         legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
   guides(fill=guide_legend(ncol=1)) +
   facet_wrap(vars(Site), scales = "free")
 
 ggsave(massilia.only,filename = "figures/RelativeAbundance/Genus_species/SSD_16S_Genera.Spec.RA_Massilia_Only_barplot.png", width=15, height=10, dpi=600,create.dir = TRUE)
+
+# plot just Sphingomonas
+sphingomonas.relab<-b.gen.spec_RA_meta[grepl("Sphingomonas",b.gen.spec_RA_meta$Genus_species),]
+sphingomonas.only<-ggplot(sphingomonas.relab[!grepl("unknown",sphingomonas.relab$Genus_species),], aes(x=SampleID, y=Count, fill=Genus_species))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
+  labs(title = "Relative Abundance of Sphingomonas Species", x="SampleID", y="Relative Abundance", fill="Taxa",subtitle="Only species in Sphingomonas - excluding unknown species")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5,
+        legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
+  guides(fill=guide_legend(ncol=2)) +
+  facet_wrap(vars(Site), scales = "free")
+
+ggsave(sphingomonas.only,filename = "figures/RelativeAbundance/Genus_species/SSD_16S_Genera.Spec.RA_Sphingomonas_Only_barplot.png", width=15, height=10, dpi=600,create.dir = TRUE)
 
 # prep for heatmap
 max(b.gen.spec_RA_meta$Count)
@@ -1346,6 +1357,28 @@ core.p2<-core.p + geom_text(aes(label = round(core.p$data$Prevalence,2)), size =
   theme(plot.title = element_text(size=15),plot.subtitle = element_text(size=13))
 ggsave(core.p2,filename = "figures/RelativeAbundance/CoreMicrobiome/SSD_16S_CoreMicrobiomeGenera_heatmap2.png", width=22, height=15, dpi=600,create.dir = TRUE)
 
+
+# pull out core microbiome taxa names
+core.taxa.names<-sapply(core.p[["data"]][["Taxa"]],levels)[,1]
+b.gen.spec_RA_meta[1:4,]
+
+core.gen.meta<-b.gen.spec_RA_meta[(b.gen.spec_RA_meta$Genus_species %in% core.taxa.names),]
+
+core.barplot1<-ggplot(core.gen.meta, aes(x=SampleID, y=Count, fill=Genus_species))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
+  labs(title = "Core Salton Sea Dust Microbiome", x="SampleID", y="Relative Abundance", subtitle="",fill="Taxa")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+  guides(fill=guide_legend(ncol=1))+
+  facet_wrap(vars(Site), scales = "free")
+
+ggsave(core.barplot1,filename = "figures/RelativeAbundance/CoreMicrobiome/SSD_16S_CoreDustMicrobiome_bySite_barplot.png", width=20, height=15, dpi=600,create.dir = TRUE)
+
+core.barplot2<-ggplot(core.gen.meta, aes(x=SampleID, y=Count, fill=Genus_species))+geom_bar(stat="identity",colour="black")+scale_x_discrete()+theme_classic()+
+  labs(title = "Core Salton Sea Dust Microbiome", x="SampleID", y="Relative Abundance", subtitle="",fill="Taxa")+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(hjust=1,angle=45),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+  guides(fill=guide_legend(ncol=1))+
+  facet_wrap(vars(SampDate), scales = "free")
+
+ggsave(core.barplot2,filename = "figures/RelativeAbundance/CoreMicrobiome/SSD_16S_CoreDustMicrobiome_bySampDate_barplot.png", width=30, height=35, dpi=600,create.dir = TRUE)
 
 #### Find Unique Genera Per Site ####
 head(dust_meta)
