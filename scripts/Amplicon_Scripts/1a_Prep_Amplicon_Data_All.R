@@ -1,7 +1,6 @@
 
 #### Set WD & Load Libraries ####
 getwd() # use setwd("path/to/files") if you are not in the right directory
-setwd("/Volumes/HLF_SSD/Aronson_Lab_Data/Salton_Sea/SaltonSeaDust")
 suppressPackageStartupMessages({ # load packages quietly
   library(phyloseq)
   library(ggplot2)
@@ -107,8 +106,15 @@ contam_df <- isContaminant(bac.ASV_c2, neg=vector_for_decontam) # use isContamin
 table(contam_df$contaminant) # identify contaminants aka TRUE: 2156
 
 contam_asvs <- (contam_df[contam_df$contaminant == TRUE, ]) # pull out ASV IDs for contaminating ASVs
+dim(contam_asvs)
 
 bac.ASV_tax[row.names(bac.ASV_tax) %in% row.names(contam_asvs),] # see which taxa are contaminants
+
+Contam.Taxa<-bac.ASV_tax[row.names(bac.ASV_tax) %in% row.names(contam_asvs),] # see which taxa are contaminants
+Contam.Taxa[1:4,]
+
+write.table(Contam.Taxa, "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ContaminationASVs_List.tsv",
+            sep="\t", quote=F, col.names=T,row.names=F)
 
 ## Create new files that EXCLUDE contaminants!!!
 
