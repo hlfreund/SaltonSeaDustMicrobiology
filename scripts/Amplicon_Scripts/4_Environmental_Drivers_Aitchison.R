@@ -1,6 +1,5 @@
 #### Set WD & Load Libraries ####
 getwd() # use setwd("path/to/files") if you are not in the right directory
-setwd("/Volumes/HLF_SSD/Aronson_Lab_Data/Salton_Sea/SaltonSeaDust")
 suppressPackageStartupMessages({ # load packages quietly
   library(phyloseq)
   library(ggplot2)
@@ -37,7 +36,7 @@ suppressPackageStartupMessages({ # load packages quietly
 ## CLR = center log ratio transformation
 
 #### Load Global Env to Import Count/ASV Tables ####
-load("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
+load("data/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
 #load("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 head(b.dust.all)
@@ -633,7 +632,7 @@ anova(rda.DP.a, permutations = how(nperm=999)) #not significant
 
 
 # drop Others, CropLand, OpenWater, SaltonSea, Forest, Developed, ave.wind speed, Shrub, ave wind direction due to high p value
-rda.DP.1<-rda(b.clr_DP ~ precip_24hr_accum+ave.air_temp+ave.relative_humidity+BarrenLand+Herbaceous+Mexico,data=DP)
+rda.DP.1<-rda(b.clr_DP ~ precip_24hr_accum+BarrenLand,data=DP)
 
 # check summary of RDA
 rda.DP.1
@@ -745,6 +744,60 @@ rda.BDC.a2 = ordiR2step(rda(b.clr_BDC ~ 1, data = BDC[,c(4,7:8,11:12,37:46)]),
 # check best fit model based on above results
 anova(rda.BDC.a, permutations = how(nperm=999)) #not significant
 
+# dropping vars with very high p values from previous ordistep
+rda.BDC.1<-rda(b.clr_BDC ~ precip_24hr_accum+Forest,data=BDC)
+
+# check summary of RDA
+rda.BDC.1
+summary(rda.BDC.1)
+
+# how much variation does our model explain?
+## reminder: R^2 = % of variation in dependent variable explained by model
+RsquareAdj(rda.BDC.1) # 0.2676531
+## ^^ use this b/c chance correlations can inflate R^2
+
+# we can then test for significance of the model by permutation
+# if it is not significant, it doesn't matter how much of the variation is explained
+anova(rda.BDC.1, permutations = how(nperm=999))
+
+## we can also do a permutation test by RDA axis
+#anova(rda.BDC.1, by = "axis", permutations = how(nperm=999)) ### by RDA axis
+## or by terms (aka variables)
+anova(rda.BDC.1, by = "terms", permutations = how(nperm=999)) ### by variables
+## this will help us interpret our RDA and we can see some variable are not significant
+#                               Df Variance      F Pr(>F)
+
+# Calculating variance inflation factor (VIF) for each predictor variable to check multicolinearity of predictor variables
+## VIF helps determien which predictors are too strongly correlated with other predictor variables to explain variation observed
+vif.cca(rda.BDC.1)
+# ave.air_temp        ave.wind_speed ave.relative_humidity    ave.wind_direction            BarrenLand              CropLand
+# 18.91092              35.48104              24.87321              31.29241              11.32342              21.88877
+# Developed                Forest            Herbaceous                Mexico             OpenWater                Others
+# NA                    NA                    NA                    NA                    NA                    NA
+# SaltonSea                 Shrub
+# NA                    NA
+
+## Understanding VIF results...
+# A value of 1 indicates there is no correlation between a given predictor variable and any other predictor variables in the model.
+# A value between 1 and 5 indicates moderate correlation between a given predictor variable and other predictor variables in the model, but this is often not severe enough to require attention.
+# A value greater than 5 indicates potentially severe correlation between a given predictor variable and other predictor variables in the model. In this case, the coefficient estimates and p-values in the regression output are likely unreliable.
+# when to ignore high VIF values: https://statisticalhorizons.com/multicollinearity/
+head(BDC[,c(4,7:8,11:12,37:46)])
+## we can use model selection instead of picking variables we think are important (by p values)
+rda.BDC.b = ordistep(rda(b.clr_BDC ~ 1, data = BDC[,c(4,7:8,11:12,37:46)]),
+                     scope=formula(rda.BDC.1),
+                     direction = "forward",
+                     permutations = how(nperm=999))
+rda.BDC.b$anova # see significance of individual terms in model
+# + OpenWater  1 63.384 2.0387  0.048 *
+
+# can also use model seletion to pick most important variables by which increases variation (R^2) the most
+rda.BDC.b2 = ordiR2step(rda(b.clr_BDC ~ 1, data = BDC[,c(4,7:8,11:12,37:46)]),
+                        scope=formula(rda.BDC.1),
+                        permutations = how(nperm=999))
+# too many terms
+
+
 
 #### RDA - PD ####
 
@@ -807,6 +860,64 @@ rda.PD.a2 = ordiR2step(rda(b.clr_PD ~ 1, data = PD[,c(4,7:8,11:12,37:46)]),
 # check best fit model based on above results
 anova(rda.PD.a, permutations = how(nperm=999)) #not significant
 
+# included all Surface type frequencies and it overfit the model so pulling some out...
+rda.PD.1<-rda(b.clr_PD ~ precip_24hr_accum+ave.wind_speed,data=PD)
+
+# check summary of RDA
+rda.PD.1
+summary(rda.PD.1)
+
+# how much variation does our model explain?
+## reminder: R^2 = % of variation in dependent variable explained by model
+RsquareAdj(rda.PD.1) # 0.3668525
+## ^^ use this b/c chance correlations can inflate R^2
+
+# we can then test for significance of the model by permutation
+# if it is not significant, it doesn't matter how much of the variation is explained
+anova(rda.PD.1, permutations = how(nperm=999))
+
+## we can also do a permutation test by RDA axis
+#anova(rda.PD.1, by = "axis", permutations = how(nperm=999)) ### by RDA axis
+## or by terms (aka variables)
+anova(rda.PD.1, by = "terms", permutations = how(nperm=999)) ### by variables
+## this will help us interpret our RDA and we can see some variable are not significant
+#                               Df Variance      F Pr(>F)
+# precip_24hr_accum  1   128.78 2.7279  0.003 **
+#   ave.wind_speed     1   129.75 2.7485  0.010 **
+#   Residual           4   188.83                 
+# Calculating variance inflation factor (VIF) for each predictor variable to check multicolinearity of predictor variables
+## VIF helps determien which predictors are too strongly correlated with other predictor variables to explain variation observed
+vif.cca(rda.PD.1)
+# ave.air_temp        ave.wind_speed ave.relative_humidity    ave.wind_direction            BarrenLand              CropLand
+# 18.91092              35.48104              24.87321              31.29241              11.32342              21.88877
+# Developed                Forest            Herbaceous                Mexico             OpenWater                Others
+# NA                    NA                    NA                    NA                    NA                    NA
+# SaltonSea                 Shrub
+# NA                    NA
+
+## Understanding VIF results...
+# A value of 1 indicates there is no correlation between a given predictor variable and any other predictor variables in the model.
+# A value between 1 and 5 indicates moderate correlation between a given predictor variable and other predictor variables in the model, but this is often not severe enough to require attention.
+# A value greater than 5 indicates potentially severe correlation between a given predictor variable and other predictor variables in the model. In this case, the coefficient estimates and p-values in the regression output are likely unreliable.
+# when to ignore high VIF values: https://statisticalhorizons.com/multicollinearity/
+head(PD[,c(4,7:8,11:12,37:46)])
+## we can use model selection instead of picking variables we think are important (by p values)
+rda.PD.b = ordistep(rda(b.clr_PD ~ 1, data = PD[,c(4,7:8,11:12,37:46)]),
+                    scope=formula(rda.PD.1),
+                    direction = "forward",
+                    permutations = how(nperm=999))
+rda.PD.b$anova # see significance of individual terms in model
+# + OpenWater  1 63.384 2.0387  0.048 *
+
+# can also use model seletion to pick most important variables by which increases variation (R^2) the most
+rda.PD.b2 = ordiR2step(rda(b.clr_PD ~ 1, data = PD[,c(4,7:8,11:12,37:46)]),
+                       scope=formula(rda.PD.1),
+                       permutations = how(nperm=999))
+# too many terms
+
+# check best fit model based on above results
+anova(rda.PD.b, permutations = how(nperm=999)) #not significant
+
 
 #### Final RDAs ####
 # RDA by sampling timepoint
@@ -815,14 +926,13 @@ head(b.clr)
 rownames(b.clr) %in% rownames(meta.all.scaled) # sanity check 1
 
 # all data
-#rda.all.2$call # best model for all data
 
 rda.all<-rda(b.clr ~ precip_24hr_accum + ave.wind_speed + Developed,data=meta.all.scaled)
 rda.all
 summary(rda.all)
 RsquareAdj(rda.all) # how much variation is explained by our model? 0.1210451
-anova(rda.all, permutations = how(nperm=999)) # p-value = 0.001 **
-anova(rda.all, by = "terms", permutations = how(nperm=999))
+anova(rda.all, permutations = how(nperm=9999)) # p-value = 0.0002 ***
+anova(rda.all, by = "terms", permutations = how(nperm=9999))
 #                               Df Variance      F Pr(>F)
 # precip_24hr_accum  1   22.500 2.1097  0.033 *
 #   ave.wind_speed     1   20.914 1.9609  0.014 *
@@ -830,90 +940,82 @@ anova(rda.all, by = "terms", permutations = how(nperm=999))
 #   Residual          24  255.965
 
 # p value adjusted for each term
-aov.rda.all.terms<-anova(rda.all, by = "terms", permutations = how(nperm=999))
+aov.rda.all.terms<-anova(rda.all, by = "terms", permutations = how(nperm=9999))
 p.adjust(aov.rda.all.terms$`Pr(>F)`,method="bonferroni",n=length(aov.rda.all.terms)) # adjusted pvalues
 # [1] 0.120 0.056 0.008  NA
 
 # p value adjusted for entire model
-aov.rda.all<-anova(rda.all, by = NULL, permutations = how(nperm=999))
+aov.rda.all<-anova(rda.all, by = NULL, permutations = how(nperm=9999))
 p.adjust(aov.rda.all$`Pr(>F)`,method="bonferroni",n=length(aov.rda.all)) # adjusted pvalues
 # [1] 0.004   NA
 
 # WI
-#rda.WI.2$call # best model
 
 rda.WI<-rda(b.clr_WI ~ ave.relative_humidity,data=WI)
 summary(rda.WI)
 RsquareAdj(rda.WI) # how much variation is explained by our model? 0.2449176
-anova(rda.WI, permutations = how(nperm=999)) # p-value = 0.036
-anova(rda.WI, by = "terms", permutations = how(nperm=999))
+anova(rda.WI, permutations = how(nperm=9999)) # p-value = 0.0381
+anova(rda.WI, by = "terms", permutations = how(nperm=9999))
 #                           Df Variance      F Pr(>F)
 #
-aov.rda.WI<-anova(rda.WI, by = "terms", permutations = how(nperm=999))
+aov.rda.WI<-anova(rda.WI, by = "terms", permutations = how(nperm=9999))
 p.adjust(aov.rda.WI$`Pr(>F)`,method="bonferroni",n=length(aov.rda.WI)) # adjusted pvalues
 # [1] 0.224 0.944   NA
 
 # DP
-#rda.DP.9$call # best model from above
 
-rda.DP<-rda(b.clr_DP ~ ave.wind_direction + BarrenLand,data=DP)
+rda.DP<-rda(b.clr_DP ~ precip_24hr_accum + BarrenLand,data=DP)
 summary(rda.DP)
-RsquareAdj(rda.DP) # how much variation is explained by our model? 0.2016672
-anova(rda.DP, permutations = how(nperm=999)) # p-value = 0.039
-anova(rda.DP, by = "terms", permutations = how(nperm=999))
+RsquareAdj(rda.DP) # how much variation is explained by our model? 0.2425156
+anova(rda.DP, permutations = how(nperm=9999)) # p-value = 0.015
+anova(rda.DP, by = "terms", permutations = how(nperm=9999))
 #                 Df Variance      F Pr(>F)
-# ave.wind_direction  1   3497.7 2.4809  0.013 *
-#   BarrenLand          1   1458.9 1.0348  0.428
-# Residual            4   5639.5
+# precip_24hr_accum  1   65.890 2.3012  0.010 **
+# BarrenLand         1   46.379 1.6198  0.025 * 
+# Residual           4  114.533                 
 
-aov.rda.DP<-anova(rda.DP, by = NULL, permutations = how(nperm=999))
+aov.rda.DP<-anova(rda.DP, by = NULL, permutations = how(nperm=9999))
 p.adjust(aov.rda.DP$`Pr(>F)`,method="bonferroni",n=length(aov.rda.DP)) # adjusted pvalues
 # 0.2
 
-aov.rda.DP.terms<-anova(rda.DP, by = "terms", permutations = how(nperm=999))
+aov.rda.DP.terms<-anova(rda.DP, by = "terms", permutations = how(nperm=9999))
 p.adjust(aov.rda.DP.terms$`Pr(>F)`,method="bonferroni",n=length(aov.rda.DP.terms)) # adjusted pvalues
 # 0.044 1.000    NA
 
 # BDC
-#rda.BDC.9$call - best model
 
-rda.BDC<-rda(b.clr_BDC ~ BarrenLand + Developed,data=BDC)
+rda.BDC<-rda(b.clr_BDC ~ Forest,data=BDC)
 summary(rda.BDC)
-RsquareAdj(rda.BDC) # how much variation is explained by our model? 0.1373921
-anova(rda.BDC, permutations = how(nperm=999)) # p-value = 0.052
-anova(rda.BDC, by = "terms", permutations = how(nperm=999))
+RsquareAdj(rda.BDC) # how much variation is explained by our model? 0.0819024
+anova(rda.BDC, permutations = how(nperm=9999)) # p-value = 0.03393
+anova(rda.BDC, by = "terms", permutations = how(nperm=9999))
 #                           Df Variance      F Pr(>F)
-# BarrenLand  1   1754.3 1.8070  0.047 *
-#   Developed   1   1115.2 1.1487  0.241
-# Residual    4   3883.5
 
-aov.rda.BDC<-anova(rda.BDC, by = NULL, permutations = how(nperm=999))
+aov.rda.BDC<-anova(rda.BDC, by = NULL, permutations = how(nperm=9999))
 p.adjust(aov.rda.BDC$`Pr(>F)`,method="bonferroni",n=length(aov.rda.BDC)) # adjusted pvalues
-# [1] 0.208    NA
-aov.rda.BDC.terms<-anova(rda.BDC, by = "terms", permutations = how(nperm=999))
+
+aov.rda.BDC.terms<-anova(rda.BDC, by = "terms", permutations = how(nperm=9999))
 p.adjust(aov.rda.BDC.terms$`Pr(>F)`,method="bonferroni",n=length(aov.rda.BDC.terms)) # adjusted pvalues
-# 0.196 1.000    NA
+#
 
-# best model : rda.PD.9$call
-rda.PD<-rda(b.clr_PD ~ ave.wind_speed+CropLand,data=PD)
+# PD
+rda.PD<-rda(b.clr_PD ~ precip_24hr_accum+ave.wind_speed,data=PD)
 summary(rda.PD)
-RsquareAdj(rda.PD) # how much variation is explained by our model? 0.1046263
-anova(rda.PD, permutations = how(nperm=999)) # p-value = 0.156
-anova(rda.PD, by = "terms", permutations = how(nperm=999))
+RsquareAdj(rda.PD) # how much variation is explained by our model? 0.3668525
+anova(rda.PD, permutations = how(nperm=9999)) # p-value = 0.0005952
+anova(rda.PD, by = "terms", permutations = how(nperm=9999))
 #                           Df Variance      F Pr(>F)
-# ave.wind_speed  1   2405.9 1.3473  0.189
-# CropLand        1   2417.5 1.3538  0.247
-# Residual        4   7142.8
 
-aov.rda.PD<-anova(rda.PD, by = NULL, permutations = how(nperm=999))
+
+aov.rda.PD<-anova(rda.PD, by = NULL, permutations = how(nperm=9999))
 p.adjust(aov.rda.PD$`Pr(>F)`,method="bonferroni",n=length(aov.rda.PD)) # adjusted pvalues
 #
-aov.rda.PD.terms<-anova(rda.PD, by = "terms", permutations = how(nperm=999))
+aov.rda.PD.terms<-anova(rda.PD, by = "terms", permutations = how(nperm=9999))
 p.adjust(aov.rda.PD.terms$`Pr(>F)`,method="bonferroni",n=length(aov.rda.PD.terms)) # adjusted pvalues
 #
 
 # save RDAs as R object
-save.image("data/Amplicon/SSD_Amplicon_EnvDriver_RDAsOnly.Rdata")
+save.image("data/SSD_Amplicon_EnvDriver_RDAsOnly.Rdata")
 
 #### Plot RDA - ALL data ####
 #plot(rda.WI) # depending on how many species you have, this step may take a while
@@ -1038,21 +1140,21 @@ dev.off()
 ## FOR AUTOPLOT -> must load packagve ggvegan first
 
 # variance partitioning of RDA
-rda.WI.part<-varpart(b.clr_WI, WI$ave.relative_humidity, WI$ave.wind_direction)
-rda.WI.part$part
-# plot variance partitioning results
-png('figures/EnvDrivers/Aitchison/SSD_WI_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
-plot(rda.WI.part,
-     Xnames = c("Ave Rel. Humidity", "Ave Wind Dir"), # name the partitions
-     bg = c("firebrick1", "purple1"), alpha = 80, # colour the circles
-     digits = 3, # only show 3 digits
-     cex = 1.5)
-dev.off()
+# rda.WI.part<-varpart(b.clr_WI, WI$ave.relative_humidity, WI$ave.wind_direction)
+# rda.WI.part$part
+# # plot variance partitioning results
+# png('figures/EnvDrivers/Aitchison/SSD_WI_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
+# plot(rda.WI.part,
+#      Xnames = c("Ave Rel. Humidity", "Ave Wind Dir"), # name the partitions
+#      bg = c("firebrick1", "purple1"), alpha = 80, # colour the circles
+#      digits = 3, # only show 3 digits
+#      cex = 1.5)
+# dev.off()
 
 rda.sum.WI<-summary(rda.WI)
 rda.sum.WI$sites[,1:2]
 rda.sum.WI$cont #cumulative proportion of variance per axis
-# RDA1=40.89%, PC1=8.77%
+# RDA1=29.4%, PC1=37.98%
 
 # create data frame w/ RDA axes for sites
 rda.axes.WI<-data.frame(RDA1=rda.sum.WI$sites[,1], PC1=rda.sum.WI$sites[,2], SampleID=rownames(rda.sum.WI$sites), Site=WI$Site)
@@ -1086,7 +1188,7 @@ rda.plot6<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = PC1)) + geom_point(aes(colo
   coord_fixed(ratio = 1,xlim = c(-10,10), ylim = c(-8,8)) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.WI.all$SampDate_Color[order(rda.axes.WI.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "September 2021", "December 2021")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, WI",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
-  xlab("RDA1 [40.89%]") + ylab("PC1 [8.77%]")
+  xlab("RDA1 [29.4%]") + ylab("PC1 [37.98%]")
 
 ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_WI.png", width=16, height=12, dpi=600,create.dir = TRUE)
 
@@ -1100,7 +1202,7 @@ rda.plot6b<-ggplot(rda.axes.WI.all, aes(x = RDA1, y = PC1)) + geom_point(aes(col
   coord_fixed(ratio = 1,xlim = c(-10,10), ylim = c(-8,8)) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.WI.all$SampDate_Color[order(rda.axes.WI.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "September 2021", "December 2021")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, WI",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
-  xlab("RDA1 [40.89%]") + ylab("PC1 [8.77%]")
+  xlab("RDA1 [29.4%]") + ylab("PC1 [37.98%]")
 
 ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_WI_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
@@ -1116,7 +1218,7 @@ summary(rda.DP)
 
 # how much variation does our model explain?
 ## reminder: R^2 = % of variation in dependent variable explained by model
-RsquareAdj(rda.DP) # 0.2016672
+RsquareAdj(rda.DP) # 0.2425156
 ## ^^ use this b/c chance correlations can inflate R^2
 
 png('figures/EnvDrivers/Aitchison/SSD_DP_autoplot_rda_example.png',width = 700, height = 600, res=100)
@@ -1125,13 +1227,13 @@ dev.off()
 ## FOR AUTOPLOT -> must load packagve ggvegan first
 
 # variance partitioning of RDA
-rda.DP.part<-varpart(b.clr_DP, DP$ave.wind_direction, DP$BarrenLand)
+rda.DP.part<-varpart(b.clr_DP, DP$precip_24hr_accum, DP$BarrenLand)
 rda.DP.part$part
 # plot variance partitioning results
 png('figures/EnvDrivers/Aitchison/SSD_DP_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
 plot(rda.DP.part,
-     Xnames = c("Ave. Wind Dir.", "Barren Land STF"), # name the partitions
-     bg = c("magenta", "peachpuff2"), alpha = 80, # colour the circles
+     Xnames = c("Accum. Precip", "Barren Land STF"), # name the partitions
+     bg = c("blue", "peachpuff2"), alpha = 80, # colour the circles
      digits = 3, # only show 3 digits
      cex = 1.5)
 dev.off()
@@ -1139,7 +1241,7 @@ dev.off()
 rda.sum.DP<-summary(rda.DP)
 rda.sum.DP$sites[,1:2]
 rda.sum.DP$cont #cumulative proportion of variance per axis
-# RDA1=33.25%, RDA2=13.53%
+# RDA1=29.6%, RDA2=19.9%
 
 # create data frame w/ RDA axes for sites
 rda.axes.DP<-data.frame(RDA1=rda.sum.DP$sites[,1], RDA2=rda.sum.DP$sites[,2], SampleID=rownames(rda.sum.DP$sites), Site=DP$Site)
@@ -1149,7 +1251,7 @@ rda.axes.DP.all<-merge(rda.axes.DP,DP,by=c("SampleID","Site"))
 
 # create data frame w/ RDA axes for variables
 arrows.DP<-data.frame(RDA1=rda.sum.DP$biplot[,1], RDA2=rda.sum.DP$biplot[,2], Label=rownames(rda.sum.DP$biplot))
-arrows.DP$Label[(arrows.DP$Label) == "ave.wind_direction"] <- "Ave Wind Dir"
+arrows.DP$Label[(arrows.DP$Label) == "precip_24hr_accum"] <- "Accum. Precip (24 hrs)"
 arrows.DP$Label[(arrows.DP$Label) == "BarrenLand"] <- "Barren Land STF"
 
 rda.plot5<-ggplot(rda.axes.DP.all, aes(x = RDA1, y = RDA2)) + geom_point(size=2) +
@@ -1172,7 +1274,7 @@ rda.plot6<-ggplot(rda.axes.DP.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(col
   coord_fixed(ratio = 1) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.DP.all$SampDate_Color[order(rda.axes.DP.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "August 2021", "September 2021", "December 2021")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, DP",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
-  xlab("RDA1 [33.25%]") + ylab("RDA2 [13.53%]")
+  xlab("RDA1 [29.6%]") + ylab("RDA2 [19.9%]")
 
 ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_DP.png", width=16, height=12, dpi=600,create.dir = TRUE)
 
@@ -1186,7 +1288,7 @@ rda.plot6b<-ggplot(rda.axes.DP.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(co
   coord_fixed(ratio = 1) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.DP.all$SampDate_Color[order(rda.axes.DP.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "August 2021", "September 2021", "December 2021")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, DP",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
-  xlab("RDA1 [33.25%]") + ylab("RDA2 [13.53%]")
+  xlab("RDA1 [29.6%]") + ylab("RDA2 [19.9%]")
 
 ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_DP_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
@@ -1202,7 +1304,7 @@ summary(rda.BDC)
 
 # how much variation does our model explain?
 ## reminder: R^2 = % of variation in dependent variable explained by model
-RsquareAdj(rda.BDC) # 0.1373921
+RsquareAdj(rda.BDC) # 0.0819024
 ## ^^ use this b/c chance correlations can inflate R^2
 
 png('figures/EnvDrivers/Aitchison/SSD_BDC_autoplot_rda_example.png',width = 700, height = 600, res=100)
@@ -1211,68 +1313,67 @@ dev.off()
 ## FOR AUTOPLOT -> must load packagve ggvegan first
 
 # variance partitioning of RDA
-rda.BDC.part<-varpart(b.clr_BDC, BDC$BarrenLand, BDC$Developed)
-rda.BDC.part$part
-# plot variance partitioning results
-png('figures/EnvDrivers/Aitchison/SSD_BDC_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
-plot(rda.BDC.part,
-     Xnames = c("Ave. Air Temp", "Developed STF"), # name the partitions
-     bg = c("peachpuff2", "lightgray"), alpha = 80, # colour the circles
-     digits = 3, # only show 3 digits
-     cex = 1.5)
-dev.off()
+# rda.BDC.part<-varpart(b.clr_BDC, BDC$Forest)
+# rda.BDC.part$part
+# # plot variance partitioning results
+# png('figures/EnvDrivers/Aitchison/SSD_BDC_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
+# plot(rda.BDC.part,
+#      Xnames = c("Ave. Air Temp", "Developed STF"), # name the partitions
+#      bg = c("peachpuff2", "lightgray"), alpha = 80, # colour the circles
+#      digits = 3, # only show 3 digits
+#      cex = 1.5)
+# dev.off()
 
 rda.sum.BDC<-summary(rda.BDC)
 rda.sum.BDC$sites[,1:2]
 rda.sum.BDC$cont #cumulative proportion of variance per axis
-# RDA1=31.19%, RDA2=11.31%
+# RDA1=23.49%, PC1=24.45%
 
 # create data frame w/ RDA axes for sites
-rda.axes.BDC<-data.frame(RDA1=rda.sum.BDC$sites[,1], RDA2=rda.sum.BDC$sites[,2], SampleID=rownames(rda.sum.BDC$sites), Site=BDC$Site)
+rda.axes.BDC<-data.frame(RDA1=rda.sum.BDC$sites[,1], PC1=rda.sum.BDC$sites[,2], SampleID=rownames(rda.sum.BDC$sites), Site=BDC$Site)
 
 # then merge with metadata to get all category colors!
 rda.axes.BDC.all<-merge(rda.axes.BDC,BDC,by=c("SampleID","Site"))
 
 # create data frame w/ RDA axes for variables
-arrows.BDC<-data.frame(RDA1=rda.sum.BDC$biplot[,1], RDA2=rda.sum.BDC$biplot[,2], Label=rownames(rda.sum.BDC$biplot))
-arrows.BDC$Label[(arrows.BDC$Label) == "BarrenLand"] <- "Barren Land STF"
-arrows.BDC$Label[(arrows.BDC$Label) == "Developed"] <- "Developed STF"
+arrows.BDC<-data.frame(RDA1=rda.sum.BDC$biplot[,1], PC1=rda.sum.BDC$biplot[,2], Label=rownames(rda.sum.BDC$biplot))
+arrows.BDC$Label[(arrows.BDC$Label) == "Forest"] <- "Forest STF"
 
-rda.plot5<-ggplot(rda.axes.BDC.all, aes(x = RDA1, y = RDA2)) + geom_point(size=2) +
-  geom_segment(data = arrows.BDC,mapping = aes(x = 0, y = 0, xend = RDA1, yend = RDA2),lineend = "round", # See available arrow types in example above
+rda.plot5<-ggplot(rda.axes.BDC.all, aes(x = RDA1, y = PC1)) + geom_point(size=2) +
+  geom_segment(data = arrows.BDC,mapping = aes(x = 0, y = 0, xend = RDA1, yend = PC1),lineend = "round", # See available arrow types in example above
                linejoin = "round",
                size = 0.5,
                arrow = arrow(length = unit(0.15, "inches")),
                colour = "black") +
-  geom_label(data = arrows.BDC,aes(label = Label, x = RDA1, y = RDA2, fontface="bold"))+
+  geom_label(data = arrows.BDC,aes(label = Label, x = RDA1, y = PC1, fontface="bold"))+
   coord_fixed() + theme_classic() +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1))
 
-rda.plot6<-ggplot(rda.axes.BDC.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=SampDate),size=4) +
-  geom_segment(data = arrows.BDC,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = RDA2*8),lineend = "round", # See available arrow types in example above
+rda.plot6<-ggplot(rda.axes.BDC.all, aes(x = RDA1, y = PC1)) + geom_point(aes(color=SampDate),size=4) +
+  geom_segment(data = arrows.BDC,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = PC1*8),lineend = "round", # See available arrow types in example above
                linejoin = "round",
                size = 0.8,
                arrow = arrow(length = unit(0.15, "inches")),
                colour = "black") +
-  geom_label(data = arrows.BDC,aes(label = Label, x = RDA1*9.85, y = RDA2*9.5, fontface="bold"), size=4)+
+  geom_label(data = arrows.BDC,aes(label = Label, x = RDA1*9.85, y = PC1*9.5, fontface="bold"), size=4)+
   coord_fixed(ratio = 1) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.BDC.all$SampDate_Color[order(rda.axes.BDC.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "September 2021", "December 2021")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, BDC",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
-  xlab("RDA1 [31.19%]") + ylab("RDA2 [11.31%]")
+  xlab("RDA1 [23.49%]") + ylab("PC1 [24.45%]")
 
 ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_BDC.png", width=16, height=12, dpi=600,create.dir = TRUE)
 
-rda.plot6b<-ggplot(rda.axes.BDC.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=SampDate),size=5) +
-  geom_segment(data = arrows.BDC,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = RDA2*8),lineend = "round", # See available arrow types in example above
+rda.plot6b<-ggplot(rda.axes.BDC.all, aes(x = RDA1, y = PC1)) + geom_point(aes(color=SampDate),size=5) +
+  geom_segment(data = arrows.BDC,mapping = aes(x = 0, y = 0, xend = RDA1*8, yend = PC1*8),lineend = "round", # See available arrow types in example above
                linejoin = "round",
                size = 1,
                arrow = arrow(length = unit(0.15, "inches")),
                colour = "black") +
-  geom_label(data = arrows.BDC,aes(label = Label, x = RDA1*9, y = RDA2*9.5, fontface="bold"), size=5)+
+  geom_label(data = arrows.BDC,aes(label = Label, x = RDA1*9, y = PC1*9.5, fontface="bold"), size=5)+
   coord_fixed(ratio = 1) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.BDC.all$SampDate_Color[order(rda.axes.BDC.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "September 2021", "December 2021")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, BDC",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
-  xlab("RDA1 [31.19%]") + ylab("RDA2 [11.31%]")
+  xlab("RDA1 [23.49%]") + ylab("PC1 [24.45%]")
 
 ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_BDC_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
@@ -1288,7 +1389,7 @@ summary(rda.PD)
 
 # how much variation does our model explain?
 ## reminder: R^2 = % of variation in dependent variable explained by model
-RsquareAdj(rda.PD) # 0.1046263
+RsquareAdj(rda.PD) # 0.3668525
 ## ^^ use this b/c chance correlations can inflate R^2
 
 png('figures/EnvDrivers/Aitchison/SSD_PD_autoplot_rda_example.png',width = 700, height = 600, res=100)
@@ -1297,13 +1398,13 @@ dev.off()
 ## FOR AUTOPLOT -> must load packagve ggvegan first
 
 # variance partitioning of RDA
-rda.PD.part<-varpart(b.clr_PD, PD$ave.wind_speed, PD$CropLand)
+rda.PD.part<-varpart(b.clr_PD, PD$precip_24hr_accum, PD$ave.wind_speed)
 rda.PD.part$part
 # plot variance partitioning results
 png('figures/EnvDrivers/Aitchison/SSD_PD_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
 plot(rda.PD.part,
-     Xnames = c("Ave. Wind Speed", "Crop Land STF"), # name the partitions
-     bg = c("blue1", "gold1"), alpha = 80, # colour the circles
+     Xnames = c("Accum. Precip", "Ave Wind Speed"), # name the partitions
+     bg = c("blue", "red"), alpha = 80, # colour the circles
      digits = 3, # only show 3 digits
      cex = 1.5)
 dev.off()
@@ -1311,7 +1412,7 @@ dev.off()
 rda.sum.PD<-summary(rda.PD)
 rda.sum.PD$sites[,1:2]
 rda.sum.PD$cont #cumulative proportion of variance per axis
-# RDA1=20.89%, RDA2=19.42%
+# RDA1=38.92%, RDA2=18.87%
 
 # create data frame w/ RDA axes for sites
 rda.axes.PD<-data.frame(RDA1=rda.sum.PD$sites[,1], RDA2=rda.sum.PD$sites[,2], SampleID=rownames(rda.sum.PD$sites), Site=PD$Site)
@@ -1322,7 +1423,7 @@ rda.axes.PD.all<-merge(rda.axes.PD,PD,by=c("SampleID","Site"))
 # create data frame w/ RDA axes for variables
 arrows.PD<-data.frame(RDA1=rda.sum.PD$biplot[,1], RDA2=rda.sum.PD$biplot[,2], Label=rownames(rda.sum.PD$biplot))
 arrows.PD$Label[(arrows.PD$Label) == "ave.wind_speed"] <- "Ave Wind Speed"
-arrows.PD$Label[(arrows.PD$Label) == "CropLand"] <- "Crop Land STF"
+arrows.PD$Label[(arrows.PD$Label) == "precip_24hr_accum"] <- "Accum. Precip (24 hrs)"
 
 rda.plot5<-ggplot(rda.axes.PD.all, aes(x = RDA1, y = RDA2)) + geom_point(size=2) +
   geom_segment(data = arrows.PD,mapping = aes(x = 0, y = 0, xend = RDA1, yend = RDA2),lineend = "round", # See available arrow types in example above
@@ -1344,7 +1445,7 @@ rda.plot6<-ggplot(rda.axes.PD.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(col
   coord_fixed(ratio = 1) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.PD.all$SampDate_Color[order(rda.axes.PD.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "September 2021", "December 2021")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, PD",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
-  xlab("RDA1 [20.89%]") + ylab("RDA2 [19.42%]")
+  xlab("RDA1 [38.92%]") + ylab("RDA2 [18.87%]")
 
 ggsave(rda.plot6,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_PD.png", width=16, height=12, dpi=600,create.dir = TRUE)
 
@@ -1358,7 +1459,7 @@ rda.plot6b<-ggplot(rda.axes.PD.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(co
   coord_fixed(ratio = 1) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.PD.all$SampDate_Color[order(rda.axes.PD.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "September 2021", "December 2021")) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust, PD",subtitle="Using Centered-Log Ratio Data",color="Depth (m)") +
-  xlab("RDA1 [20.89%]") + ylab("RDA2 [19.42%]")
+  xlab("RDA1 [38.92%]") + ylab("RDA2 [18.87%]")
 
 ggsave(rda.plot6b,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_PD_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
