@@ -638,8 +638,6 @@ dev.off()
 ### now compare dispersions by site + year
 b.disper2<-betadisper((vegdist(b.clr,method="euclidean")), interaction(dust_meta$Site,dust_meta$CollectionYear,sep="."))
 b.disper2
-# NOTE: SB and RHB have less samples than other sites since they are supposed to represent similar locations
-# maybe we should remove these sites and then rerun the PERMANOVA?
 
 ## Significant differences in homogeneities can be tested using either parametric or permutational tests,
 ##and parametric post hoc contrasts can also be investigated:
