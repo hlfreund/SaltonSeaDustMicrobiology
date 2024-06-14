@@ -783,7 +783,7 @@ save.image("data/SSeaDust_AlphaDiv_Data_Rarefied.Rdata")
 #
 # head(bac.div.metadat.rar)
 #
-# fit1<-kruskal.test(AveShanDiv ~ Site, data=bac.div.metadat.rar)
+# fit1<-anova(AveShanDiv ~ Site, data=bac.div.metadat.rar)
 # # ANOVA is basically a regression but w/ categorical variables more info here https://www.statology.org/anova-vs-regression/
 # #pairwise.adonis(bac.div.metadat.rar$AveShanDiv, bac.div.metadat.rar$SampDate, p.adjust.m='bonferroni') # shows us variation for each sample to see which ones are different
 #
