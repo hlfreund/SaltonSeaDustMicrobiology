@@ -884,7 +884,7 @@ anova(rda.PD.1, by = "terms", permutations = how(nperm=999)) ### by variables
 #                               Df Variance      F Pr(>F)
 # precip_24hr_accum  1   128.78 2.7279  0.003 **
 #   ave.wind_speed     1   129.75 2.7485  0.010 **
-#   Residual           4   188.83                 
+#   Residual           4   188.83
 # Calculating variance inflation factor (VIF) for each predictor variable to check multicolinearity of predictor variables
 ## VIF helps determien which predictors are too strongly correlated with other predictor variables to explain variation observed
 vif.cca(rda.PD.1)
@@ -971,8 +971,8 @@ anova(rda.DP, permutations = how(nperm=9999)) # p-value = 0.015
 anova(rda.DP, by = "terms", permutations = how(nperm=9999))
 #                 Df Variance      F Pr(>F)
 # precip_24hr_accum  1   65.890 2.3012  0.010 **
-# BarrenLand         1   46.379 1.6198  0.025 * 
-# Residual           4  114.533                 
+# BarrenLand         1   46.379 1.6198  0.025 *
+# Residual           4  114.533
 
 aov.rda.DP<-anova(rda.DP, by = NULL, permutations = how(nperm=9999))
 p.adjust(aov.rda.DP$`Pr(>F)`,method="bonferroni",n=length(aov.rda.DP)) # adjusted pvalues
@@ -1095,7 +1095,7 @@ rda.plot2<-ggplot(rda.axes.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=
   geom_label(data = arrows.all,aes(label = Label, x = RDA1*7, y = RDA2*7, fontface="bold"), size=4)+
   coord_fixed(ratio = 1, xlim = c(-8,8), ylim = c(-8,8)) + theme_classic() +
   scale_color_manual(name ="Collection Date",values=unique(rda.axes.all$SampDate_Color[order(rda.axes.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +
-  scale_shape_manual(values = c(7,10, 15,16)) +
+  scale_shape_manual(values = c(0,1,16,18)) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data") +
   xlab("RDA1 [9.97%]") + ylab("RDA2 [7.82%]")
@@ -1111,7 +1111,7 @@ rda.plot3<-ggplot(rda.axes.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=
                colour = "black") +
   geom_label(data = arrows.all,aes(label = Label, x = RDA1*8, y = RDA2*8, fontface="bold"), size=5)+
   coord_fixed(ratio = 1, xlim = c(-10,10), ylim = c(-7,7)) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.all$SampDate_Color[order(rda.axes.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +
-  scale_shape_manual(values = c(7,10, 15,16)) +
+  scale_shape_manual(values = c(0,1,16,18)) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data") +
   xlab("RDA1 [9.97%]") + ylab("RDA2 [7.82%]")
