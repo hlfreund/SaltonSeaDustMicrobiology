@@ -36,7 +36,7 @@ suppressPackageStartupMessages({ # load packages quietly
 ## CLR = center log ratio transformation
 
 #### Load Global Env to Import Count/ASV Tables ####
-load("data/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
+load("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
 #load("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 head(b.dust.all)
