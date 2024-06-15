@@ -1118,6 +1118,41 @@ rda.plot3<-ggplot(rda.axes.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=
 
 ggsave(rda.plot3,filename = "figures/EnvDrivers/Aitchison/SSD_16S_RDA_AllData_bigger.png", width=15, height=15, dpi=600,create.dir = TRUE)
 
+# 3D RDA
+
+rda.sum.all$cont #cumulative proportion of variance per axis
+
+rda.axes.3d1<-data.frame(RDA1=rda.sum.all$sites[,1], RDA2=rda.sum.all$sites[,2], RDA3=rda.sum.all$sites[,3],SampleID=rownames(rda.sum.all$sites), Site=meta.all.scaled$Site, SampDate=meta.all.scaled$SampDate)
+rda.axes.3d<-merge(rda.axes.3d1,meta.all.scaled,by=c("SampleID","Site","SampDate"))
+
+arrows.3d<-data.frame(RDA1=rda.sum.all$biplot[,1], RDA2=rda.sum.all$biplot[,2], RDA3=rda.sum.all$biplot[,3], Label=rownames(rda.sum.all$biplot))
+arrows.3d
+arrows.3d$Label[(arrows.3d$Label) == "precip_24hr_accum"] <- "Accum. Precip (24 hr)"
+arrows.3d$Label[(arrows.3d$Label) == "ave.wind_speed"] <- "Ave Wind Speed"
+arrows.3d$Label[(arrows.3d$Label) == "Developed"] <- "Developed STF"
+
+plty.rda.all %>% add_markers(data=rda.axes.3d,color = ~SampDate, colors = c(unique(rda.axes.3d$SampDate_Color[order(rda.axes.3d$SampDate)])),
+                             symbol=~Site,symbols = c("square-open", "circle-open","circle","square")) %>%
+  add_trace(x = ~RDA1*8, y = ~RDA2*8, z = ~RDA3*8, type = "scatter3d", mode = "lines",showlegend = TRUE, data=arrows.3d,inherit=TRUE) %>%
+  add_annotations(data=arrows.3d,text = ~Label,x = ~RDA1*9, y = ~RDA2*9, z = ~RDA3*9,
+                  showarrow = TRUE)
+# before you can run save_image(), run the following lines; follow instructions: https://search.r-project.org/CRAN/refmans/plotly/html/save_image.html
+#install.packages('reticulate')
+# reticulate::install_miniconda()
+# reticulate::conda_install('r-reticulate', 'python-kaleido')
+# reticulate::conda_install('r-reticulate', 'plotly', channel = 'plotly')
+reticulate::use_miniconda('r-reticulate')
+
+save_image(plty.rda.all, "figures/EnvDrivers/Aitchison/SSD_16S_CLR_SampDate_CollYr_Site_3D_Aitchison_RDA1.png",width=1200,height=1000)
+save_image(plty.rda.all, "figures/EnvDrivers/Aitchison/SSD_16S_CLR_SampDate_CollYr_Site_3D_Aitchison_RDA2.png",width=1400,height=1100)
+
+
+# save 3D plot as an HTml
+saveWidget(widget = plty.rda.all, #the plotly object,
+           file = "figures/EnvDrivers/Aitchison/SSD_16S_CLR_SampDate_CollYr_Site_3D_Aitchison_RDA1.html", #the path & file name
+           selfcontained = TRUE #creates a single html file
+)
+
 
 #### Plot RDA - WI ####
 #plot(rda.WI) # depending on how many species you have, this step may take a while
