@@ -1095,7 +1095,7 @@ rda.plot2<-ggplot(rda.axes.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=
   geom_label(data = arrows.all,aes(label = Label, x = RDA1*7, y = RDA2*7, fontface="bold"), size=4)+
   coord_fixed(ratio = 1, xlim = c(-8,8), ylim = c(-8,8)) + theme_classic() +
   scale_color_manual(name ="Collection Date",values=unique(rda.axes.all$SampDate_Color[order(rda.axes.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +
-  scale_shape_manual(values = c(0,1,16,18)) +
+  scale_shape_manual(values = c(0,1, 16,15)) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data") +
   xlab("RDA1 [9.97%]") + ylab("RDA2 [7.82%]")
@@ -1111,7 +1111,7 @@ rda.plot3<-ggplot(rda.axes.all, aes(x = RDA1, y = RDA2)) + geom_point(aes(color=
                colour = "black") +
   geom_label(data = arrows.all,aes(label = Label, x = RDA1*8, y = RDA2*8, fontface="bold"), size=5)+
   coord_fixed(ratio = 1, xlim = c(-10,10), ylim = c(-7,7)) + theme_classic() + scale_color_manual(name ="Collection Date",values=unique(rda.axes.all$SampDate_Color[order(rda.axes.all$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +
-  scale_shape_manual(values = c(0,1,16,18)) +
+  scale_shape_manual(values = c(0,1, 16,15)) +
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1)) +
   labs(title="RDA: Bacteria/Archaea Composition in Salton Sea Dust",subtitle="Using Centered-Log Ratio Data") +
   xlab("RDA1 [9.97%]") + ylab("RDA2 [7.82%]")
