@@ -215,7 +215,19 @@ b.clr.km
 
 # Visualize kmeans clustering with output form eclust()
 # use repel = TRUE to avoid overplotting
-fviz_cluster(b.clr.km, b.clr, show.clust.cent=TRUE,ellipse.type = "euclid")
+fviz_cluster(b.clr.km, b.clr, ellipse = TRUE,
+             ellipse.level = 0.95, ellipse.alpha = 0.2,ellipse.type = "convex",outlier.color = "black")
+
+kmeans.plot1<-fviz_cluster(b.clr.km, b.clr, ellipse = TRUE,
+                          ellipse.level = 0.95, ellipse.alpha = 0.2,ellipse.type = "euclid",outlier.color = "black") +
+  ggtitle("K-means = 3")
+ggsave(kmeans.plot1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_KMeans_Cluster_Euclid_3clusters_PCoA1.png", width=14, height=10, dpi=600,create.dir = TRUE)
+
+kmeans.plot2<-fviz_cluster(b.clr.km, b.clr, ellipse = TRUE,
+                           ellipse.level = 0.95, ellipse.alpha = 0.2,ellipse.type = "convex",outlier.color = "black") +
+  ggtitle("K-means = 3")
+ggsave(kmeans.plot2,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_KMeans_Cluster_Convex_3clusters_PCoA2.png", width=14, height=10, dpi=600,create.dir = TRUE)
+
 
 # Gap statistic plot to determine the ideal # of clusters k
 # The gap statistic compares the total intracluster variation for different values of k with their expected values under null reference distribution of the data (i.e. a distribution with no obvious clustering)
@@ -291,11 +303,11 @@ pltly.all.a<-plot_ly(b.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~SampDa
                       zaxis = list(title = 'PC3 7.31%')))
 
 # before you can run save_image(), run the following lines; follow instructions: https://search.r-project.org/CRAN/refmans/plotly/html/save_image.html
-# install.packages('reticulate')
+#install.packages('reticulate')
 # reticulate::install_miniconda()
 # reticulate::conda_install('r-reticulate', 'python-kaleido')
 # reticulate::conda_install('r-reticulate', 'plotly', channel = 'plotly')
-# reticulate::use_miniconda('r-reticulate')
+reticulate::use_miniconda('r-reticulate')
 
 save_image(pltly.all.a, "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_CollYr_Site_3D_Aitchison_PCOA1.png",width=1200,height=1000)
 save_image(pltly.all.a, "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_CollYr_Site_3D_Aitchison_PCOA2.png",width=1400,height=1100)
