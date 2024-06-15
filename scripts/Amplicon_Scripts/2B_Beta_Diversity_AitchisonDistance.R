@@ -253,7 +253,7 @@ pcoa1<-ggplot(b.pcoa.meta, aes(x=Axis.1, y=Axis.2)) +geom_point(aes(color=SampDa
   scale_size_manual(values = c("2020" = 7, "2021"=4),labels=c("2020","2021")) +
   guides(shape = guide_legend(override.aes = list(size = 5)))+
   scale_color_manual(name ="Collection Date",values=unique(b.pcoa.meta$SampDate_Color[order(b.pcoa.meta$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +
-  scale_shape_manual(values = c(7,10, 15,16)) +
+  scale_shape_manual(values = c(0,1,16,15)) +
   xlab("PC1 [24.47%]") + ylab("PC2 [8.31%]")
 
 ggsave(pcoa1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_Site_Year_PCOA1.png", width=14, height=10, dpi=600,create.dir = TRUE)
@@ -297,7 +297,7 @@ ggsave(pcoa1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_SampDate_Si
 # 3D PCoA
 
 pltly.all.a<-plot_ly(b.pcoa.meta, x=~Axis.1,y=~Axis.2,z=~Axis.3, color = ~SampDate, colors = c(unique(b.pcoa.meta$SampDate_Color[order(b.pcoa.meta$SampDate)])),
-        symbol=~Site,symbols = c("square-open", "circle-open","circle","diamond")) %>%
+        symbol=~Site,symbols = c("square-open", "circle-open","circle","square")) %>%
   layout(scene = list(xaxis = list(title = 'PC1 24.47%'),
                       yaxis = list(title = 'PC2 8.31%'),
                       zaxis = list(title = 'PC3 7.31%')))
