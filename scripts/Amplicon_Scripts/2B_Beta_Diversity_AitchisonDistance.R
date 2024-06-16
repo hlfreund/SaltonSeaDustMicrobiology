@@ -694,11 +694,11 @@ pair.mod2
 
 # Visualize dispersions
 png('figures/BetaDiversity/Aitchison/SSD_pcoa_betadispersion_site_by_year.png',width = 700, height = 600, res=100)
-plot(b.disper3,main = "Centroids and Dispersion based on Aitchison Distance", col=colorset6$Site_Color)
+plot(b.disper2,main = "Centroids and Dispersion based on Aitchison Distance", col=colorset6$Site_Color)
 dev.off()
 
 png('figures/BetaDiversity/Aitchison/SSD_boxplot_centroid_distance_site_by_year.png',width = 900, height = 600, res=100)
-boxplot(b.disper3,xlab="By Site x Collection Year", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
+boxplot(b.disper2,xlab="By Site x Collection Year", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
 dev.off()
 
 ### now compare dispersions within summer only, site + year
@@ -707,15 +707,15 @@ dev.off()
 b.clr[which(rownames(b.clr) %in% rownames(summer_meta)),][1:10,1:5] # does our indexing idea work? yes!
 summ.clr<-b.clr[which(rownames(b.clr) %in% rownames(summer_meta)),]
 
-b.disper4<-betadisper((vegdist(summ.clr,method="euclidean")), interaction(summer_meta$Site,summer_meta$CollectionYear,sep="."))
-b.disper4
+b.disper3<-betadisper((vegdist(summ.clr,method="euclidean")), interaction(summer_meta$Site,summer_meta$CollectionYear,sep="."))
+b.disper3
 # NOTE: SB and RHB have less samples than other sites since they are supposed to represent similar locations
 # maybe we should remove these sites and then rerun the PERMANOVA?
 
 ## Significant differences in homogeneities can be tested using either parametric or permutational tests,
 ##and parametric post hoc contrasts can also be investigated:
 
-permutest(b.disper4, pairwise=TRUE) # compare dispersions to each other via permutation test to see significant differences in dispersion by pairwise comparisons
+permutest(b.disper3, pairwise=TRUE) # compare dispersions to each other via permutation test to see significant differences in dispersion by pairwise comparisons
 #Pairwise comparisons:
 #             PD.2020  BDC.2020   DP.2020   WI.2020   PD.2021  BDC.2021   DP.2021 WI.2021
 # PD.2020            0.0260000 0.1620000 0.1920000 0.9130000 0.1250000 0.2750000   0.161
@@ -727,12 +727,12 @@ permutest(b.disper4, pairwise=TRUE) # compare dispersions to each other via perm
 # DP.2021  0.2610152 0.0155220 0.4729980 0.4946793 0.0000000 0.0000000             0.001
 # WI.2021  0.1579286 0.0249566 0.5873339 0.5895183 0.0000000 0.0000000 0.0000000
 
-anova(b.disper4) # p = 0.2164 --> accept the Null H, spatial medians (a measure of dispersion) are NOT significantly difference across sample dates
+anova(b.disper3) # p = 0.2164 --> accept the Null H, spatial medians (a measure of dispersion) are NOT significantly difference across sample dates
 # ANOVA adjusted p-value
-aov.beta.p4<-anova(b.disper4)[["Pr(>F)"]] # get p values from ANOVA
+aov.beta.p4<-anova(b.disper3)[["Pr(>F)"]] # get p values from ANOVA
 p.adjust(aov.beta.p4,method="bonferroni",n=length(aov.beta.p4))
 
-TukeyHSD(b.disper4) # tells us which summer sites + years /category's dispersion MEANS are significantly different than each other
+TukeyHSD(b.disper3) # tells us which summer sites + years /category's dispersion MEANS are significantly different than each other
 #                     diff       lwr       upr     p adj
 # BDC.2020-PD.2020  -53.821951 -129.49858  21.85468 0.2529067
 # DP.2020-PD.2020   -39.840723 -115.51735  35.83590 0.5714260
@@ -767,8 +767,8 @@ TukeyHSD(b.disper4) # tells us which summer sites + years /category's dispersion
 # If both tests are significant, then there is a dispersion effect for sure and there might also be (not always) a location effect.
 # Dispersion effect means the actual spread of the data points is influencing the significant differences, not the actual data itself
 
-pnova4<-adonis2(summ.clr ~ Site*CollectionYear,data=summer_meta,method = "euclidean",by="terms",permutations= 10000)
-pnova4
+pnova3<-adonis2(summ.clr ~ Site*CollectionYear,data=summer_meta,method = "euclidean",by="terms",permutations= 10000)
+pnova3
 #                       Df SumOfSqs      R2      F  Pr(>F)
 # Site                 3    31186 0.20099 1.3628 0.07193 .
 # CollectionYear       1    10451 0.06736 1.3701 0.13387
@@ -776,7 +776,7 @@ pnova4
 # Residual            12    91534 0.58992
 # Total               19   155163 1.00000
 
-p.adjust(pnova4$`Pr(>F)`,method="bonferroni",n=length(pnova4$`Pr(>F)`)) # adjusted pval
+p.adjust(pnova3$`Pr(>F)`,method="bonferroni",n=length(pnova3$`Pr(>F)`)) # adjusted pval
 
 ##one issue with adonis is that it doesn't do multiple comparisons *******
 # tells us that something is different, but what is different? Which sample/plot/location?
@@ -820,11 +820,11 @@ pair.mod4
 
 # Visualize dispersions
 png('figures/BetaDiversity/Aitchison/SSD_pcoa_betadispersion_site_by_year_summer_only.png',width = 700, height = 600, res=100)
-plot(b.disper4,main = "Centroids and Dispersion based on Aitchison Distance", col=colorset6$Site_Color)
+plot(b.disper3,main = "Centroids and Dispersion based on Aitchison Distance", col=colorset6$Site_Color)
 dev.off()
 
 png('figures/BetaDiversity/Aitchison/SSD_boxplot_centroid_distance_site_by_year_summer_only.png',width = 700, height = 600, res=100)
-boxplot(b.disper4,xlab="By Site x Collection Year (Summer Only)", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
+boxplot(b.disper3,xlab="By Site x Collection Year (Summer Only)", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
 dev.off()
 
 
@@ -834,15 +834,15 @@ dev.off()
 b.clr[which(rownames(b.clr) %in% rownames(meta.2020)),][1:10,1:5] # does our indexing idea work? yes!
 clr.2020<-b.clr[which(rownames(b.clr) %in% rownames(meta.2020)),]
 
-b.disper5<-betadisper((vegdist(clr.2020,method="euclidean")), meta.2020$Site)
-b.disper5
+b.disper4<-betadisper((vegdist(clr.2020,method="euclidean")), meta.2020$Site)
+b.disper4
 # NOTE: SB and RHB have less samples than other sites since they are supposed to represent similar locations
 # maybe we should remove these sites and then rerun the PERMANOVA?
 
 ## Significant differences in homogeneities can be tested using either parametric or permutational tests,
 ##and parametric post hoc contrasts can also be investigated:
 
-permutest(b.disper5, pairwise=TRUE) # compare dispersions to each other via permutation test to see significant differences in dispersion by pairwise comparisons
+permutest(b.disper4, pairwise=TRUE) # compare dispersions to each other via permutation test to see significant differences in dispersion by pairwise comparisons
 #Pairwise comparisons:
 #         PD     BDC      DP    WI
 # PD          0.19200 0.49700 0.149
@@ -850,12 +850,12 @@ permutest(b.disper5, pairwise=TRUE) # compare dispersions to each other via perm
 # DP  0.50433 0.66492         0.623
 # WI  0.14123 0.97072 0.63281
 
-anova(b.disper5) # p = 0.5764 --> accept the Null H, spatial medians (a measure of dispersion) are NOT significantly difference across sample dates
+anova(b.disper4) # p = 0.5764 --> accept the Null H, spatial medians (a measure of dispersion) are NOT significantly difference across sample dates
 # ANOVA adjusted p-value
-aov.beta.p5<-anova(b.disper5)[["Pr(>F)"]] # get p values from ANOVA
+aov.beta.p5<-anova(b.disper4)[["Pr(>F)"]] # get p values from ANOVA
 p.adjust(aov.beta.p5,method="bonferroni",n=length(aov.beta.p5))
 
-TukeyHSD(b.disper5) # tells us which summer sites + years /category's dispersion MEANS are significantly different than each other
+TukeyHSD(b.disper4) # tells us which summer sites + years /category's dispersion MEANS are significantly different than each other
 #            diff       lwr       upr     p adj
 # BDC-PD -35.219152 -121.47415  51.03585 0.6311958
 # DP-PD  -19.275391 -105.53039  66.97961 0.9087550
@@ -868,14 +868,14 @@ TukeyHSD(b.disper5) # tells us which summer sites + years /category's dispersion
 # If both tests are significant, then there is a dispersion effect for sure and there might also be (not always) a location effect.
 # Dispersion effect means the actual spread of the data points is influencing the significant differences, not the actual data itself
 
-pnova5<-adonis2(clr.2020 ~ Site,data=meta.2020,method = "euclidean",by="terms",permutations= 10000)
-pnova5
+pnova4<-adonis2(clr.2020 ~ Site,data=meta.2020,method = "euclidean",by="terms",permutations= 10000)
+pnova4
 #           Df SumOfSqs      R2      F  Pr(>F)
 # Site      3    34123 0.25048 1.3368 0.08292 .
 # Residual 12   102106 0.74952
 # Total    15   136229 1.00000
 
-p.adjust(pnova5$`Pr(>F)`,method="bonferroni",n=length(pnova5$`Pr(>F)`)) # adjusted pval
+p.adjust(pnova4$`Pr(>F)`,method="bonferroni",n=length(pnova4$`Pr(>F)`)) # adjusted pval
 # [1] 0.2487512        NA        NA
 
 ##one issue with adonis is that it doesn't do multiple comparisons *******
@@ -898,11 +898,11 @@ pair.mod5
 
 # Visualize dispersions
 png('figures/BetaDiversity/Aitchison/SSD_pcoa_betadispersion_site_2020_only.png',width = 700, height = 600, res=100)
-plot(b.disper5,main = "Centroids and Dispersion based on Aitchison Distance (2020 Only)", col=colorset6$Site_Color)
+plot(b.disper4,main = "Centroids and Dispersion based on Aitchison Distance (2020 Only)", col=colorset6$Site_Color)
 dev.off()
 
 png('figures/BetaDiversity/Aitchison/SSD_boxplot_centroid_distance_site_2020_only.png',width = 700, height = 600, res=100)
-boxplot(b.disper5,xlab="By Site (2020 Only)", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
+boxplot(b.disper4,xlab="By Site (2020 Only)", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
 dev.off()
 
 #### Rank Distance Comparison with ANOSIM ####
@@ -1057,37 +1057,37 @@ STFs_only=STFs_only[rownames(pcoa.axes),] ## reorder metadata to match order of 
 rownames(STFs_only) # check rownames to see if they are in the same order in both data frames after reordering
 rownames(pcoa.axes)
 
-glm_<- vector('list', ncol(pcoa.axes) * ncol(STFs_only)) # create empty list where the GLM output is stored
-results_<- vector('list', ncol(pcoa.axes) * ncol(STFs_only)) # create an empty list where the GLM summaries are stored
-sig.results<-vector('list', ncol(pcoa.axes) * ncol(STFs_only))
-mdlnum <- 1 # counting our model numbers for indexes purposes in the loop
-
-# use a loop to run a bunch of GLMs
-## pcoa.axes[i] is dependent variable (y), STFs_only[j] is independent variable (x) in GLM
-for (i in 1:ncol(pcoa.axes)){ # for each column in pcoa.axes
-  for (j in 1:ncol(STFs_only)){ # for each column in STFs_only
-    glm_[[mdlnum]] <-glm(pcoa.axes[,i]~STFs_only[,j], family=gaussian) # run the GLM with the gaussian distribution, where df1[i] is your dependent variable and df2[j] is your independent variable
-    results_[[mdlnum]] <-summary(glm_[[mdlnum]]) # save results of glm into list called results
-    names(results_)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STFs_only)[j]) # rename list element to contain the name of the columns used in the model
-    mdlnum <- mdlnum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
-
-  }
-}
-
-## pcoa.axes[i] is dependent variable (y), STFs_only[j] is independent variable (x) in GLM
-for (i in 1:ncol(pcoa.axes)){ # for each column in pcoa.axes
-  for (j in 1:ncol(STFs_only)){ # for each column in STFs_only
-    glm_[[mdlnum]] <-glm(pcoa.axes[,i]~STFs_only[,j], family=gaussian) # run the GLM with the gaussian distribution, where df1[i] is your dependent variable and df2[j] is your independent variable
-    results_[[mdlnum]] <-summary(glm_[[mdlnum]]) # save results of glm into list called results
-    names(results_)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STFs_only)[j]) # rename list element to contain the name of the columns used in the model
-
-    ifelse(coef(results_[[mdlnum]])[,4] < 0.05, sig.results[[mdlnum]]<-results_[[mdlnum]], "Not Sig")
-    names(sig.results)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STFs_only)[j])
-    mdlnum <- mdlnum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
-
-  }
-}
-sig.results[sapply(sig.results, is.null)] <- NULL
+# glm_<- vector('list', ncol(pcoa.axes) * ncol(STFs_only)) # create empty list where the GLM output is stored
+# results_<- vector('list', ncol(pcoa.axes) * ncol(STFs_only)) # create an empty list where the GLM summaries are stored
+# sig.results<-vector('list', ncol(pcoa.axes) * ncol(STFs_only))
+# mdlnum <- 1 # counting our model numbers for indexes purposes in the loop
+#
+# # use a loop to run a bunch of GLMs
+# ## pcoa.axes[i] is dependent variable (y), STFs_only[j] is independent variable (x) in GLM
+# for (i in 1:ncol(pcoa.axes)){ # for each column in pcoa.axes
+#   for (j in 1:ncol(STFs_only)){ # for each column in STFs_only
+#     glm_[[mdlnum]] <-glm(pcoa.axes[,i]~STFs_only[,j], family=gaussian) # run the GLM with the gaussian distribution, where df1[i] is your dependent variable and df2[j] is your independent variable
+#     results_[[mdlnum]] <-summary(glm_[[mdlnum]]) # save results of glm into list called results
+#     names(results_)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STFs_only)[j]) # rename list element to contain the name of the columns used in the model
+#     mdlnum <- mdlnum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
+#
+#   }
+# }
+#
+# ## pcoa.axes[i] is dependent variable (y), STFs_only[j] is independent variable (x) in GLM
+# for (i in 1:ncol(pcoa.axes)){ # for each column in pcoa.axes
+#   for (j in 1:ncol(STFs_only)){ # for each column in STFs_only
+#     glm_[[mdlnum]] <-glm(pcoa.axes[,i]~STFs_only[,j], family=gaussian) # run the GLM with the gaussian distribution, where df1[i] is your dependent variable and df2[j] is your independent variable
+#     results_[[mdlnum]] <-summary(glm_[[mdlnum]]) # save results of glm into list called results
+#     names(results_)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STFs_only)[j]) # rename list element to contain the name of the columns used in the model
+#
+#     ifelse(coef(results_[[mdlnum]])[,4] < 0.05, sig.results[[mdlnum]]<-results_[[mdlnum]], "Not Sig")
+#     names(sig.results)[mdlnum]<-paste(names(pcoa.axes)[i],"~",names(STFs_only)[j])
+#     mdlnum <- mdlnum + 1 # add 1 to modelnumber so we keep track of # of models (for indexing purposes in list)
+#
+#   }
+# }
+# sig.results[sapply(sig.results, is.null)] <- NULL
 
 multi.univar.glm.fxn<-function(dep.var.df,indep.var.df,distro){
   # create empty lists to store stuff & model number (mdlnum) to keep track of models each iteration of loop in fxn
