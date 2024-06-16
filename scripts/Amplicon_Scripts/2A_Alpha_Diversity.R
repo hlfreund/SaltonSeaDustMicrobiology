@@ -638,48 +638,49 @@ AIC(fit.sr1,fit.sr2,fit.sr3,fit.sr4)
 
 # just look at everything at once in step-wise fashion
 # first shannon div
-step1<-step(glm.nb(formula = round(AveShanDiv) ~ ., data=bac.div.metadat.rar[,c(3,9:10,13:15,38:47)]))
-#                 Estimate Std. Error t value Pr(>|t|)
-summary(step1)
-plot(step1)
-
-summary(glm.nb(formula = AveShanDiv ~ Shrub , data=bac.div.metadat.rar))
-
-# then species richness
-step2<-step(glm.nb(formula = round(AveSpecRich) ~ ., data=bac.div.metadat.rar[,c(4,9:10,13:15,38:47)]))
-#                 Estimate Std. Error t value Pr(>|t|)
-summary(step2)
-plot(step2)
-
-summary(glm.nb(formula = AveSpecRich ~ ave.wind_direction+ave.air_temp , data=bac.div.metadat.rar))
-
-# create dfs of only STF + climate data and only the pcoa axes of interest
-Clim_only<-meta.all.scaled[,c(4,7:8,11:12,37:46)]
-
-head(Clim_only)
-
-# view df of just diversity data
-head(d.r_16s.rar)
-rownames(d.r_16s.rar)<-d.r_16s.rar$SampleID
-
-dim(Clim_only) # confirming that both data frames have the same # of rows
-dim(d.r_16s.rar)
-
-rownames(Clim_only) # check rownames to see if they are in the same order in both data frames
-rownames(d.r_16s.rar)
-
-# reorder data frames so they are in the same order by row (SampleID)
-Clim_only=Clim_only[rownames(d.r_16s.rar),] ## reorder metadata to match order of CLR data
-
-rownames(Clim_only) # check rownames to see if they are in the same order in both data frames after reordering
-rownames(d.r_16s.rar)
-
-glmtest<-glm.nb(d.r_16s.rar$AveShanDiv~Clim_only$ave.air_temp)
+# step1<-step(glm.nb(formula = round(AveShanDiv) ~ ., data=bac.div.metadat.rar[,c(3,9:10,13:15,38:47)]))
+# #                 Estimate Std. Error t value Pr(>|t|)
+# summary(step1)
+# plot(step1)
+#
+# summary(glm.nb(formula = AveShanDiv ~ Shrub , data=bac.div.metadat.rar))
+#
+# # then species richness
+# step2<-step(glm.nb(formula = round(AveSpecRich) ~ ., data=bac.div.metadat.rar[,c(4,9:10,13:15,38:47)]))
+# #                 Estimate Std. Error t value Pr(>|t|)
+# summary(step2)
+# plot(step2)
+#
+# summary(glm.nb(formula = AveSpecRich ~ ave.wind_direction+ave.air_temp , data=bac.div.metadat.rar))
+#
+# # create dfs of only STF + climate data and only the pcoa axes of interest
+# Clim_only<-meta.all.scaled[,c(4,7:8,11:12,37:46)]
+#
+# head(Clim_only)
+#
+# # view df of just diversity data
+# head(d.r_16s.rar)
+# rownames(d.r_16s.rar)<-d.r_16s.rar$SampleID
+#
+# dim(Clim_only) # confirming that both data frames have the same # of rows
+# dim(d.r_16s.rar)
+#
+# rownames(Clim_only) # check rownames to see if they are in the same order in both data frames
+# rownames(d.r_16s.rar)
+#
+# # reorder data frames so they are in the same order by row (SampleID)
+# Clim_only=Clim_only[rownames(d.r_16s.rar),] ## reorder metadata to match order of CLR data
+#
+# rownames(Clim_only) # check rownames to see if they are in the same order in both data frames after reordering
+# rownames(d.r_16s.rar)
+#
+# glmtest<-glm.nb(d.r_16s.rar$AveShanDiv~Clim_only$ave.air_temp)
 
 #### Correlations ####
 
 # quick visualization of comparing all the variables to each other
 ## cannot include all variables of interest because figure margins become too big
+par(mar=c(1,1,1,1))
 pairs(bac.div.metadat.rar[, c(3:4,8,11:12,15:16,40:49)]) # average shannon div first
 # maybe Herbaceoous x Shannon Div?
 pairs(bac.div.metadat.rar[, c(3:4,8,11:12,15:16,40:49)]) # species richness next
