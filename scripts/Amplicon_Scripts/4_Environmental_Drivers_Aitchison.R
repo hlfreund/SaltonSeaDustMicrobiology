@@ -1131,11 +1131,22 @@ arrows.3d$Label[(arrows.3d$Label) == "precip_24hr_accum"] <- "Accum. Precip (24 
 arrows.3d$Label[(arrows.3d$Label) == "ave.wind_speed"] <- "Ave Wind Speed"
 arrows.3d$Label[(arrows.3d$Label) == "Developed"] <- "Developed STF"
 
-plty.rda.all %>% add_markers(data=rda.axes.3d,color = ~SampDate, colors = c(unique(rda.axes.3d$SampDate_Color[order(rda.axes.3d$SampDate)])),
-                             symbol=~Site,symbols = c("square-open", "circle-open","circle","square")) %>%
-  add_trace(x = ~RDA1*8, y = ~RDA2*8, z = ~RDA3*8, type = "scatter3d", mode = "lines",showlegend = TRUE, data=arrows.3d,inherit=TRUE) %>%
-  add_annotations(data=arrows.3d,text = ~Label,x = ~RDA1*9, y = ~RDA2*9, z = ~RDA3*9,
-                  showarrow = TRUE)
+arrows.3d.pal<-c("blue","firebrick","gray")
+
+pltly.rda.all<-plot_ly(rda.axes.3d, x=~RDA1,y=~RDA2,z=~RDA3) %>%
+  layout(scene = list(xaxis = list(title = 'RDA1 9.97%'),
+                      yaxis = list(title = 'RDA2 7.83%'),
+                      zaxis = list(title = 'RDA3 4.07%'))) %>%
+  add_markers(data=rda.axes.3d,color = ~SampDate, colors = ~SampDate_Color,
+                            symbol=~Site,symbols = c("square-open", "circle-open","circle","square"))
+
+pltly.rda.all %>% add_trace(x = ~arrows.3d$RDA1*8, y = ~arrows.3d$RDA2*8, z = ~arrows.3d$RDA3*8, type = "scatter3d", mode = "lines",
+            showlegend = TRUE, data=arrows.3d,inherit=TRUE,
+            colors=~arrows.3d.pal)
+add_annotations(text=~arrows.3d$Label, x = ~arrows.3d$RDA1, y = ~arrows.3d$RDA2, z = ~arrows.3d$RDA3,
+          type="scatter3d", mode="lines",
+          color = as.factor(arrows.3d$Label),
+          colors="black")
 # before you can run save_image(), run the following lines; follow instructions: https://search.r-project.org/CRAN/refmans/plotly/html/save_image.html
 #install.packages('reticulate')
 # reticulate::install_miniconda()
