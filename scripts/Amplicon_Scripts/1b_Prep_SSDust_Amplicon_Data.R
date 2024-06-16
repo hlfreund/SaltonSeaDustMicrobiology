@@ -187,7 +187,7 @@ dust_meta$SampDate<-factor(dust_meta$SampDate, levels=c("July.2020","August.2020
 
 # create collection palette
 unique(dust_meta$SampDate)
-colorset8 = as.data.frame(t(data.frame("July.2020"="green2","August.2020"="orange","October.2020"="red","November.2020"="purple",
+colorset8 = as.data.frame(t(data.frame("July.2020"="seagreen3","August.2020"="orange","October.2020"="red","November.2020"="purple",
                    "July.2021"="darkgreen","August.2021"="darkorange3","September.2021"="red4","December.2021"="purple4")))
 colorset8$SampDate<-rownames(colorset8)
 colnames(colorset8)[which(names(colorset8) == "V1")] <- "SampDate_Color"
