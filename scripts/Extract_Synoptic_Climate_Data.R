@@ -124,7 +124,7 @@ i.STID <- sites$STID[1] # checking the index (1)
 
 time_series_data <- lapply(sites$STID, function(i.STID){
   dt <- mw(service = 'timeseries', stid =i.STID,
-           vars = c('wind_speed','wind_gust','wind_direction',
+           vars = c('wind_speed','wind_gust','wind_direction','wind_cardinal_direction',
                     'air_temp','relative_humidity'),
            start = '202005130001', end = '202112090001', jsonsimplify= TRUE)
 
@@ -146,10 +146,36 @@ time_series_data[, date_time_hour:=ceiling_date(date_time, 'hour')]
 # time_series_data[, DateLST:=ymd_hms(date_time, tz = 'America/Los_Angeles')]
 # time_series_data[, DateLST:=ceiling_date(DateLST, 'hour')]
 
+# the process of converting wind vector into a mathematical vector: http://colaweb.gmu.edu/dev/clim301/lectures/wind/wind-uv
+# NOTES: Remember that a vector can be broken into component vectors, where the i unit vector runs parallel to the x asis, and the j vector runs parallel to the y axis.
+# For winds, the u wind is parallel to the x axis. A positive u wind is from the west (to east). A negative u wind is from the east (to west).
+## E is 90 degrees, W is 270
+# The v wind runs parallel to the y axis. A positive v wind is from the south, and a negative v wind is from the north.
+## S is 180, N is 360 or 0
+
+# first, calculate mathematical direction
+time_series_data$math_wind.dir<-270-time_series_data$wind_direction
+#time_series_data[math_wind.dir < 0, math_wind.dir := math_wind.dir + 360]
+time_series_data$math_wind.dir<-ifelse(time_series_data$math_wind.dir < 0, time_series_data$math_wind.dir + 360, time_series_data$math_wind.dir)
+# now calculate component vector winds, u & v
+#u = ws * cos(θ), where theta is wind direction (in radians, which you convert from degrees)
+#v = ws * sin(θ)
+
+time_series_data$u_E.W.wind<-time_series_data$wind_speed * cos(pi * time_series_data$math_wind.dir/180) #
+time_series_data$v_N.S.wind<-time_series_data$wind_speed * sin(pi * time_series_data$math_wind.dir/180)
+
+# we can use u and v to determine direciton and magnitude of the wind vector
+# wind speed = sqrt(u2+v2)
+# wind direciton = arctan(v/u)
+
+# now for CIRCULAR wind direction
 time_series_data[, wd:=circular(wind_direction, template='geographics', units='degrees')]
 # ^ create column $wd which is the wind direction in degrees, not sure why we need to create this since wind_direction has the same info?
 
 head(time_series_data)
+# use time_series_data for your sanity checks to see if your u and v wind components and you wind direction are describing the same cardinal direction
+# remember: a positive u is from the west, a negative u is from the east; a positive v is from the south, a negative v is from the north
+# NorthEast winds should have negative u and v!
 
 # note: [,.()] is data.table notation; just keeps data in data.table format
 # https://stackoverflow.com/questions/33808705/dot-preceding-parentheses-in-data-table
@@ -157,9 +183,12 @@ head(time_series_data)
 time_series_data_scalar <- time_series_data[, .(air_temp = mean(air_temp, na.rm=TRUE),
                               wind_speed=mean(wind_speed, na.rm=TRUE),
                               wind_gust=max(wind_gust, na.rm=TRUE),
-                              relative_humidity=mean(relative_humidity,na.rm=TRUE)),
+                              relative_humidity=mean(relative_humidity,na.rm=TRUE),
+                              u_E.W.wind=mean(u_E.W.wind,na.rm=TRUE),
+                              v_N.S.wind=mean(v_N.S.wind,na.rm=TRUE)),
                           .(STID, date_time_hour)]
 # ^ need to add accumulated precip & relative humidity in here, want to make sure I am treating the data the same way as Will
+
 
 time_series_data_dir <- time_series_data[!is.na(wd) & !is.na(wind_speed) & wind_speed > 0,
                            .(wind_direction=weighted.mean.circular(wd,
@@ -173,6 +202,7 @@ time_series_data_dir[wind_direction < 0, wind_direction := wind_direction + 360]
 
 time_series_data_out <- full_join(time_series_data_scalar, time_series_data_dir)
 
+head(time_series_data_out)
 
 # #### Pull Out Precipitation TimeSeries Data for Sites Near Salton Sea ####
 # ## full timeseries variable list: https://demos.synopticdata.com/variables/index.html
@@ -346,9 +376,6 @@ SubsetTimeSeries(stids,time_series_data_out) # this works
 # DPMC1.Coll7<-subset(time_series_data_out, date_time_hour >= ymd_hms("2021-09-18 12:00:00") & date_time_hour <= ymd_hms("2021-12-08 17:00:00") & STID=="DPMC1")
 #
 
-
-
-
 #### Save Output ####
 head(timeseries.aves)
 
@@ -358,3 +385,6 @@ head(timeseries.aves)
 saveRDS(timeseries.aves, file = "data/Climate/SaltonSea_SynopticClimateData_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 save.image("data/Climate/SSD_Synoptic_ClimateData_All.Rdata")
+
+write.table(timeseries.aves, "data/Climate/SSD_Synoptic_ClimateData_All.tsv",
+            sep="\t", quote=F, col.names=T,row.names=F)
