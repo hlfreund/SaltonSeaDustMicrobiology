@@ -344,11 +344,11 @@ rownames(dust.meta.all) # sanity check
 # first scale metadata in big df
 meta.all.scaled<-dust.meta.all
 head(meta.all.scaled)
-meta.all.scaled[,c(4,7:12,37:46)]<-scale(meta.all.scaled[,c(4,7:12,37:46)],center=TRUE,scale=TRUE) # only scale chem env data
+meta.all.scaled[,c(4,7:13,38:47)]<-scale(meta.all.scaled[,c(4,7:13,38:47)],center=TRUE,scale=TRUE) # only scale chem env data
 head(meta.all.scaled)
 
 # move scaled metadata to its own df
-env.dat.scaled<-meta.all.scaled[,c(4,7:12,37:46)]
+env.dat.scaled<-meta.all.scaled[,c(4,7:13,38:47)]
 head(env.dat.scaled)
 
 #### Create Super DF with Count, Taxa, & Metadata ####
@@ -377,7 +377,7 @@ head(bac.ASV_round.all)
 dim(bac.ASV_round.all)
 
 # melt combined ASV + taxa table to then merge with metadata by SampleID
-bac.dat.dust<-melt(bac.ASV_round.all)
+bac.dat.dust<-reshape2::melt(bac.ASV_round.all)
 head(bac.dat.dust)
 colnames(bac.dat.dust)[which(names(bac.dat.dust) == "variable")] <- "SampleID"
 colnames(bac.dat.dust)[which(names(bac.dat.dust) == "value")] <- "Count"
