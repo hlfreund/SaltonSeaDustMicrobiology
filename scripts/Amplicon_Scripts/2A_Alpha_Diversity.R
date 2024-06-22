@@ -681,12 +681,12 @@ AIC(fit.sr1,fit.sr2,fit.sr3,fit.sr4)
 # quick visualization of comparing all the variables to each other
 ## cannot include all variables of interest because figure margins become too big
 par(mar=c(1,1,1,1))
-pairs(bac.div.metadat.rar[, c(3:4,8,11:12,15:16,40:49)]) # average shannon div first
+pairs(bac.div.metadat.rar[, c(3:4,8,11:12,14:16,41:50)]) # average shannon div first
 # maybe Herbaceoous x Shannon Div?
-pairs(bac.div.metadat.rar[, c(3:4,8,11:12,15:16,40:49)]) # species richness next
+pairs(bac.div.metadat.rar[, c(3:4,8,11:12,14:16,41:50)]) # species richness next
 
 # Visualize with a corrplot
-cor_div.sr.stf <- cor(bac.div.metadat.rar[, c(3:4,8,11:12,15:16,40:49)], method='pearson')
+cor_div.sr.stf <- cor(bac.div.metadat.rar[, c(3:4,8,11:12,14:16,41:50)], method='pearson')
 cor_div.sr.stf
 
 corrplot.mixed(cor_div.sr.stf, tl.pos='lt', tl.cex=0.4, sig.level = 0.05, insig="label_sig", number.cex=0.8,
@@ -698,7 +698,7 @@ head(meta.all.scaled)
 head(bac.div.metadat.rar)
 
 # create dfs of only surface type freq data, only climate data, & only the alpha div & species richness respectively
-STF_Clim_Only<-meta.all.scaled[,c(4,7:8,11:12,37:46)]
+STF_Clim_Only<-meta.all.scaled[,c(4,7:8,10:12,38:47)]
 head(STF_Clim_Only)
 
 div.rich<-bac.div.metadat.rar[,c(1,3:4)]
@@ -755,20 +755,18 @@ multi.univar.corr.fxn<-function(dep.var.df,indep.var.df){
 
 multi.univar.corr.fxn(div.rich[,-1],STF_Clim_Only) # test the function!
 
-# Note:
-# ave wind direction seems to slightly correlate with ave shan div & species richness, though it's not really significant
-ggplot(bac.div.metadat.rar, aes(x=ave.wind_direction, y=AveShanDiv)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
-  scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +theme_bw()+theme_classic()+
-  labs(title = "Dust Bacterial Shannon Diversity by Collection Date & Site", subtitle="Using Rarefied Counts & Scaled Environmental Data", x="Ave Wind Direction", y="Shannon Diversity", color="Collection Date")+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
-  scale_shape_manual(values = c(0,1,16,15),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
-
-ggplot(bac.div.metadat.rar, aes(x=ave.wind_direction, y=AveSpecRich)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
-  scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +theme_bw()+theme_classic()+
-  labs(title = "Dust Bacterial Shannon Diversity by Collection Date & Site", subtitle="Using Rarefied Counts & Scaled Environmental Data", x="Ave Wind Direction", y="Species Richness", color="Collection Date")+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
-  scale_shape_manual(values = c(0,1,16,15),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
-
+# ggplot(bac.div.metadat.rar, aes(x=ave.wind_direction, y=AveShanDiv)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
+#   scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +theme_bw()+theme_classic()+
+#   labs(title = "Dust Bacterial Shannon Diversity by Collection Date & Site", subtitle="Using Rarefied Counts & Scaled Environmental Data", x="Ave Wind Direction", y="Shannon Diversity", color="Collection Date")+
+#   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+#   scale_shape_manual(values = c(0,1,16,15),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
+#
+# ggplot(bac.div.metadat.rar, aes(x=ave.wind_direction, y=AveSpecRich)) +geom_jitter(aes(color=SampDate,shape=Site), size=3, width=0.15, height=0) +
+#   scale_color_manual(name ="Collection Date",values=unique(bac.div.metadat.rar$SampDate_Color[order(bac.div.metadat.rar$SampDate)]),labels=c("July 2020", "August 2020", "October 2020","November 2020", "July 2021", "August 2021", "September 2021", "December 2021")) +theme_bw()+theme_classic()+
+#   labs(title = "Dust Bacterial Shannon Diversity by Collection Date & Site", subtitle="Using Rarefied Counts & Scaled Environmental Data", x="Ave Wind Direction", y="Species Richness", color="Collection Date")+
+#   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,size=10),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15))+
+#   scale_shape_manual(values = c(0,1,16,15),labels=unique(bac.div.metadat.rar$Site[order(bac.div.metadat.rar$Site)]))
+#
 
 #### Save Everything ####
 save.image("data/SSeaDust_AlphaDiv_Data_Rarefied.Rdata")
