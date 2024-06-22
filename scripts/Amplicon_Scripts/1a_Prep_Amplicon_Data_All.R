@@ -163,8 +163,8 @@ saveRDS(bac.ASV_taxa_CLEAN, file = "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Tax
 unique(metadata$SampleType)
 metadata$SampleType<-factor(metadata$SampleType, levels=c("Soil","Dust","Lung","Control"))
 
-#colorset1 = melt(c(Seawater="#1f547b",Soil="#c44536",Dust="#432818",Playa="#d00000",Fecal="#66615f",Lung="#47126b",Control="#b13d1e"))
-colorset1 = melt(c(Soil="#c44536",Dust="#432818",Fecal="#66615f",Lung="#47126b",Control="#b13d1e"))
+#colorset1 = reshape2::melt(c(Seawater="#1f547b",Soil="#c44536",Dust="#432818",Playa="#d00000",Fecal="#66615f",Lung="#47126b",Control="#b13d1e"))
+colorset1 = reshape2::melt(c(Soil="#c44536",Dust="#432818",Fecal="#66615f",Lung="#47126b",Control="#b13d1e"))
 
 colorset1$SampleType<-rownames(colorset1)
 colnames(colorset1)[which(names(colorset1) == "value")] <- "Sample_Color"
@@ -206,7 +206,7 @@ bac.ASV_all<-bac.ASV_all[, !duplicated(colnames(bac.ASV_all))] # remove col dupl
 dim(bac.ASV_all)
 #bac.ASV_dat<-left_join(bac.ASV_tax.no.contam,bac.ASV_dat2, by=c("ASV_ID","Kingdom","Phylum","Class","Order","Family","Genus","Species"),all=T) # all=T to keep all rows from the dataframes, not drop rows that are missing from one DF or the other
 
-bac.dat<-melt(bac.ASV_all)
+bac.dat<-reshape2::melt(bac.ASV_all)
 head(bac.dat)
 colnames(bac.dat)[which(names(bac.dat) == "variable")] <- "SampleID"
 colnames(bac.dat)[which(names(bac.dat) == "value")] <- "Count"
@@ -219,7 +219,7 @@ dim(bac.dat)
 #bac.ASV_dat<-bac.ASV_dat[, !duplicated(colnames(bac.ASV_dat))] # remove col duplicates
 #dim(bac.ASV_dat)
 
-#bac.asv.melt<-melt(bac.ASV_dat, id.vars=c("ASV_ID","Kingdom", "Phylum", "Class", "Order", "Family", "Genus","Species"))
+#bac.asv.melt<-reshape2::melt(bac.ASV_dat, id.vars=c("ASV_ID","Kingdom", "Phylum", "Class", "Order", "Family", "Genus","Species"))
 #colnames(bac.asv.melt)[which(names(bac.asv.melt) == "variable")] <- "SampleID"
 #colnames(bac.asv.melt)[which(names(bac.asv.melt) == "value")] <- "Count"
 #head(bac.asv.melt)
@@ -374,7 +374,7 @@ bac.clean.counts$ASV_ID<-rownames(bac.clean.counts)
 #bac.tax<-subset(bac.ASV_tax.no.contam, select=c("ASV_ID", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"))
 bac.all<-merge(bac.clean.counts, bac.ASV_taxa_CLEAN, by="ASV_ID")
 head(bac.all)
-bac_melt<-melt(bac.all, id.vars = c("ASV_ID", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"))
+bac_melt<-reshape2::melt(bac.all, id.vars = c("ASV_ID", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"))
 head(bac_melt)
 names(bac_melt)[which(names(bac_melt) == "variable")] <- "SampleID"
 names(bac_melt)[which(names(bac_melt) == "value")] <- "Counts"
@@ -403,7 +403,7 @@ saveRDS(bac.tax.clean, file = "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy
 ## pulling sequences from DADA2 results only for ASVs that we have in our cleaned up bac.ASV_table
 ## use this new set of ASVs of interest to construct phylogenetic tree, import the tree with ape package, and calculate Unifrac distance with rbiom
 # giving our seq headers more manageable names (ASV_1, ASV_2...)
-load(file = "DADA2_Results/mydada_16S.V3V4.Rdata") # load your DADA2 output for this project
+load(file = "data/Amplicon/mydada_16S.V3V4.Rdata") # load your DADA2 output for this project
 
 asv_seqs <- colnames(seqtab.nochim) # pull out ASV sequences
 asv_headers <- vector(dim(seqtab.nochim)[2], mode="character") # pull out ASV headers
