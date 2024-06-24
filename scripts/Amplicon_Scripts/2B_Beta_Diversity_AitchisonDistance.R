@@ -60,6 +60,11 @@ summer_meta<-dust_meta[dust_meta$Season_General=="Summer",]
 meta.2020<-dust_meta[dust_meta$CollectionYear=="2020",]
 meta.2021<-dust_meta[dust_meta$CollectionYear=="2021",]
 
+# merge precip data and dust_meta to create rain vs no rain category (for PERMANOVAs later)
+
+precip.meta<-merge(dust_meta,precip.data,by=c("Deploy_dth","Collect_dth","Precip_STID"))
+precip.meta$RainCat<-ifelse(precip.meta$precip_24hr_accum>0,"Rain","No Rain")
+
 # #### PCoA on Raw Data - Sanity Check ####
 #
 # # check rownames of CLR transformed ASV data & metadata
@@ -701,81 +706,31 @@ png('figures/BetaDiversity/Aitchison/SSD_boxplot_centroid_distance_site_by_year.
 boxplot(b.disper2,xlab="By Site x Collection Year", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
 dev.off()
 
-### now compare dispersions within summer only, site + year
-
-# pulling out summer samples only
-b.clr[which(rownames(b.clr) %in% rownames(summer_meta)),][1:10,1:5] # does our indexing idea work? yes!
-summ.clr<-b.clr[which(rownames(b.clr) %in% rownames(summer_meta)),]
-
-b.disper3<-betadisper((vegdist(summ.clr,method="euclidean")), interaction(summer_meta$Site,summer_meta$CollectionYear,sep="."))
+### now compare dispersions by rain vs no rain
+b.disper3<-betadisper((vegdist(b.clr,method="euclidean")), precip.meta$RainCat)
 b.disper3
-# NOTE: SB and RHB have less samples than other sites since they are supposed to represent similar locations
-# maybe we should remove these sites and then rerun the PERMANOVA?
 
 ## Significant differences in homogeneities can be tested using either parametric or permutational tests,
 ##and parametric post hoc contrasts can also be investigated:
 
 permutest(b.disper3, pairwise=TRUE) # compare dispersions to each other via permutation test to see significant differences in dispersion by pairwise comparisons
 #Pairwise comparisons:
-#             PD.2020  BDC.2020   DP.2020   WI.2020   PD.2021  BDC.2021   DP.2021 WI.2021
-# PD.2020            0.0260000 0.1620000 0.1920000 0.9130000 0.1250000 0.2750000   0.161
-# BDC.2020 0.0082168           0.5290000 0.7150000 0.0100000 0.0640000 0.0210000   0.035
-# DP.2020  0.1684466 0.5682766           0.9150000 0.2470000 0.6970000 0.4480000   0.572
-# WI.2020  0.1990247 0.7277465 0.9183499           0.2850000 0.6940000 0.4750000   0.567
-# PD.2021  0.9238252 0.0050571 0.2397645 0.2846356           0.0010000 0.0010000   0.001
-# BDC.2021 0.1004492 0.0425528 0.7163219 0.6935400 0.0000000           0.0010000   0.002
-# DP.2021  0.2610152 0.0155220 0.4729980 0.4946793 0.0000000 0.0000000             0.001
-# WI.2021  0.1579286 0.0249566 0.5873339 0.5895183 0.0000000 0.0000000 0.0000000
 
-anova(b.disper3) # p = 0.2164 --> accept the Null H, spatial medians (a measure of dispersion) are NOT significantly difference across sample dates
+anova(b.disper3) # p = 0.9402 --> accept the Null H, spatial medians (a measure of dispersion) are NOT significantly difference across sample dates
 # ANOVA adjusted p-value
-aov.beta.p4<-anova(b.disper3)[["Pr(>F)"]] # get p values from ANOVA
-p.adjust(aov.beta.p4,method="bonferroni",n=length(aov.beta.p4))
+aov.beta.p3<-anova(b.disper3)[["Pr(>F)"]] # get p values from ANOVA
+p.adjust(aov.beta.p3,method="bonferroni",n=length(aov.beta.p3))
 
-TukeyHSD(b.disper3) # tells us which summer sites + years /category's dispersion MEANS are significantly different than each other
+TukeyHSD(b.disper3) # tells us which Sample Dates/category's dispersion MEANS are significantly different than each other
 #                     diff       lwr       upr     p adj
-# BDC.2020-PD.2020  -53.821951 -129.49858  21.85468 0.2529067
-# DP.2020-PD.2020   -39.840723 -115.51735  35.83590 0.5714260
-# WI.2020-PD.2020   -43.604545 -119.28117  32.07208 0.4720854
-# PD.2021-PD.2020     1.265656  -83.34339  85.87470 1.0000000
-# BDC.2021-PD.2020  -28.614849 -113.22389  55.99419 0.9094776
-# DP.2021-PD.2020   -16.834014 -101.44306  67.77503 0.9944790
-# WI.2021-PD.2020   -22.810660 -107.41970  61.79838 0.9697823
-# DP.2020-BDC.2020   13.981227  -61.69540  89.65785 0.9964611
-# WI.2020-BDC.2020   10.217406  -65.45922  85.89403 0.9995079
-# PD.2021-BDC.2020   55.087607  -29.52143 139.69665 0.3394887
-# BDC.2021-BDC.2020  25.207101  -59.40194 109.81614 0.9499478
-# DP.2021-BDC.2020   36.987936  -47.62111 121.59698 0.7521783
-# WI.2021-BDC.2020   31.011290  -53.59775 115.62033 0.8721998
-# WI.2020-DP.2020    -3.763822  -79.44045  71.91281 0.9999994
-# PD.2021-DP.2020    41.106380  -43.50266 125.71542 0.6550537
-# BDC.2021-DP.2020   11.225874  -73.38317  95.83492 0.9995605
-# DP.2021-DP.2020    23.006709  -61.60233 107.61575 0.9684095
-# WI.2021-DP.2020    17.030063  -67.57898 101.63910 0.9940872
-# PD.2021-WI.2020    44.870201  -39.73884 129.47924 0.5635184
-# BDC.2021-WI.2020   14.989696  -69.61935  99.59874 0.9972598
-# DP.2021-WI.2020    26.770531  -57.83851 111.37957 0.9332230
-# WI.2021-WI.2020    20.793885  -63.81516 105.40293 0.9815588
-# BDC.2021-PD.2021  -29.880506 -122.56507  62.80406 0.9271368
-# DP.2021-PD.2021   -18.099671 -110.78423  74.58489 0.9950595
-# WI.2021-PD.2021   -24.076317 -116.76088  68.60825 0.9751454
-# DP.2021-BDC.2021   11.780835  -80.90373 104.46540 0.9996677
-# WI.2021-BDC.2021    5.804189  -86.88037  98.48875 0.9999972
-# WI.2021-DP.2021    -5.976646  -98.66121  86.70792 0.9999966
 
 # If PERMANOVA is significant but betadisper() IS NOT, then you can infer that there is only a location effect.
 # If both tests are significant, then there is a dispersion effect for sure and there might also be (not always) a location effect.
 # Dispersion effect means the actual spread of the data points is influencing the significant differences, not the actual data itself
 
-pnova3<-adonis2(summ.clr ~ Site*CollectionYear,data=summer_meta,method = "euclidean",by="terms",permutations= 10000)
+pnova3<-adonis2(b.clr ~ RainCat,data=precip.meta,method = "euclidean",by="terms",permutations= 10000)
 pnova3
-#                       Df SumOfSqs      R2      F  Pr(>F)
-# Site                 3    31186 0.20099 1.3628 0.07193 .
-# CollectionYear       1    10451 0.06736 1.3701 0.13387
-# Site:CollectionYear  3    21992 0.14173 0.9610 0.49650
-# Residual            12    91534 0.58992
-# Total               19   155163 1.00000
-
+# not sig
 p.adjust(pnova3$`Pr(>F)`,method="bonferroni",n=length(pnova3$`Pr(>F)`)) # adjusted pval
 
 ##one issue with adonis is that it doesn't do multiple comparisons *******
@@ -785,98 +740,45 @@ p.adjust(pnova3$`Pr(>F)`,method="bonferroni",n=length(pnova3$`Pr(>F)`)) # adjust
 ##random person on the internet to the rescue!
 #install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 
-summ.clr.dist = (vegdist(summ.clr, "euclidean", na.rm = TRUE)) #distance matrix using Bray's dissimilarity index for trait distribution (traits of interest only)
-pair.mod4<-pairwise.adonis(summ.clr.dist,interaction(summer_meta$Site,summer_meta$CollectionYear,sep="."), p.adjust.m='bonferroni',perm=999) # shows us variation for each sample to see which ones are different
-pair.mod4
-#                   pairs Df SumsOfSqs  F.Model        R2     p.value     p.adjusted sig
-# 1  BDC.2020 vs BDC.2021  1  6617.165 1.6784236 0.3587584 0.1000000          1
-# 2   BDC.2020 vs DP.2020  1  3784.424 1.1387840 0.2216057 0.1000000          1
-# 3   BDC.2020 vs DP.2021  1 10539.027 2.1043550 0.4122666 0.1000000          1
-# 4   BDC.2020 vs PD.2020  1 14581.317 2.0093638 0.3343721 0.1000000          1
-# 5   BDC.2020 vs PD.2021  1 13063.954 1.8646618 0.3833076 0.1000000          1
-# 6   BDC.2020 vs WI.2020  1  4157.002 1.2875871 0.2435113 0.1000000          1
-# 7   BDC.2020 vs WI.2021  1  7141.092 1.6067557 0.3487825 0.1000000          1
-# 8   BDC.2021 vs DP.2020  1  5607.339 1.0001559 0.2500292 0.4000000          1
-# 9   BDC.2021 vs DP.2021  1  8701.261 0.9380843 0.3192843 0.6666667          1
-# 10  BDC.2021 vs PD.2020  1 10482.593 0.9660406 0.2435781 0.4000000          1
-# 11  BDC.2021 vs PD.2021  1  7777.384 0.6337310 0.2406210 0.6666667          1
-# 12  BDC.2021 vs WI.2020  1  6222.593 1.1354671 0.2745680 0.2000000          1
-# 13  BDC.2021 vs WI.2021  1  6792.955 0.8058175 0.2871953 1.0000000          1
-# 14   DP.2020 vs DP.2021  1  8758.931 1.3127548 0.3043889 0.2000000          1
-# 15   DP.2020 vs PD.2020  1 11476.255 1.3494069 0.2522536 0.3000000          1
-# 16   DP.2020 vs PD.2021  1 10905.372 1.2578213 0.2954143 0.2000000          1
-# 17   DP.2020 vs WI.2020  1  4100.205 0.9159392 0.1863203 0.5000000          1
-# 18   DP.2020 vs WI.2021  1  5977.509 0.9785730 0.2459608 0.3000000          1
-# 19   DP.2021 vs PD.2020  1 13853.945 1.1625558 0.2792889 0.3000000          1
-# 20   DP.2021 vs PD.2021  1 12072.352 0.8703341 0.3032170 0.6666667          1
-# 21   DP.2021 vs WI.2020  1  9668.344 1.4770039 0.3299090 0.2000000          1
-# 22   DP.2021 vs WI.2021  1  8869.441 0.8844273 0.3066214 0.6666667          1
-# 23   PD.2020 vs PD.2021  1 10322.990 0.7418781 0.1982636 0.5000000          1
-# 24   PD.2020 vs WI.2020  1 14160.930 1.6838261 0.2962487 0.3000000          1
-# 25   PD.2020 vs WI.2021  1 10095.950 0.8892746 0.2286479 0.5000000          1
-# 26   PD.2021 vs WI.2020  1 12527.185 1.4662329 0.3282930 0.2000000          1
-# 27   PD.2021 vs WI.2021  1  9882.088 0.7586860 0.2750172 0.6666667          1
-# 28   WI.2020 vs WI.2021  1  6743.746 1.1273143 0.2731351 0.2000000          1
+b.clr.dist = (vegdist(b.clr, "euclidean", na.rm = TRUE)) #distance matrix using Bray's dissimilarity index for trait distribution (traits of interest only)
+pair.mod3<-pairwise.adonis(b.clr.dist,precip.meta$RainCat, p.adjust.m='bonferroni',perm=9999) # shows us variation for each sample to see which ones are different
+pair.mod3
 
 # Visualize dispersions
-png('figures/BetaDiversity/Aitchison/SSD_pcoa_betadispersion_site_by_year_summer_only.png',width = 700, height = 600, res=100)
-plot(b.disper3,main = "Centroids and Dispersion based on Aitchison Distance", col=colorset6$Site_Color)
+png('figures/BetaDiversity/Aitchison/SSD_pcoa_betadispersion_site_Rain_vs_NoRain.png',width = 700, height = 600, res=100)
+plot(b.disper3,main = "Centroids and Dispersion based on Aitchison Distance")
 dev.off()
 
-png('figures/BetaDiversity/Aitchison/SSD_boxplot_centroid_distance_site_by_year_summer_only.png',width = 700, height = 600, res=100)
-boxplot(b.disper3,xlab="By Site x Collection Year (Summer Only)", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
+png('figures/BetaDiversity/Aitchison/SSD_boxplot_centroid_distance_site_Rain_vs_NoRain.png',width = 900, height = 600, res=100)
+boxplot(b.disper3,xlab="By Site x Collection Year", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance")
 dev.off()
 
-
-### compare only sites in 2020
-
-# pulling out 2020 samples only
-b.clr[which(rownames(b.clr) %in% rownames(meta.2020)),][1:10,1:5] # does our indexing idea work? yes!
-clr.2020<-b.clr[which(rownames(b.clr) %in% rownames(meta.2020)),]
-
-b.disper4<-betadisper((vegdist(clr.2020,method="euclidean")), meta.2020$Site)
+### now compare dispersions by site and rain vs no rain
+b.disper4<-betadisper((vegdist(b.clr,method="euclidean")), interaction(precip.meta$Site,precip.meta$RainCat,sep="."))
 b.disper4
-# NOTE: SB and RHB have less samples than other sites since they are supposed to represent similar locations
-# maybe we should remove these sites and then rerun the PERMANOVA?
 
 ## Significant differences in homogeneities can be tested using either parametric or permutational tests,
 ##and parametric post hoc contrasts can also be investigated:
 
 permutest(b.disper4, pairwise=TRUE) # compare dispersions to each other via permutation test to see significant differences in dispersion by pairwise comparisons
 #Pairwise comparisons:
-#         PD     BDC      DP    WI
-# PD          0.19200 0.49700 0.149
-# BDC 0.17683         0.65300 0.973
-# DP  0.50433 0.66492         0.623
-# WI  0.14123 0.97072 0.63281
 
-anova(b.disper4) # p = 0.5764 --> accept the Null H, spatial medians (a measure of dispersion) are NOT significantly difference across sample dates
+anova(b.disper4) # p =  --> accept the Null H, spatial medians (a measure of dispersion) are NOT significantly difference across sample dates
 # ANOVA adjusted p-value
-aov.beta.p5<-anova(b.disper4)[["Pr(>F)"]] # get p values from ANOVA
-p.adjust(aov.beta.p5,method="bonferroni",n=length(aov.beta.p5))
+aov.beta.p4<-anova(b.disper4)[["Pr(>F)"]] # get p values from ANOVA
+p.adjust(aov.beta.p4,method="bonferroni",n=length(aov.beta.p4))
 
-TukeyHSD(b.disper4) # tells us which summer sites + years /category's dispersion MEANS are significantly different than each other
-#            diff       lwr       upr     p adj
-# BDC-PD -35.219152 -121.47415  51.03585 0.6311958
-# DP-PD  -19.275391 -105.53039  66.97961 0.9087550
-# WI-PD  -36.399334 -122.65433  49.85567 0.6074864
-# DP-BDC  15.943761  -70.31124 102.19876 0.9451076
-# WI-BDC  -1.180182  -87.43518  85.07482 0.9999745
-# WI-DP  -17.123943 -103.37894  69.13106 0.9333724
+TukeyHSD(b.disper4) # tells us which Sample Dates/category's dispersion MEANS are significantly different than each other
+#                     diff       lwr       upr     p adj
 
 # If PERMANOVA is significant but betadisper() IS NOT, then you can infer that there is only a location effect.
 # If both tests are significant, then there is a dispersion effect for sure and there might also be (not always) a location effect.
 # Dispersion effect means the actual spread of the data points is influencing the significant differences, not the actual data itself
 
-pnova4<-adonis2(clr.2020 ~ Site,data=meta.2020,method = "euclidean",by="terms",permutations= 10000)
+pnova4<-adonis2(b.clr ~ Site*RainCat,data=precip.meta,method = "euclidean",by="terms",permutations= 10000)
 pnova4
-#           Df SumOfSqs      R2      F  Pr(>F)
-# Site      3    34123 0.25048 1.3368 0.08292 .
-# Residual 12   102106 0.74952
-# Total    15   136229 1.00000
-
+# not sig
 p.adjust(pnova4$`Pr(>F)`,method="bonferroni",n=length(pnova4$`Pr(>F)`)) # adjusted pval
-# [1] 0.2487512        NA        NA
 
 ##one issue with adonis is that it doesn't do multiple comparisons *******
 # tells us that something is different, but what is different? Which sample/plot/location?
@@ -885,24 +787,17 @@ p.adjust(pnova4$`Pr(>F)`,method="bonferroni",n=length(pnova4$`Pr(>F)`)) # adjust
 ##random person on the internet to the rescue!
 #install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 
-clr.2020.dist = (vegdist(clr.2020, "euclidean", na.rm = TRUE)) #distance matrix using Bray's dissimilarity index for trait distribution (traits of interest only)
-pair.mod5<-pairwise.adonis(clr.2020.dist,meta.2020$Site, p.adjust.m='bonferroni',perm=999) # shows us variation for each sample to see which ones are different
-pair.mod5
-#       pairs Df SumsOfSqs  F.Model        R2     p.value     p.adjusted sig
-# 1 BDC vs DP  1  6893.020 0.8708630 0.1267473   0.745      1.000
-# 2 BDC vs PD  1 14642.101 1.5596363 0.2063110   0.065      0.390
-# 3 BDC vs WI  1  5893.646 0.9744444 0.1397164   0.440      1.000
-# 4  DP vs PD  1 15559.884 1.4184650 0.1912073   0.173      1.000
-# 5  DP vs WI  1  7371.709 0.9662006 0.1386984   0.440      1.000
-# 6  PD vs WI  1 17885.412 1.9648737 0.2466924   0.113      0.678
+b.clr.dist = (vegdist(b.clr, "euclidean", na.rm = TRUE)) #distance matrix using Bray's dissimilarity index for trait distribution (traits of interest only)
+pair.mod4<-pairwise.adonis(b.clr.dist,interaction(precip.meta$Site,precip.meta$RainCat,sep="."), p.adjust.m='bonferroni',perm=9999) # shows us variation for each sample to see which ones are different
+pair.mod4
 
 # Visualize dispersions
-png('figures/BetaDiversity/Aitchison/SSD_pcoa_betadispersion_site_2020_only.png',width = 700, height = 600, res=100)
-plot(b.disper4,main = "Centroids and Dispersion based on Aitchison Distance (2020 Only)", col=colorset6$Site_Color)
+png('figures/BetaDiversity/Aitchison/SSD_pcoa_betadispersion_site_Rain_vs_NoRain.png',width = 700, height = 600, res=100)
+plot(b.disper4,main = "Centroids and Dispersion based on Aitchison Distance", col=colorset6$Site_Color)
 dev.off()
 
-png('figures/BetaDiversity/Aitchison/SSD_boxplot_centroid_distance_site_2020_only.png',width = 700, height = 600, res=100)
-boxplot(b.disper4,xlab="By Site (2020 Only)", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
+png('figures/BetaDiversity/Aitchison/SSD_boxplot_centroid_distance_site_Rain_vs_NoRain.png',width = 900, height = 600, res=100)
+boxplot(b.disper4,xlab="By Site x Collection Year", main = "Distance to Centroid by Category", sub="Based on Aitchison Distance", col=colorset6$Site_Color)
 dev.off()
 
 #### Rank Distance Comparison with ANOSIM ####
