@@ -64,6 +64,8 @@ dim(dropped_samps_ASVs) # table of only unwanted samples
 # one final sanity check to see if unwanted samples are in new ASV table
 dropped_samps_ASVs$SampleID %in% bac.ASV_table$SampleID
 
+# Fix DP.D.9.8.21 sample ID name
+
 ## Import ASV taxonomic data
 bac.ASV_tax<-data.frame(readRDS("data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_Taxonomy_dada2_Clean_Robject.rds", refhook = NULL))
 head(bac.ASV_tax)
@@ -268,26 +270,40 @@ bac.ASV_round.table[,-1]<-round(bac.ASV_table[,-1]*100)
 bac.ASV_round.table[1:10,1:30]
 bac.ASV_table[1:10,1:30]
 
-#### Drop Rep Letter from Sample Names ####
+#### Drop Rep Letter from Sample Names & Fix DP 9/21 Sample ID####
 
 # v gsub() - (.*\\..*) means that we are keeping all .*.*., no matter how many there are in string
 ## (.*\\..*) & (.*\\..*\\..*) & (.*\\..*\\..*\\..*) ALL do the same thing
 ## whatever is outside of the parentheses will be removed; here it's last occurence of .*
 dust_meta$SampleID<-gsub("(.*\\..*)\\..*","\\1", dust_meta$SampleID)
 dust_meta$SampleID # sanity check
+# Fix DP.D.9.8.21 Sample ID name
+dust_meta$SampleID[grep("DP.D.9.8.21", dust_meta$SampleID)] <- "DP.D.9.18.21"
+dust_meta$SampleID # sanity check
 rownames(dust_meta)<-dust_meta$SampleID
 
 bac.ASV_table$SampleID<-gsub("(.*\\..*)\\..*","\\1", bac.ASV_table$SampleID)
 bac.ASV_table$SampleID # sanity check
+# Fix DP.D.9.8.21 Sample ID name
+bac.ASV_table$SampleID[grep("DP.D.9.8.21", bac.ASV_table$SampleID)] <- "DP.D.9.18.21"
+bac.ASV_table$SampleID # sanity check
 rownames(bac.ASV_table)<-bac.ASV_table$SampleID
 
 bac.ASV_round.table$SampleID<-gsub("(.*\\..*)\\..*","\\1", bac.ASV_round.table$SampleID)
+bac.ASV_round.table$SampleID # sanity check
+# Fix DP.D.9.8.21 Sample ID name
+bac.ASV_round.table$SampleID[grep("DP.D.9.8.21", bac.ASV_round.table$SampleID)] <- "DP.D.9.18.21"
 bac.ASV_round.table$SampleID # sanity check
 rownames(bac.ASV_round.table)<-bac.ASV_round.table$SampleID
 #
 # b.dust.all$SampleID<-gsub("(.*\\..*)\\..*","\\1", b.dust.all$SampleID)
 # b.dust.all$SampleID # sanity check
 # head(b.dust.all)
+
+# Fix DP.D.9.8.21 Sample ID name
+SurfTypFreq$SampleID[grep("DP.D.9.8.21", SurfTypFreq$SampleID)] <- "DP.D.9.18.21"
+SurfTypFreq$SampleID # sanity check
+rownames(SurfTypFreq)<-SurfTypFreq$SampleID
 
 # check if sampleIDs match between metadata & ASV table
 rownames(dust_meta) %in% rownames(bac.ASV_table)
@@ -303,6 +319,7 @@ head(dust.meta.surf)
 dim(dust.meta.surf)
 
 rownames(dust.meta.surf)<-dust.meta.surf$SampleID
+rownames(dust.meta.surf)
 
 #### Check ASV Count Distribution Across Samples ####
 rowSums(bac.ASV_round.table[,-1])
@@ -390,3 +407,4 @@ head(b.dust.all)
 save.image("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
 
 ## ^ this will be loaded into other scripts for downstream analyses
+
