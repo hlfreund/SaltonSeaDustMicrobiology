@@ -1383,9 +1383,9 @@ ggsave(core.barplot2,filename = "figures/RelativeAbundance/CoreMicrobiome/SSD_16
 #### Look at Specific Shared Taxa Across Sites ####
 head(b.genus_RA_meta)
 
-gencol = melt(c(Massilia="cyan3",Sphingomonas="darkorchid2",Planomicrobium="greenyellow", Hymenobacter="darkgoldenrod1", Planococcus="orangered1",
-                Nibribacter="slateblue1", Devosia="red", `Allorhizobium Neorhizobium Pararhizobium Rhizobium`="brown", Pseudomonas="dodgerblue",
-                Novosphingobium="springgreen2", Roseomonas="deeppink", Paracoccus="magenta",Kocuria="yellow2"))
+gencol = melt(c(Massilia="cyan3",Sphingomonas="purple1",Planomicrobium="greenyellow", Hymenobacter="darkgoldenrod1", Planococcus="tomato1",
+                Nibribacter="slateblue1", Devosia="red", `Allorhizobium Neorhizobium Pararhizobium Rhizobium`="brown", Pseudomonas="darkslategray2",
+                Novosphingobium="springgreen2", Roseomonas="deeppink", Paracoccus="orchid1",Kocuria="yellow2"))
 head(gencol)
 gencol$Genus<-rownames(gencol)
 gencol$Genus<-factor(gencol$Genus, levels=c("Massilia","Sphingomonas","Planomicrobium","Hymenobacter","Planococcus",
