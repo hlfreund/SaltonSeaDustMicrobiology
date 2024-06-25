@@ -730,7 +730,7 @@ TukeyHSD(b.disper3) # tells us which Sample Dates/category's dispersion MEANS ar
 
 pnova3<-adonis2(b.clr ~ RainCat,data=precip.meta,method = "euclidean",by="terms",permutations= 10000)
 pnova3
-# not sig
+# p = 0.8378
 p.adjust(pnova3$`Pr(>F)`,method="bonferroni",n=length(pnova3$`Pr(>F)`)) # adjusted pval
 
 ##one issue with adonis is that it doesn't do multiple comparisons *******
