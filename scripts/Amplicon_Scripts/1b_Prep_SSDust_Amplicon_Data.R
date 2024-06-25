@@ -402,6 +402,25 @@ colnames(bac.dat.dust)[which(names(bac.dat.dust) == "value")] <- "Count"
 b.dust.all<-merge(bac.dat.dust,meta.all.scaled,by="SampleID")
 head(b.dust.all)
 
+#### Combine Climate Data + Metadata for Your Records ####
+head(dust_meta)
+head(precip.data)
+head(clim.data)
+
+clim.precip<-merge(precip.data,clim.data,by=c("Deploy_dth","Collect_dth"))
+head(clim.precip)
+
+clim.precip.all<-merge(dust_meta,clim.precip,by=c("CollectionNum","STID","Deploy_dth","Collect_dth","Precip_STID"))
+head(clim.precip.all)
+
+# drop unnecessary columns for saving
+clim.precip.all<-subset(clim.precip.all,select=-c(SampMonth_Color,SeasonGen_Color,SeasonSpec_Color,
+                                                  Year_Color,Site_Color,SCY_Color,SampDate_Color))
+head(clim.precip.all)
+
+write.table(clim.precip.all, "data/Climate/SSD_Ave_Clim_Precip_Metadata_All.tsv",
+            sep="\t", quote=F, col.names=T,row.names=F)
+
 #### Save Global Env for Import into Other Scripts ####
 
 save.image("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
