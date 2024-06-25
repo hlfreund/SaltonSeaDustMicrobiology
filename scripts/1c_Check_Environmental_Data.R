@@ -1080,7 +1080,7 @@ rh.by.site<-ggplot(clim.precip.all, aes(x=SampDate, y=ave.relative_humidity,colo
   scale_color_manual(name ="Collection Date",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)])) +
   xlab("Collection Date") + ylab("Ave Relative Humidity") + scale_shape_manual(name="Site",values = c(0,1,16,15))
 
-ggsave(rh.by.site,filename = "figures/EnvVariablesOnly/SSD_Site_AveAirTemp_SampDate_scatterplot.png", width=14, height=10, dpi=600)
+ggsave(rh.by.site,filename = "figures/EnvVariablesOnly/SSD_Site_AveRelHumidity_SampDate_scatterplot.png", width=14, height=10, dpi=600)
 
 precip.by.site<-ggplot(clim.precip.all, aes(x=SampDate, y=precip_24hr_accum,color=SampDate,shape=Site,group=Site)) + geom_point(size=3) + geom_line() + theme_bw()+
   labs(title="Ave 24hr Accum. Precipitation by Site & Collection Date",subtitle="Using Averaged Climate Data - Not Scaled or Centered",color="Collection Date")+theme_classic()+
@@ -1096,7 +1096,8 @@ EW.u.by.site<-ggplot(clim.precip.all, aes(x=SampDate, y=ave.u_E.W.wind,color=Sam
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,angle=45),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
   scale_color_manual(name ="Collection Date",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)])) +
-  xlab("Collection Date") + ylab("Ave Wind Component u") + scale_shape_manual(name="Site",values = c(0,1,16,15))
+  xlab("Collection Date") + ylab("Ave Wind Component u") + scale_shape_manual(name="Site",values = c(0,1,16,15)) +
+  geom_hline(yintercept=-0.025, linetype="dashed",color = "black", size=1)
 
 ggsave(EW.u.by.site,filename = "figures/EnvVariablesOnly/SSD_Site_AveEastWest_u_SampDate_scatterplot.png", width=14, height=10, dpi=600)
 
@@ -1105,6 +1106,7 @@ NS.v.by.site<-ggplot(clim.precip.all, aes(x=SampDate, y=ave.v_N.S.wind,color=Sam
   theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,angle=45),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
   scale_color_manual(name ="Collection Date",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)])) +
-  xlab("Collection Date") + ylab("Ave Wind Component v") + scale_shape_manual(name="Site",values = c(0,1,16,15))
+  xlab("Collection Date") + ylab("Ave Wind Component v") + scale_shape_manual(name="Site",values = c(0,1,16,15)) +
+  geom_hline(yintercept=0, linetype="dashed",color = "black", size=1)
 
 ggsave(NS.v.by.site,filename = "figures/EnvVariablesOnly/SSD_Site_AveNorthSouth_v_SampDate_scatterplot.png", width=14, height=10, dpi=600)
