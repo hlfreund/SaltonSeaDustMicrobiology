@@ -1052,122 +1052,59 @@ ggsave(fig.its1.sr.fit1,filename = "figures/EnvVariablesOnly/DustComp_by_ITS1_Sp
 
 
 #### Plots of Env Variables ####
+head(clim.precip.all)
 
 # Compare all variables across Depths
-dep.dom<-ggplot(meta.all.scaled, aes(x=Depth_m, y=Dissolved_OrganicMatter_RFU,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Dissolved Organic Matter (DOM) by Depth & sample site",subtitle="Using Scaled DOM RFU Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+speed.by.site<-ggplot(clim.precip.all, aes(x=SampDate, y=ave.wind_speed,color=SampDate,shape=Site,group=Site)) + geom_point(size=3) + geom_line() + theme_bw()+
+  labs(title="Ave Wind Speed by Site & Collection Date",subtitle="Using Averaged Climate Data - Not Scaled or Centered",color="Collection Date")+theme_classic()+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,angle=45),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("Depth (m)") + ylab("DOM (RFU)")+coord_flip()+ scale_x_discrete(limits=rev)
+  scale_color_manual(name ="Collection Date",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)])) +
+  xlab("Collection Date") + ylab("Ave Wind Speed") + scale_shape_manual(name="Site",values = c(0,1,16,15))
 
-ggsave(dep.dom,filename = "figures/EnvVariablesOnly/SSD_DOM_Depth_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
+ggsave(speed.by.site,filename = "figures/EnvVariablesOnly/SSD_Site_AveWindSpeed_SampDate_scatterplot.png", width=14, height=10, dpi=600)
 
-dep.orp<-ggplot(meta.all.scaled, aes(x=Depth_m, y=ORP_mV,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Oxidative-Reduction Potential by Depth & sample site",subtitle="Using Scaled ORP (mV) Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+temp.by.site<-ggplot(clim.precip.all, aes(x=SampDate, y=ave.air_temp,color=SampDate,shape=Site,group=Site)) + geom_point(size=3) + geom_line() + theme_bw()+
+  labs(title="Ave Air Temp by Site & Collection Date",subtitle="Using Averaged Climate Data - Not Scaled or Centered",color="Collection Date")+theme_classic()+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,angle=45),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("Depth (m)") + ylab("ORP (mV)")+coord_flip()+ scale_x_discrete(limits=rev)
+  scale_color_manual(name ="Collection Date",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)])) +
+  xlab("Collection Date") + ylab("Ave Air Temp") + scale_shape_manual(name="Site",values = c(0,1,16,15))
 
-ggsave(dep.orp,filename = "figures/EnvVariablesOnly/SSD_ORP_Depth_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
+ggsave(temp.by.site,filename = "figures/EnvVariablesOnly/SSD_Site_AveAirTemp_SampDate_scatterplot.png", width=14, height=10, dpi=600)
 
-dep.sal<-ggplot(meta.all.scaled, aes(x=Depth_m, y=Salinity_ppt,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Salinity by Depth & sample site",subtitle="Using Scaled Salinity (PPT) Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+rh.by.site<-ggplot(clim.precip.all, aes(x=SampDate, y=ave.relative_humidity,color=SampDate,shape=Site,group=Site)) + geom_point(size=3) + geom_line() + theme_bw()+
+  labs(title="Ave Relative Humidity by Site & Collection Date",subtitle="Using Averaged Climate Data - Not Scaled or Centered",color="Collection Date")+theme_classic()+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,angle=45),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("Depth (m)") + ylab("Salinity (PPT)")+coord_flip()+ scale_x_discrete(limits=rev)
+  scale_color_manual(name ="Collection Date",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)])) +
+  xlab("Collection Date") + ylab("Ave Relative Humidity") + scale_shape_manual(name="Site",values = c(0,1,16,15))
 
-ggsave(dep.orp,filename = "figures/EnvVariablesOnly/SSD_Salinity_Depth_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
+ggsave(rh.by.site,filename = "figures/EnvVariablesOnly/SSD_Site_AveAirTemp_SampDate_scatterplot.png", width=14, height=10, dpi=600)
 
-dep.sulf<-ggplot(meta.all.scaled, aes(x=Depth_m, y=Sulfate_milliM,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Sulfate by Depth & sample site",subtitle="Using Scaled Sulfate (milliM) Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+precip.by.site<-ggplot(clim.precip.all, aes(x=SampDate, y=precip_24hr_accum,color=SampDate,shape=Site,group=Site)) + geom_point(size=3) + geom_line() + theme_bw()+
+  labs(title="Ave 24hr Accum. Precipitation by Site & Collection Date",subtitle="Using Averaged Climate Data - Not Scaled or Centered",color="Collection Date")+theme_classic()+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,angle=45),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("Depth (m)") + ylab("Sulfate (milliM)")+coord_flip()+ scale_x_discrete(limits=rev)
+  scale_color_manual(name ="Collection Date",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)])) +
+  xlab("Collection Date") + ylab("Ave Accum. Precipitation") + scale_shape_manual(name="Site",values = c(0,1,16,15))
 
-ggsave(dep.sulf,filename = "figures/EnvVariablesOnly/SSD_Sulfate_Depth_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
+ggsave(precip.by.site,filename = "figures/EnvVariablesOnly/SSD_Site_AveAccumPrecip_SampDate_scatterplot.png", width=14, height=10, dpi=600)
 
-dep.do<-ggplot(meta.all.scaled, aes(x=Depth_m, y=DO_Percent_Local,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Dissolved Oxygen by Depth & sample site",subtitle="Using Scaled DO (%) Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+EW.u.by.site<-ggplot(clim.precip.all, aes(x=SampDate, y=ave.u_E.W.wind,color=SampDate,shape=Site,group=Site)) + geom_point(size=3) + geom_line() + theme_bw()+
+  labs(title="Ave East-West Winds (u) by Site & Collection Date",subtitle="Using Averaged Climate Data - Not Scaled or Centered\nPositive = from West, Negative = from East",color="Collection Date")+theme_classic()+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,angle=45),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("Depth (m)") + ylab("DO (%)")+coord_flip()+ scale_x_discrete(limits=rev)
+  scale_color_manual(name ="Collection Date",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)])) +
+  xlab("Collection Date") + ylab("Ave Wind Component u") + scale_shape_manual(name="Site",values = c(0,1,16,15))
 
-ggsave(dep.do,filename = "figures/EnvVariablesOnly/SSD_DO_Depth_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
+ggsave(EW.u.by.site,filename = "figures/EnvVariablesOnly/SSD_Site_AveEastWest_u_SampDate_scatterplot.png", width=14, height=10, dpi=600)
 
-dep.hs<-ggplot(meta.all.scaled, aes(x=Depth_m, y=Sulfide_microM,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Sulfide by Depth & sample site",subtitle="Using Scaled Sulfate (microM) Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
+NS.v.by.site<-ggplot(clim.precip.all, aes(x=SampDate, y=ave.v_N.S.wind,color=SampDate,shape=Site,group=Site)) + geom_point(size=3) + geom_line() + theme_bw()+
+  labs(title="Ave North-South (v) by Site & Collection Date",subtitle="Using Averaged Climate Data - Not Scaled or Centered\nPositive = from South, Negative = from North",color="Collection Date")+theme_classic()+
+  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1,hjust=1,angle=45),legend.text = element_text(size=11))+
   guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("Depth (m)") + ylab("Sulfide (microM)")+coord_flip()+ scale_x_discrete(limits=rev)
+  scale_color_manual(name ="Collection Date",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)])) +
+  xlab("Collection Date") + ylab("Ave Wind Component v") + scale_shape_manual(name="Site",values = c(0,1,16,15))
 
-ggsave(dep.hs,filename = "figures/EnvVariablesOnly/SSD_Sulfide_Depth_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
-
-dep.chlr<-ggplot(meta.all.scaled, aes(x=Depth_m, y=Chlorophyll_RFU,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Chlorophyll by Depth & sample site",subtitle="Using Scaled Chlorophyll (RFU) Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
-  guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("Depth (m)") + ylab("Chlorophyll (RFU)")+coord_flip()+ scale_x_discrete(limits=rev)
-
-ggsave(dep.chlr,filename = "figures/EnvVariablesOnly/SSD_Chlorophyll_Depth_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
-
-dep.temp<-ggplot(meta.all.scaled, aes(x=Depth_m, y=Temp_DegC,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Temperature by Depth & sample site",subtitle="Using Scaled Chlorophyll (RFU) Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
-  guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("Depth (m)") + ylab("Temperature (C)")+coord_flip()+ scale_x_discrete(limits=rev)
-
-ggsave(dep.temp,filename = "figures/EnvVariablesOnly/SSD_Temp_Depth_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
-
-# Compare variables to each other
-dom.hs<-ggplot(meta.all.scaled, aes(x=Dissolved_OrganicMatter_RFU, y=Sulfide_microM,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Sulfide ~ DOM",subtitle="Using Scaled Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
-  guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("DOM (RFU)") + ylab("Sulfide (microM)")
-
-ggsave(dom.hs,filename = "figures/EnvVariablesOnly/SSD_Sulfide_DOM_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
-
-do.hs<-ggplot(meta.all.scaled, aes(x=DO_Percent_Local, y=Sulfide_microM,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Sulfide ~ DO%",subtitle="Using Scaled Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
-  guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("DO (%)") + ylab("Sulfide (microM)")
-
-ggsave(do.hs,filename = "figures/EnvVariablesOnly/SSD_Sulfide_DO.Percent_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
-
-orp.hs<-ggplot(meta.all.scaled, aes(x=ORP_mV, y=Sulfide_microM,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="Sulfide ~ ORP (mV)",subtitle="Using Scaled Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
-  guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("ORP (mV") + ylab("Sulfide (microM)")
-
-ggsave(orp.hs,filename = "figures/EnvVariablesOnly/SSD_Sulfide_ORP_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
-
-orp.dom<-ggplot(meta.all.scaled, aes(x=ORP_mV, y=Dissolved_OrganicMatter_RFU,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="DOM (RFU) ~ ORP (mV)",subtitle="Using Scaled Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
-  guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("DOM (RFU") + ylab("Sulfide (microM)")
-
-ggsave(orp.dom,filename = "figures/EnvVariablesOnly/SSD_DOM_ORP_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
-
-orp.do<-ggplot(meta.all.scaled, aes(x=ORP_mV, y=DO_Percent_Local,color=SampDate,group=SampDate)) + geom_point(size=3) + geom_line() + theme_bw()+
-  labs(title="DO% ~ ORP (mV)",subtitle="Using Scaled Data",color="sample site")+theme_classic()+
-  theme(axis.title.x = element_text(size=13),axis.title.y = element_text(size=13),legend.title.align=0.5, legend.title = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(vjust=1),legend.text = element_text(size=11))+
-  guides(shape = guide_legend(override.aes = list(size = 5)))+
-  scale_color_manual(name ="sample site",values=unique(meta.all.scaled$SampDate_Color[order(meta.all.scaled$SampDate)]),labels=c("August.2021"="August 2021","December.2021"="December 2021","April.2022"="April 2022")) +
-  xlab("ORP (mV") + ylab("DO %")
-
-ggsave(orp.do,filename = "figures/EnvVariablesOnly/SSD_DO.Percent_ORP_bySampleDate_scatterplot.png", width=12, height=10, dpi=600)
+ggsave(NS.v.by.site,filename = "figures/EnvVariablesOnly/SSD_Site_AveNorthSouth_v_SampDate_scatterplot.png", width=14, height=10, dpi=600)
