@@ -244,6 +244,9 @@ dim(bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),])
 bac.ASV_table<-bac.ASV_table[rownames(bac.ASV_table) %in% rownames(dust_meta),] # drop technical reps of samples
 dim(bac.ASV_table)
 bac.ASV_table[1:6,1:6]
+dim(bac.ASV_table[,-1])
+rowSums(bac.ASV_table[,-1])
+sum(rowSums(bac.ASV_table[,-1])) # total reads
 
 #### Scale ASV Counts by Dust Collector Deployment Duration ####
 ## scaling all ASV counts by the number of days that the dust collector was out for
@@ -268,6 +271,7 @@ bac.ASV_round.table[,-1]<-round(bac.ASV_table[,-1]*100)
 
 # let's compare the results
 bac.ASV_round.table[1:10,1:30]
+rowSums(bac.ASV_round.table[,-1])
 bac.ASV_table[1:10,1:30]
 
 #### Drop Rep Letter from Sample Names & Fix DP 9/21 Sample ID####

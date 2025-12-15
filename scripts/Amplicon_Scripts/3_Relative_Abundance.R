@@ -1,6 +1,7 @@
 #### Set WD & Load Libraries ####
 getwd() # use setwd("path/to/files") if you are not in the right directory
 #setwd("/Volumes/HLF_SSD/Aronson_Lab_Data/Salton_Sea/SaltonSeaDust")
+#setwd("/bigdata/aronsonlab/shared/SaltonSea/Amplicon_Sequences/EnvMiSeq_4.17.2023_16S/Analysis")
 suppressPackageStartupMessages({ # load packages quietly
   library(devtools)
   library(phyloseq)
@@ -24,8 +25,8 @@ suppressPackageStartupMessages({ # load packages quietly
   library(tidyr)
   library(reshape)
   library(reshape2)
-  library(wesanderson)
-  library(nationalparkcolors)
+  #library(wesanderson)
+  #library(nationalparkcolors)
   library(shades)
   library(ALDEx2)
   library(rstatix)
@@ -37,14 +38,14 @@ suppressPackageStartupMessages({ # load packages quietly
   library(fst)
   library(plotly)
   library(htmlwidgets)
-  library(MoMAColors)
+  #library(MoMAColors)
   library(microshades)
   library(lmtest)
 })
 
 #### Load Global Env to Import Count/ASV Tables ####
 load("data/Amplicon/SSDust_16S.V3V4_W23_Data_Ready.Rdata") # save global env to Rdata file
-#load("data/Amplicon/SSD_16S_CLR_EucDist_Ready.Rdata")
+#load("data/SSD_16S_CLR_EucDist_Ready.Rdata")
 
 head(b.dust.all)
 bac.ASV_table[1:4,1:4]
@@ -672,7 +673,7 @@ BDC.gen.RA<-subset(b.genus_RA_meta,b.genus_RA_meta$Site=="BDC")
 PD.gen.RA<-subset(b.genus_RA_meta,b.genus_RA_meta$Site=="PD")
 DP.gen.RA<-subset(b.genus_RA_meta,b.genus_RA_meta$Site=="DP")
 
-saveRDS(b.genus_RA_meta, file = "data/Amplicon/SSD_GenusOnly_RelativeAbundance_Robject.rds", ascii = FALSE, version = NULL,
+saveRDS(b.genus_RA_meta, file = "data/SSD_GenusOnly_RelativeAbundance_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
 #### Genus + Species Relative Abundance ####
@@ -722,7 +723,7 @@ BDC.gen.spec.RA<-subset(b.gen.spec_RA_meta,b.gen.spec_RA_meta$Site=="BDC")
 PD.gen.spec.RA<-subset(b.gen.spec_RA_meta,b.gen.spec_RA_meta$Site=="PD")
 DP.gen.spec.RA<-subset(b.gen.spec_RA_meta,b.gen.spec_RA_meta$Site=="DP")
 
-saveRDS(b.gen.spec_RA_meta, file = "data/Amplicon/SSD_GenusSpecies_RelativeAbundance_Robject.rds", ascii = FALSE, version = NULL,
+saveRDS(b.gen.spec_RA_meta, file = "data/SSD_GenusSpecies_RelativeAbundance_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
 # Barplot by SampleID
@@ -1033,7 +1034,7 @@ max(b.k.genus_RA_meta$Count)
 b.k.genus_RA_meta$SampleID = factor(b.k.genus_RA_meta$SampleID, levels=unique(b.k.genus_RA_meta$SampleID[order(b.k.genus_RA_meta$Site,b.k.genus_RA_meta$Seas_Coll_Year)]), ordered=TRUE)
 b.k.genus_RA_meta$Sample_Type<-"Dust"
 
-saveRDS(b.k.genus_RA_meta, file = "data/Amplicon/SSD_GenusSpecies_RelativeAbundance_Robject.rds", ascii = FALSE, version = NULL,
+saveRDS(b.k.genus_RA_meta, file = "data/SSD_GenusSpecies_RelativeAbundance_Robject.rds", ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
 # separate genera RelAb data by site for downstream figs
@@ -1284,7 +1285,7 @@ ggsave(tg2,filename = "figures/RelativeAbundance/Genus_by_Kingdom/SSD_16S_Genera
 
 
 #### Save Just Relative Abundance Data ####
-save.image("data/Amplicon/SSDust_RelAb_Scaled_by_DeploymentDays_Data.Rdata")
+save.image("data/SSDust_RelAb_Scaled_by_DeploymentDays_Data.Rdata")
 
 #### Core Microbiome Analysis ####
 # code for this section is from here: https://microbiome.github.io/tutorials/Core.html
@@ -1407,50 +1408,71 @@ core.gen.barplot<-ggplot(core.genus.meta, aes(x=SampleID, y=Count, fill=Genus))+
 ggsave(core.gen.barplot,filename = "figures/RelativeAbundance/CoreMicrobiome/SSD_16S_CoreMicrobiomeGenera_barplot_v2.png", width=25, height=30, dpi=600,create.dir = TRUE)
 
 
-#### Find Unique Genera Per Site ####
-head(dust_meta)
-head(b.genus_m)
+#### Find Shared Genera in SSW vs SSD ####
 
-site_list<-data.frame(Site=dust_meta$Site,SampleID=dust_meta$SampleID)
+ssw.gen.meta<-read.delim("data/SSW_GenusSpecies_RelativeAbundance.tsv",sep="\t")
+head(ssw.gen.meta)
+ssw.gen.meta$SampleID = factor(ssw.gen.meta$SampleID, levels=unique(ssw.gen.meta$SampleID[order(ssw.gen.meta$SampDate,ssw.gen.meta$Depth_m)]), ordered=TRUE)
 
-b.g.RA.site<-merge(site_list, b.genus_m,by="SampleID")
-head(b.g.RA.site)
+ssw.gen.RelAb<-ssw.gen.meta[,c(1:4,8)]
+ssw.gen.RelAb$Site<-"SSW"
+ssw.gen.RelAb$Sample_Type<-"Seawater"
+
+head(b.gen.spec_RA_meta)
+ssd.gen.RelAb<-b.gen.spec_RA_meta[,c(1:4,6,31)]
+head(ssd.gen.RelAb)
+ssd.gen.RelAb$Depth_m<-12 # assigning dust samples an arbitrary depth so that they are in the right order when merged with SSW samples
+
+ssw.ssd.gen.RA<-rbind(ssw.gen.RelAb,ssd.gen.RelAb)
+unique(ssw.ssd.gen.RA$Sample_Type) # quick sanity check
 
 # finding shared genera...
-n_occur <- data.frame(table(b.g.RA.site$Genus_species)) # find frequencies of genera to see which are shared between sample types
+n_occur <- data.frame(table(ssw.ssd.gen.RA$Genus_species)) # find frequencies of genera to see which are shared between sample types
 n_occur[n_occur$Freq > 1,] # shows us which genera have a greater frequency than 2
-g_shared_site<-g_site_meta[g_site_meta$Genus %in% n_occur$Var1[n_occur$Freq > 1],]
-#write.csv(g_shared_site,"16S_Genera_SampleType_Shared.csv",row.names=FALSE)
+g_shared_samptype<-ssw.ssd.gen.RA[ssw.ssd.gen.RA$Genus_species %in% n_occur$Var1[n_occur$Freq > 1],]
 
-g_not.shared_site<-subset(g_site_meta, !(g_site_meta$Genus %in% g_shared_site$Genus)) # subset based off of what is NOT in one dataframe from another data frame
+head(g_shared_samptype)
+dim(g_shared_samptype)
 
-WI.g1<-subset(b.g.RA.site,Site=="WI")
-PD.g1<-subset(b.g.RA.site,Site=="PD")
-BDC.g1<-subset(b.g.RA.site,Site=="BDC")
-DP.g1<-subset(b.g.RA.site,Site=="DP")
+g_shared_samptype<-subset(g_shared_samptype, (g_shared_samptype$Genus_species %in% ssw.gen.RelAb$Genus_species)) #
 
-# pull out taxa only in WI that's not in PD, BDC
-WI.g<-subset(WI.g1, !(which(WI.g1$Genus_species %in% PD.g1$Genus_species))) # subset based off of what is NOT in one dataframe from another data frame
+head(g_shared_samptype)
+dim(g_shared_samptype)
 
 ## Comparing Genera in Dust vs Seawater
 # X Axis Breaks and Labels
-lbls = paste0(as.character(c(seq(0.05, 0, -0.01), seq(0.01, 0.05, 0.01)))) # labels
-brks=seq(-0.05,0.05,0.01)
-g_shared_site1<-subset(g_shared_site, Site!="Soil")
-g_shared_site1$Count2 <- ifelse(g_shared_site1$Site == "Seawater", -1*g_shared_site1$Count, g_shared_site1$Count)
-g_shared_site1<-g_shared_site1[order(-g_shared_site1$Count2,g_shared_site1$Genus),]
-g_shared_site1$GenSamp<-interaction(g_shared_site1$Genus,g_shared_site1$Site)
-g_shared_site1$GenSamp<-factor(g_shared_site1$GenSamp, levels=g_shared_site1$GenSamp)
-class(g_shared_site1$GenSamp)
-g_shared_site1$Genus<-factor(g_shared_site1$Genus, levels=unique(g_shared_site1$Genus[sort(g_shared_site1$GenSamp)]))
+lbls = paste0(as.character(c(seq(1, 0, -0.1), seq(0.01, 1, 0.1)))) # labels
+brks=seq(-1,1,0.1)
+#g_shared_samptype<-subset(g_shared_samptype, Site!="Soil")
+g_shared_samptype$Count2 <- ifelse(g_shared_samptype$Sample_Type == "Seawater", -1*g_shared_samptype$Count, g_shared_samptype$Count)
+g_shared_samptype<-g_shared_samptype[order(-g_shared_samptype$Count2,g_shared_samptype$Genus),]
+g_shared_samptype$GenSamp<-interaction(g_shared_samptype$Genus,g_shared_samptype$Sample_Type)
+g_shared_samptype$GenSamp<-factor(g_shared_samptype$GenSamp, levels=unique(g_shared_samptype$GenSamp))
+class(g_shared_samptype$GenSamp)
+g_shared_samptype$Genus<-factor(g_shared_samptype$Genus, levels=unique(g_shared_samptype$Genus[sort(g_shared_samptype$GenSamp)]))
+g_shared_samptype<-na.omit(g_shared_samptype)
+g_shared_samptype<-g_shared_samptype[g_shared_samptype$Count>0,]
 
-share1<-ggplot(g_shared_site1, aes(x = Genus, y = -Count2, fill = Site)) +
-  geom_bar(data = subset(g_shared_site1[g_shared_site1$Count2<=-0.0005,], Site == "Seawater"), stat = "identity") +
-  geom_bar(data = subset(g_shared_site1[g_shared_site1$Count2>=0.0005,], Site == "Dust"), stat = "identity") +
-  coord_flip()+scale_y_continuous(labels = lbls,breaks=brks)+theme_classic()+scale_fill_manual(name ="Sample Type", values=unique(g_shared_site1$Sample_Color[rev(order(g_shared_site1$Site))]))+ylab("Relative Abundance")+
+# Organize SampleIDs so they are in order in heatmaps
+g_shared_samptype$Site<-factor(g_shared_samptype$Site,levels=c("PD","BDC","DP","WI","SSW"))
+g_shared_samptype$SampDate<-factor(g_shared_samptype$SampDate,levels=c("July.2020","August.2020","October.2020","November.2020","July.2021","August.2021","September.2021","December.2021","April.2022"))
+#g_shared_samptype$Depth_m<-factor(g_shared_samptype$SampDate,levels=c("0","3","4","5","7","9","10","10.5","None"))
+
+g_shared_samptype$SampleID = factor(g_shared_samptype$SampleID, levels=unique(g_shared_samptype$SampleID[order(g_shared_samptype$Site,g_shared_samptype$SampDate,g_shared_samptype$Depth_m)]), ordered=TRUE)
+
+ggplot(g_shared_samptype, aes(x = Genus, y = -Count2, fill = Sample_Type)) +
+  geom_bar(data = subset(g_shared_samptype[g_shared_samptype$Count2<=-0.005,], Sample_Type == "Seawater"), stat = "identity") +
+  geom_bar(data = subset(g_shared_samptype[g_shared_samptype$Count2>=0.005,], Sample_Type == "Dust"), stat = "identity") +
+  coord_flip()+scale_y_continuous(labels = lbls,breaks=brks)+theme_classic()+ylab("Relative Abundance")+
   theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+labs(title="Microbial Genera by Sample Type", subtitle="Includes Taxa with a Relative Abundance of at least 0.05%")
 
-ggsave(share1,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_WI.v.PD_population.pyramid.png", width=12, height=10, dpi=600,create.dir = TRUE)
+shared.hm<-ggplot(g_shared_samptype, aes(SampleID, Genus_species, fill= Count)) +geom_tile()+scale_fill_gradient2(low="blue",mid="pink",high="red",midpoint=0.3)+
+  theme_classic()+theme(text=element_text(size=12, family="Arial"),axis.title.x = element_text(size=13,vjust=-0.5),axis.title.y = element_text(size=13),axis.text = element_text(size=11),axis.text.x = element_text(angle=40, vjust=.93, hjust=1.01),
+                        axis.text.y = element_text(face='italic'),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=11),plot.title = element_text(size=15)) +
+  labs(x="Sample ID", y="Microbial Genera", title="Microbial Genera in Salton Sea Dust vs. Seawater",subtitle="Using Deployment-Scaled Relative Abundances for Dust & Relative Abundances for Seawater ",fill="Relative Abundance")+scale_x_discrete(expand = c(0,0)) +
+  scale_y_discrete(limits = rev(levels(as.factor(g_shared_samptype$Genus_species)))) + facet_grid(. ~ Sample_Type, scales="free")
+
+ggsave(shared.hm,filename = "figures/RelativeAbundance/SSD_SSW_16S_shared_Genera_heatmap.png", width=20, height=25, dpi=600,create.dir = TRUE)
 
 # #### Shared Genus Relative Abundance ####
 # # first let's get RelAb of taxa by site
@@ -1751,28 +1773,14 @@ ggsave(share1,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_WI.v.P
 #
 # ggsave(tp.h1,filename = "figures/RelativeAbundance/SSD_16S_Phyla.RA_heatmap.png", width=12, height=10, dpi=600,create.dir = TRUE)
 #
-# #### Look at Specific Shared Taxa Across Sites ####
-#
-# head(g_site_meta)
-# length(g_site_meta$Site)
-#
-# d.gen<-subset(g_site_meta, Site=="Dust")
-# sw.gen<-subset(g_site_meta, Site=="Seawater")
-#
-# colnames(d.gen)[which(names(d.gen) == "Count")] <- "D.RA"
-# d.gen$D.RA<-as.numeric(d.gen$D.RA)
-# #d.gen<-subset(d.gen, D.RA>0.0001)
-#
-# colnames(sw.gen)[which(names(sw.gen) == "Count")] <- "SW.RA"
-# sw.gen$SW.RA<-as.numeric(sw.gen$SW.RA)
-# #sw.gen<-subset(sw.gen, SW.RA>0.0001)
+# #### Look at Specific Shared Taxa in SSW vs SSD ####
 #
 # head(d.gen)
 # head(sw.gen)
 #
 # tgen.comp<-merge(d.gen, sw.gen, by="Genus")
-# colnames(tgen.comp)[which(names(tgen.comp) == "Site.x")] <- "D_Samp"
-# colnames(tgen.comp)[which(names(tgen.comp) == "Site.y")] <- "SW_Samp"
+# colnames(tgen.comp)[which(names(tgen.comp) == "Sample_Type.x")] <- "D_Samp"
+# colnames(tgen.comp)[which(names(tgen.comp) == "Sample_Type.y")] <- "SW_Samp"
 # colnames(tgen.comp)[which(names(tgen.comp) == "Sample_Color.x")] <- "D_color"
 # colnames(tgen.comp)[which(names(tgen.comp) == "Sample_Color.y")] <- "SW_color"
 # write.csv(tgen.comp,"16S_Genera_SampleType_Shared_RA.Separated.csv",row.names=FALSE)
@@ -1825,10 +1833,10 @@ ggsave(share1,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_WI.v.P
 # # 16S_Gen.RA_site_linear 3 - cutoff is 0.000001
 # # ** only 2 genera shared at 0.001 cutoff: Halomonas, Truepera
 #
-# ggplot(g_shared_site, aes(x = Genus, y = Count2, fill = Site)) +
-#   geom_bar(data = subset(g_shared_site, Site == "Dust"), stat = "identity") +
-#   geom_bar(data = subset(g_shared_site, Site == "Seawater"), stat = "identity") +
-#   coord_flip()+scale_y_continuous(labels = lbls,breaks=brks)+theme_classic()+scale_fill_manual(name ="Sample Type", values=unique(g_shared_site$Sample_Color[order(g_shared_site$Site)]))+ylab("Relative Abundance")+theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+labs(title="Microbial Genera by Sample Type", subtitle="Includes Taxa with a Relative Abundance of at least 0.05%")
+# ggplot(g_shared_site, aes(x = Genus, y = Count2, fill = Sample_Type)) +
+#   geom_bar(data = subset(g_shared_site, Sample_Type == "Dust"), stat = "identity") +
+#   geom_bar(data = subset(g_shared_site, Sample_Type == "Seawater"), stat = "identity") +
+#   coord_flip()+scale_y_continuous(labels = lbls,breaks=brks)+theme_classic()+scale_fill_manual(name ="Sample Type", values=unique(g_shared_site$Sample_Color[order(g_shared_site$Sample_Type)]))+ylab("Relative Abundance")+theme(axis.title.x = element_text(size=14, vjust=-1),axis.title.y = element_text(size=14, vjust=1),axis.text = element_text(size=11),legend.title.align=0.5, legend.title = element_text(size=13),legend.text = element_text(size=13),plot.title = element_text(size=15))+labs(title="Microbial Genera by Sample Type", subtitle="Includes Taxa with a Relative Abundance of at least 0.05%")
 #
 #
 #
@@ -1919,7 +1927,7 @@ ggsave(share1,filename = "figures/RelativeAbundance/SSD_16S_shared_Genera_WI.v.P
 # ggsave(wi.uniq.tg1c,filename = "figures/RelativeAbundance/Wister/SSD_16S_WI_Genera.RA_taxasum_15perc.png", width=15, height=10, dpi=600,create.dir = TRUE)
 
 #### Save Everything ####
-save.image("data/Amplicon/SSDust_RelAb_DataAll.Rdata")
+save.image("data/SSDust_RelAb_DataAll.Rdata")
 
 # Version Information
 sessionInfo()

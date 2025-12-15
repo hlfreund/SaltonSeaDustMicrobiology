@@ -124,8 +124,13 @@ write.table(Contam.Taxa, "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ContaminationASVs_
 #asv_fasta_no_contam <- asv_fasta[- dont_want]
 
 # making new count table
+bac.ASV_counts[row.names(bac.ASV_counts) %in% row.names(contam_asvs), ] # number of reads in contam ASVs
+ncol(bac.ASV_counts)
+#colSums(bac.ASV_counts[row.names(bac.ASV_counts) %in% row.names(contam_asvs),-126])
+
 bac.ASV_counts_no.contam <- bac.ASV_counts[!row.names(bac.ASV_counts) %in% row.names(contam_asvs), ] # drop ASVs found in contam_asvs
 head(bac.ASV_counts_no.contam)
+dim(bac.ASV_counts_no.contam)
 
 # making new taxonomy table
 bac.ASV_tax.no.contam <- bac.ASV_tax[!row.names(bac.ASV_tax) %in% row.names(contam_asvs), ] # drop ASVs found in contam_asvs
