@@ -28,7 +28,7 @@ suppressPackageStartupMessages({ # load packages quietly
   library(rstatix)
   library(devtools)
   #library(decontam)
-  library(ggvegan)
+  #library(ggvegan)
   library(microbiome)
 })
 
@@ -255,7 +255,7 @@ vif.cca(rda.all.0)
 head(meta.all.scaled[,c(4,7:8,11:12,37:46)])
 ## we can use model selection instead of picking variables we think are important (by p values)
 # more info on ordistep & ordiR2step here: https://www.davidzeleny.net/anadat-r/doku.php/en:forward_sel_examples
-rda.all.a = ordistep(rda(b.clr ~ 1, data = meta.all.scaled[,c(4,7:8,11:12,37:46)]),
+rda.all.a = ordistep(rda(b.clr ~ 1, data = meta.all.scaled),
                      scope=formula(rda.all.0),
                      direction = "forward",
                      permutations = how(nperm=999))
@@ -267,7 +267,7 @@ rda.all.a$anova # see significance of individual terms in model
 # + precip_24hr_accum  1 162.00 2.0647  0.030 *
 
 # can also use model seletion to pick most important variables by which increases variation (R^2) the most
-rda.all.a2 = ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled[,c(4,7:8,11:12,37:46)]),
+rda.all.a2 = ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled),
                         scope=formula(rda.all.0),
                         permutations = how(nperm=999))
 rda.all.a2$anova # see significance of individual terms in model
@@ -549,7 +549,7 @@ rda.WI.c2 = ordiR2step(rda(b.clr_WI ~ 1, data = WI[,c(4,7:8,11:12,37:46)]),
                        permutations = how(nperm=999))
 #
 
-rda.WI.3<-rda(b.clr_WI ~ ave.relative_humidity,data=WI)
+rda.WI.3<-rda(b.clr_WI ~ ave.relative_humidity+ave.u_E.W.wind,data=WI)
 
 # check summary of RDA
 rda.WI.3
@@ -568,6 +568,10 @@ anova(rda.WI.3, permutations = how(nperm=999))
 #anova(rda.WI.3, by = "axis", permutations = how(nperm=999)) ### by RDA axis
 ## or by terms (aka variables)
 anova(rda.WI.3, by = "terms", permutations = how(nperm=999)) ### by variables
+
+ordiR2step(rda(b.clr_WI ~ 1, data = WI),
+           scope=formula(rda.WI.3),
+           permutations = how(nperm=999))
 
 #### RDA - DP ####
 
@@ -939,6 +943,22 @@ anova(rda.all, by = "terms", permutations = how(nperm=9999))
 #   Developed          1   28.238 2.6477  0.001 ***
 #   Residual          24  255.965
 
+# VIFs for final RDA
+vif.cca(rda.all)
+
+# get AICs and other important parameters from ordistep with final RDA
+rda.all.oridstep1<-ordistep(rda(b.clr ~ 1, data = meta.all.scaled),
+         scope=formula(rda.all),
+         direction = "forward",
+         permutations = how(nperm=999))
+
+rda.all.oridstep2<-ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled),
+           scope=formula(rda.all),
+           permutations = how(nperm=999))
+
+# final AIC; extractAIC outputs degrees of freedom, then AIC
+extractAIC(rda.all)
+
 # p value adjusted for each term
 aov.rda.all.terms<-anova(rda.all, by = "terms", permutations = how(nperm=9999))
 p.adjust(aov.rda.all.terms$`Pr(>F)`,method="bonferroni",n=length(aov.rda.all.terms)) # adjusted pvalues
@@ -951,13 +971,29 @@ p.adjust(aov.rda.all$`Pr(>F)`,method="bonferroni",n=length(aov.rda.all)) # adjus
 
 # WI
 
-rda.WI<-rda(b.clr_WI ~ ave.relative_humidity,data=WI)
+rda.WI<-rda(b.clr_WI ~ ave.relative_humidity+ave.u_E.W.wind,data=WI)
 summary(rda.WI)
 RsquareAdj(rda.WI) # how much variation is explained by our model? 0.2449176
 anova(rda.WI, permutations = how(nperm=9999)) # p-value = 0.0381
 anova(rda.WI, by = "terms", permutations = how(nperm=9999))
 #                           Df Variance      F Pr(>F)
 #
+# VIFs for final WI RDA
+vif.cca(rda.WI)
+
+# get AICs and other important parameters from ordistep with final RDA
+rda.WI.oridstep1<-ordistep(rda(b.clr ~ 1, data = meta.all.scaled),
+                            scope=formula(rda.WI),
+                            direction = "forward",
+                            permutations = how(nperm=999))
+
+rda.WI.oridstep2<-ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled),
+                              scope=formula(rda.WI),
+                              permutations = how(nperm=999))
+
+# final AIC; extractAIC outputs degrees of freedom, then AIC
+extractAIC(rda.WI)
+
 aov.rda.WI<-anova(rda.WI, by = "terms", permutations = how(nperm=9999))
 p.adjust(aov.rda.WI$`Pr(>F)`,method="bonferroni",n=length(aov.rda.WI)) # adjusted pvalues
 # [1] 0.224 0.944   NA
@@ -970,9 +1006,25 @@ RsquareAdj(rda.DP) # how much variation is explained by our model? 0.2425156
 anova(rda.DP, permutations = how(nperm=9999)) # p-value = 0.015
 anova(rda.DP, by = "terms", permutations = how(nperm=9999))
 #                 Df Variance      F Pr(>F)
-# precip_24hr_accum  1   65.890 2.3012  0.010 **
-# BarrenLand         1   46.379 1.6198  0.025 *
+# precip_24hr_accum  1   65.890 2.3012 0.01310 *
+# BarrenLand         1   46.379 1.6198 0.03413 *
 # Residual           4  114.533
+
+# VIFs for final DP RDA
+vif.cca(rda.DP)
+
+# get AICs and other important parameters from ordistep with final RDA
+rda.DP.oridstep1<-ordistep(rda(b.clr ~ 1, data = meta.all.scaled),
+                           scope=formula(rda.DP),
+                           direction = "forward",
+                           permutations = how(nperm=999))
+
+rda.DP.oridstep2<-ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled),
+                             scope=formula(rda.DP),
+                             permutations = how(nperm=999))
+
+# final AIC; extractAIC outputs degrees of freedom, then AIC
+extractAIC(rda.DP)
 
 aov.rda.DP<-anova(rda.DP, by = NULL, permutations = how(nperm=9999))
 p.adjust(aov.rda.DP$`Pr(>F)`,method="bonferroni",n=length(aov.rda.DP)) # adjusted pvalues
@@ -984,12 +1036,31 @@ p.adjust(aov.rda.DP.terms$`Pr(>F)`,method="bonferroni",n=length(aov.rda.DP.terms
 
 # BDC
 
-rda.BDC<-rda(b.clr_BDC ~ Forest,data=BDC)
+rda.BDC<-rda(b.clr_BDC ~ precip_24hr_accum+ave.v_N.S.wind,data=BDC)
 summary(rda.BDC)
 RsquareAdj(rda.BDC) # how much variation is explained by our model? 0.0819024
 anova(rda.BDC, permutations = how(nperm=9999)) # p-value = 0.03393
 anova(rda.BDC, by = "terms", permutations = how(nperm=9999))
 #                           Df Variance      F Pr(>F)
+# precip_24hr_accum  1   93.661 2.2868 0.04484 *
+# ave.v_N.S.wind     1   50.596 1.2354 0.29524
+# Residual           4  163.826
+
+# VIFs for final BDC RDA
+vif.cca(rda.BDC)
+
+# get AICs and other important parameters from ordistep with final RDA
+rda.BDC.oridstep1<-ordistep(rda(b.clr ~ 1, data = meta.all.scaled),
+                           scope=formula(rda.BDC),
+                           direction = "forward",
+                           permutations = how(nperm=999))
+
+rda.BDC.oridstep2<-ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled),
+                             scope=formula(rda.BDC),
+                             permutations = how(nperm=999))
+
+# final AIC; extractAIC outputs degrees of freedom, then AIC
+extractAIC(rda.BDC)
 
 aov.rda.BDC<-anova(rda.BDC, by = NULL, permutations = how(nperm=9999))
 p.adjust(aov.rda.BDC$`Pr(>F)`,method="bonferroni",n=length(aov.rda.BDC)) # adjusted pvalues
@@ -1006,6 +1077,21 @@ anova(rda.PD, permutations = how(nperm=9999)) # p-value = 0.0005952
 anova(rda.PD, by = "terms", permutations = how(nperm=9999))
 #                           Df Variance      F Pr(>F)
 
+# VIFs for final PD RDA
+vif.cca(rda.PD)
+
+# get AICs and other important parameters from ordistep with final RDA
+rda.PD.oridstep1<-ordistep(rda(b.clr ~ 1, data = meta.all.scaled),
+                            scope=formula(rda.PD),
+                            direction = "forward",
+                            permutations = how(nperm=999))
+
+rda.PD.oridstep2<-ordiR2step(rda(b.clr ~ 1, data = meta.all.scaled),
+                              scope=formula(rda.PD),
+                              permutations = how(nperm=999))
+
+# final AIC; extractAIC outputs degrees of freedom, then AIC
+extractAIC(rda.PD)
 
 aov.rda.PD<-anova(rda.PD, by = NULL, permutations = how(nperm=9999))
 p.adjust(aov.rda.PD$`Pr(>F)`,method="bonferroni",n=length(aov.rda.PD)) # adjusted pvalues
@@ -1186,16 +1272,17 @@ dev.off()
 ## FOR AUTOPLOT -> must load packagve ggvegan first
 
 # variance partitioning of RDA
-# rda.WI.part<-varpart(b.clr_WI, WI$ave.relative_humidity, WI$ave.wind_direction)
-# rda.WI.part$part
-# # plot variance partitioning results
-# png('figures/EnvDrivers/Aitchison/SSD_WI_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
-# plot(rda.WI.part,
-#      Xnames = c("Ave Rel. Humidity", "Ave Wind Dir"), # name the partitions
-#      bg = c("firebrick1", "purple1"), alpha = 80, # colour the circles
-#      digits = 3, # only show 3 digits
-#      cex = 1.5)
-# dev.off()
+rda.WI.part<-varpart(b.clr_WI, WI$ave.relative_humidity, WI$ave.u_E.W.wind)
+rda.WI.part$part
+# plot variance partitioning results
+png('figures/EnvDrivers/Aitchison/SSD_WI_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
+par(mar=c(1,1,1,1))
+plot(rda.WI.part,
+     Xnames = c("Ave Rel. Humidity", "Ave E-W Wind"), # name the partitions
+     bg = c("firebrick1", "purple1"), alpha = 80, # colour the circles
+     digits = 3, # only show 3 digits
+     cex = 1.5)
+dev.off()
 
 rda.sum.WI<-summary(rda.WI)
 rda.sum.WI$sites[,1:2]
@@ -1359,16 +1446,17 @@ dev.off()
 ## FOR AUTOPLOT -> must load packagve ggvegan first
 
 # variance partitioning of RDA
-# rda.BDC.part<-varpart(b.clr_BDC, BDC$Forest)
-# rda.BDC.part$part
-# # plot variance partitioning results
-# png('figures/EnvDrivers/Aitchison/SSD_BDC_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
-# plot(rda.BDC.part,
-#      Xnames = c("Ave. Air Temp", "Developed STF"), # name the partitions
-#      bg = c("peachpuff2", "lightgray"), alpha = 80, # colour the circles
-#      digits = 3, # only show 3 digits
-#      cex = 1.5)
-# dev.off()
+rda.BDC.part<-varpart(b.clr_BDC, BDC$precip_24hr_accum, BDC$ave.v_N.S.wind)
+rda.BDC.part$part
+# plot variance partitioning results
+png('figures/EnvDrivers/Aitchison/SSD_BDC_RDA_VariancePartitioning.png',width = 900, height = 900, res=100)
+par(mar=c(1,1,1,1))
+plot(rda.BDC.part,
+     Xnames = c("Ave. Air Temp", "Developed STF"), # name the partitions
+     bg = c("red", "lightblue"), alpha = 80, # colour the circles
+     digits = 3, # only show 3 digits
+     cex = 1.5)
+dev.off()
 
 rda.sum.BDC<-summary(rda.BDC)
 rda.sum.BDC$sites[,1:2]
