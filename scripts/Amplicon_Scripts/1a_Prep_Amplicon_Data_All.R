@@ -54,6 +54,8 @@ TotalSampleCounts_withContams<-data.frame(SampleID=colnames(bac.ASV_counts[,!(co
 write.table(TotalSampleCounts_withContams, "data/Amplicon/EnvMiSeq_W23_16S.V3V4_ASVs_TotalCounts_withContams.tsv",
             sep="\t", quote=F, col.names=T,row.names=F)
 
+sum(TotalSampleCounts_withContams$TotalCounts)
+
 # Remove unwanted samples aka old Salton Seawater samples sequenced by Zymo
 #remove_samples<-c("SS.OV.10m.seawater.0621", "SS.OV.2m.seawater.0621", "SS.OV.5m.seawater.0621")
 #bac.ASV_counts<-bac.ASV_counts[,!(colnames(bac.ASV_counts) %in% remove_samples)]
@@ -99,6 +101,7 @@ vector_for_decontam<-metadata$Sample_or_Control # use for decontam package
 # ^ tells us which are controls aka TRUE vs which are not aka FALSE
 
 bac.ASV_counts[,-length(bac.ASV_counts)] <- as.data.frame(sapply(bac.ASV_counts[,-length(bac.ASV_counts)], as.numeric)) #convert data frame to numeric
+sum(colSums(bac.ASV_counts[,-length(bac.ASV_counts)]))
 bac.ASV_c2<-t(bac.ASV_counts[,-length(bac.ASV_counts)]) # transpose so that rows are Samples and columns are ASVs
 contam_df <- isContaminant(bac.ASV_c2, neg=vector_for_decontam) # use isContaminant to identify ASVs that are contaminants
 ## ^ ASVs that are more prominant in negative controls are identified as contaminants because there is less actual DNA to compete with, allowing these contaminants to be amplifeid in neg. controls
@@ -109,6 +112,13 @@ contam_asvs <- (contam_df[contam_df$contaminant == TRUE, ]) # pull out ASV IDs f
 dim(contam_asvs)
 
 bac.ASV_tax[row.names(bac.ASV_tax) %in% row.names(contam_asvs),] # see which taxa are contaminants
+
+rownames(contam_asvs) # pull out contaminant ASVs and count their reads
+
+# total reads attributed to contaminating ASVs found with decontam()
+contam_asv_counts<-bac.ASV_counts[bac.ASV_counts$ASV_ID %in% rownames(contam_asvs),]
+colSums(contam_asv_counts[,-length(contam_asv_counts)])
+sum(colSums(contam_asv_counts[,-length(contam_asv_counts)]))
 
 Contam.Taxa<-bac.ASV_tax[row.names(bac.ASV_tax) %in% row.names(contam_asvs),] # see which taxa are contaminants
 Contam.Taxa[1:4,]
@@ -140,6 +150,7 @@ head(bac.ASV_tax.no.contam)
 
 Control_counts<-bac.ASV_counts_no.contam[,colnames(bac.ASV_counts_no.contam) %in% ControlDF$SampleID] # see which taxa are contaminants
 Control_counts
+sum(colSums(Control_counts))
 Control_counts<-Control_counts[which(rowSums(Control_counts) > 0),] # drop ASVs that don't appear in Controls
 dim(Control_counts)
 head(Control_counts)

@@ -30,7 +30,7 @@ suppressPackageStartupMessages({ # load packages quietly
   library(ALDEx2)
   library(rstatix)
   library(decontam)
-  library(ggvegan)
+  #library(ggvegan)
   library(microbiome)
   library(pairwiseAdonis)
   library(corrplot)
@@ -229,9 +229,11 @@ kmeans.plot1<-fviz_cluster(b.clr.km, b.clr, ellipse = TRUE,
 ggsave(kmeans.plot1,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_KMeans_Cluster_Euclid_3clusters_PCoA1.png", width=14, height=10, dpi=600,create.dir = TRUE)
 
 kmeans.plot2<-fviz_cluster(b.clr.km, b.clr, ellipse = TRUE,
-                           ellipse.level = 0.95, ellipse.alpha = 0.2,ellipse.type = "convex",outlier.color = "black") +
-  ggtitle("K-means = 3")
-ggsave(kmeans.plot2,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_KMeans_Cluster_Convex_3clusters_PCoA2.png", width=14, height=10, dpi=600,create.dir = TRUE)
+                           ellipse.level = 0.95, labelsize=13,ellipse.alpha = 0.2,ellipse.type = "convex",repel=TRUE,outlier.color = "black") +
+  ggtitle("K-means = 3")+theme_classic()+theme(axis.title.x = element_text(size=20),axis.title.y = element_text(size=20),
+                                               legend.title.align=0.5, legend.title = element_text(size=18),
+                                               axis.text = element_text(size=15),legend.text = element_text(size=15))
+ggsave(kmeans.plot2,filename = "figures/BetaDiversity/Aitchison/SSD_16S_CLR_KMeans_Cluster_Convex_3clusters_PCoA2.png", width=15, height=12, dpi=600,create.dir = TRUE)
 
 
 # Gap statistic plot to determine the ideal # of clusters k
